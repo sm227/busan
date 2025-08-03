@@ -56,12 +56,12 @@ export default function SwipeStack({ properties, stories, onSwipe, onComplete }:
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center bg-amber-100 border border-amber-200 rounded-xl p-8 shadow-lg"
+          className="text-center bg-emerald-100 border border-emerald-200 rounded-xl p-8 shadow-lg"
         >
-          <h3 className="text-2xl font-bold text-amber-900 mb-4">
+          <h3 className="text-2xl font-bold text-emerald-900 mb-4">
             모든 추천을 확인했습니다!
           </h3>
-          <p className="text-amber-700">
+          <p className="text-emerald-700">
             마음에 드는 곳이 있으셨나요?
           </p>
         </motion.div>
@@ -104,13 +104,13 @@ export default function SwipeStack({ properties, stories, onSwipe, onComplete }:
                   onRemove={handleRemove}
                 />
               ) : (
-                <div className="bg-amber-50 border border-amber-200 rounded-3xl shadow-xl h-full opacity-80">
-                  <div className="h-64 bg-amber-300 rounded-t-3xl" />
+                <div className="bg-emerald-50 border border-emerald-200 rounded-3xl shadow-xl h-full opacity-80">
+                  <div className="h-64 bg-emerald-300 rounded-t-3xl" />
                   <div className="p-6">
-                    <h3 className="text-xl font-bold text-amber-900 mb-2">
+                    <h3 className="text-xl font-bold text-emerald-900 mb-2">
                       {property.title}
                     </h3>
-                    <p className="text-amber-700 text-sm">
+                    <p className="text-emerald-700 text-sm">
                       {property.location.district}, {property.location.city}
                     </p>
                   </div>
@@ -122,7 +122,7 @@ export default function SwipeStack({ properties, stories, onSwipe, onComplete }:
       </AnimatePresence>
       
       {/* Cards Counter */}
-      <div className="absolute top-4 left-4 bg-amber-800 bg-opacity-90 text-amber-50 px-3 py-1 rounded-full text-sm z-50 border border-amber-600">
+      <div className="absolute top-4 left-4 bg-emerald-800 bg-opacity-90 text-emerald-50 px-3 py-1 rounded-full text-sm z-50 border border-emerald-600">
         {currentIndex + 1} / {properties.length}
       </div>
     </div>

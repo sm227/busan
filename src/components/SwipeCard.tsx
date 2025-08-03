@@ -49,11 +49,11 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
         transition: { duration: 0.3 }
       } : {}}
     >
-      <div className="bg-white border border-amber-200 rounded-2xl shadow-lg overflow-hidden h-full relative">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden h-full relative">
         {/* Property Image */}
-        <div className="relative h-48 bg-amber-100">
+        <div className="relative h-48 bg-emerald-100">
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-amber-700">
+            <div className="text-center text-emerald-700">
               <Home size={32} className="mx-auto mb-1" />
               <p className="text-xs">사진 준비중</p>
             </div>
@@ -61,7 +61,7 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
           
           {/* Match Score Badge */}
           <div className="absolute top-3 right-3 bg-white rounded-full px-2 py-1 shadow-sm">
-            <span className="text-xs font-medium text-amber-700">
+            <span className="text-xs font-medium text-emerald-700">
               {property.matchScore}% 매칭
             </span>
           </div>
@@ -100,7 +100,7 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
               <span>인구 {property.communityInfo.population}명</span>
             </div>
 
-            <div className="text-xl font-bold text-amber-700 mb-3">
+            <div className="text-xl font-bold text-emerald-700 mb-3">
               월 {property.price.rent?.toLocaleString()}원
               {property.price.deposit && (
                 <div className="text-sm text-gray-600 font-normal">
@@ -122,7 +122,7 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
             {property.features.slice(0, 3).map((feature, index) => (
               <span 
                 key={index}
-                className="px-2 py-1 bg-amber-100 rounded text-xs text-amber-700"
+                className="px-2 py-1 bg-emerald-100 rounded text-xs text-emerald-700"
               >
                 {feature}
               </span>
@@ -146,7 +146,7 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
           
           <button
             onClick={() => handleButtonClick('right')}
-            className="w-12 h-12 bg-amber-500 hover:bg-amber-600 rounded-full flex items-center justify-center text-white shadow-md"
+            className="w-12 h-12 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-md"
           >
             <Heart size={20} />
           </button>

@@ -95,30 +95,48 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       {/* 홈 화면 */}
       {appState === 'welcome' && (
-        <div className="min-h-screen flex flex-col justify-center px-4 py-8">
+        <div className="min-h-screen bg-white flex flex-col justify-center px-4 py-8">
           <div className="w-full max-w-sm mx-auto text-center">
-            <h1 className="text-2xl text-gray-900 mb-4 font-medium">
-              시골마음
-            </h1>
-            
             <div className="mb-8">
-              <div className="text-4xl mb-4">🏡</div>
-              <p className="text-gray-700 text-base mb-6 leading-relaxed">
+              <div className="w-14 h-14 bg-emerald-50 rounded-lg flex items-center justify-center mx-auto mb-6">
+                <div className="text-2xl">🏡</div>
+              </div>
+              <h1 className="text-2xl font-medium text-gray-800 mb-6">
+                시골마음
+              </h1>
+              <p className="text-gray-600 text-base mb-8 leading-relaxed">
                 당신에게 맞는<br />
                 시골 생활을 찾아보세요
               </p>
             </div>
 
-            <button
-              onClick={() => setAppState('questionnaire')}
-              className="w-full bg-amber-500 text-white py-3 rounded-lg font-medium mb-4 hover:bg-amber-600 transition-colors"
-            >
-              시작하기
-            </button>
+            <div className="space-y-4">
+              <button
+                onClick={() => setAppState('questionnaire')}
+                className="w-full bg-emerald-500 text-white py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+              >
+                시작하기
+              </button>
 
-            <p className="text-xs text-gray-500">
-              몇 가지 간단한 질문에 답해주세요
-            </p>
+              <p className="text-sm text-gray-500">
+                몇 가지 간단한 질문에 답해주세요
+              </p>
+            </div>
+
+            <div className="mt-10 grid grid-cols-3 gap-4 text-center">
+              <div className="p-2">
+                <div className="text-lg mb-1">🌱</div>
+                <p className="text-xs text-gray-500">맞춤 추천</p>
+              </div>
+              <div className="p-2">
+                <div className="text-lg mb-1">🍃</div>
+                <p className="text-xs text-gray-500">쉬운 매칭</p>
+              </div>
+              <div className="p-2">
+                <div className="text-lg mb-1">🌿</div>
+                <p className="text-xs text-gray-500">바로 연결</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -129,12 +147,17 @@ export default function Home() {
           {/* 헤더 */}
           <div className="bg-white border-b border-gray-200 px-4 py-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-lg font-medium text-gray-900">시골마음</h1>
-              <div className="flex items-center space-x-3">
-                <button className="p-2 text-gray-600 hover:text-gray-800">
+              <div className="flex items-center space-x-2">
+                <div className="w-7 h-7 bg-emerald-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-medium text-xs">시</span>
+                </div>
+                <h1 className="text-lg font-medium text-gray-800">시골마음</h1>
+              </div>
+              <div className="flex items-center space-x-1">
+                <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
                   <User className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-gray-600 hover:text-gray-800">
+                <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
                   <Settings className="w-5 h-5" />
                 </button>
               </div>
@@ -144,18 +167,20 @@ export default function Home() {
           {/* 메인 콘텐츠 */}
           <div className="px-4 py-6 space-y-6">
             {/* 추천 시작 카드 */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
               <div className="text-center">
-                <div className="text-3xl mb-3">🏡</div>
-                <h2 className="text-lg font-medium text-gray-900 mb-2">
-                  새로운 시골 생활 찾기
+                <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mx-auto mb-3">
+                  <div className="text-lg">🏡</div>
+                </div>
+                <h2 className="text-lg font-medium text-gray-800 mb-2">
+                  시골 생활 찾기
                 </h2>
-                <p className="text-gray-600 text-sm mb-4">
+                <p className="text-gray-600 text-sm mb-4 leading-relaxed">
                   당신의 취향에 맞는 시골 집을 추천해드려요
                 </p>
                 <button
                   onClick={startMatching}
-                  className="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-medium transition-colors"
+                  className="w-full bg-emerald-500 text-white py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
                 >
                   추천받기
                 </button>
@@ -165,27 +190,30 @@ export default function Home() {
             {/* 최근 관심 목록 */}
             {likedProperties.length > 0 && (
               <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium text-gray-900">관심 목록</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <Heart className="w-4 h-4 text-emerald-600" />
+                    <h3 className="font-medium text-gray-800">관심 목록</h3>
+                  </div>
                   <button
                     onClick={() => setAppState('results')}
-                    className="text-amber-600 text-sm hover:text-amber-700"
+                    className="text-emerald-600 text-sm hover:text-emerald-700"
                   >
                     전체보기
                   </button>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {likedProperties.slice(0, 2).map((property) => (
                     <div
                       key={property.id}
                       onClick={() => handlePropertyDetail(property)}
-                      className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors"
                     >
-                      <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                        <HomeIcon className="w-5 h-5" className="text-amber-600" />
+                      <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
+                        <HomeIcon className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 text-sm">
+                        <h4 className="font-medium text-gray-800 text-sm">
                           {property.title}
                         </h4>
                         <p className="text-gray-600 text-xs">
@@ -193,9 +221,9 @@ export default function Home() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-amber-600 font-medium text-sm">
+                        <div className="bg-emerald-500 text-white px-2 py-1 rounded text-xs">
                           {property.matchScore}%
-                        </p>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -205,33 +233,36 @@ export default function Home() {
 
             {/* 인기 지역 */}
             <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-              <h3 className="font-medium text-gray-900 mb-3">인기 지역</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors">
+              <div className="flex items-center space-x-2 mb-3">
+                <MapPin className="w-4 h-4 text-gray-600" />
+                <h3 className="font-medium text-gray-800">인기 지역</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-emerald-50 transition-colors">
                   <div className="text-center">
-                    <div className="text-lg mb-1">🏔️</div>
-                    <h4 className="font-medium text-gray-900 text-sm">강원도</h4>
+                    <div className="text-sm mb-1">🏔️</div>
+                    <h4 className="font-medium text-gray-800 text-sm">강원도</h4>
                     <p className="text-gray-600 text-xs">자연 속 휴양</p>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors">
+                <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-emerald-50 transition-colors">
                   <div className="text-center">
-                    <div className="text-lg mb-1">🌊</div>
-                    <h4 className="font-medium text-gray-900 text-sm">제주도</h4>
+                    <div className="text-sm mb-1">🌊</div>
+                    <h4 className="font-medium text-gray-800 text-sm">제주도</h4>
                     <p className="text-gray-600 text-xs">바다 옆 생활</p>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors">
+                <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-emerald-50 transition-colors">
                   <div className="text-center">
-                    <div className="text-lg mb-1">🌾</div>
-                    <h4 className="font-medium text-gray-900 text-sm">전라도</h4>
+                    <div className="text-sm mb-1">🌾</div>
+                    <h4 className="font-medium text-gray-800 text-sm">전라도</h4>
                     <p className="text-gray-600 text-xs">농촌 체험</p>
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors">
+                <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-emerald-50 transition-colors">
                   <div className="text-center">
-                    <div className="text-lg mb-1">🏕️</div>
-                    <h4 className="font-medium text-gray-900 text-sm">경상도</h4>
+                    <div className="text-sm mb-1">🏕️</div>
+                    <h4 className="font-medium text-gray-800 text-sm">경상도</h4>
                     <p className="text-gray-600 text-xs">전통 마을</p>
                   </div>
                 </div>
@@ -299,28 +330,31 @@ export default function Home() {
 
             {/* 커뮤니티 & 기능 메뉴 */}
             <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-              <h3 className="font-medium text-gray-900 mb-3">더 많은 기능</h3>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex items-center space-x-2 mb-3">
+                <Sparkles className="w-4 h-4 text-gray-600" />
+                <h3 className="font-medium text-gray-800">더 많은 기능</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setAppState('community')}
-                  className="flex flex-col items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                  className="flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors"
                 >
-                  <Users className="w-6 h-6 text-blue-600 mb-1" />
-                  <span className="text-xs text-blue-700 font-medium">커뮤니티</span>
+                  <Users className="w-5 h-5 text-emerald-600 mb-1" />
+                  <span className="text-xs text-gray-700">커뮤니티</span>
                 </button>
                 <button
                   onClick={() => setAppState('stories')}
-                  className="flex flex-col items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                  className="flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors"
                 >
-                  <BookOpen className="w-6 h-6 text-green-600 mb-1" />
-                  <span className="text-xs text-green-700 font-medium">이주 스토리</span>
+                  <BookOpen className="w-5 h-5 text-emerald-600 mb-1" />
+                  <span className="text-xs text-gray-700">이주 스토리</span>
                 </button>
                 <button
                   onClick={() => setAppState('guide')}
-                  className="flex flex-col items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                  className="flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors"
                 >
-                  <Map className="w-6 h-6 text-purple-600 mb-1" />
-                  <span className="text-xs text-purple-700 font-medium">이주 가이드</span>
+                  <Map className="w-5 h-5 text-emerald-600 mb-1" />
+                  <span className="text-xs text-gray-700">이주 가이드</span>
                 </button>
               </div>
             </div>
@@ -423,7 +457,7 @@ export default function Home() {
                       <MapPin className="w-3 h-3" className="mr-1" />
                       <span className="text-sm">{property.location.district}, {property.location.city}</span>
                     </div>
-                    <div className="text-amber-600 font-medium mb-3 text-sm">
+                    <div className="text-emerald-600 font-medium mb-3 text-sm">
                       {property.matchScore}% 매칭 · 월 {property.price.rent?.toLocaleString()}원
                     </div>
                     
@@ -437,7 +471,7 @@ export default function Home() {
                       </button>
                       <button
                         onClick={() => handleContact(property)}
-                        className="flex-1 flex items-center justify-center space-x-1 bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg text-sm transition-colors"
+                        className="flex-1 flex items-center justify-center space-x-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg text-sm transition-colors"
                       >
                         <Phone className="w-3 h-3" />
                         <span>연락하기</span>
@@ -456,7 +490,7 @@ export default function Home() {
             <div className="space-y-3 pb-8">
               <button
                 onClick={() => setAppState('matching')}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-medium transition-colors"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-medium transition-colors"
               >
                 새로운 추천받기
               </button>
@@ -496,7 +530,7 @@ export default function Home() {
                   <span className="text-sm">{selectedProperty.location.district}, {selectedProperty.location.city}</span>
                 </div>
                 
-                <div className="text-xl font-bold text-amber-600 mb-2">
+                <div className="text-xl font-bold text-emerald-600 mb-2">
                   월 {selectedProperty.price.rent?.toLocaleString()}원
                 </div>
                 {selectedProperty.price.deposit && (
@@ -530,7 +564,7 @@ export default function Home() {
                   {selectedProperty.features.map((feature, index) => (
                     <span 
                       key={index}
-                      className="px-2 py-1 bg-amber-100 rounded text-xs text-amber-700"
+                      className="px-2 py-1 bg-emerald-100 rounded text-xs text-emerald-700"
                     >
                       {feature}
                     </span>
@@ -542,7 +576,7 @@ export default function Home() {
             <div className="space-y-3 pb-8">
               <button
                 onClick={() => handleContact(selectedProperty)}
-                className="w-full flex items-center justify-center space-x-2 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-medium transition-colors"
+                className="w-full flex items-center justify-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-medium transition-colors"
               >
                 <Phone className="w-4 h-4" />
                 <span>연락하기</span>
@@ -575,8 +609,8 @@ export default function Home() {
 
             <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm mb-8">
               <div className="text-center mb-6">
-                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Phone className="w-6 h-6" className="text-amber-600" />
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Phone className="w-6 h-6 text-emerald-600" />
                 </div>
                 <h2 className="text-lg font-medium text-gray-900 mb-1">
                   연락하기
@@ -626,7 +660,7 @@ export default function Home() {
             <div className="space-y-3 pb-8">
               <a
                 href="tel:010-1234-5678"
-                className="w-full flex items-center justify-center space-x-2 bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-medium transition-colors"
+                className="w-full flex items-center justify-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-medium transition-colors"
               >
                 <Phone className="w-4 h-4" />
                 <span>전화걸기</span>

@@ -3,16 +3,26 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SwipeCard from './SwipeCard';
-import { RuralProperty, VillageStory } from '@/types';
+import AISwipeCard from './AISwipeCard';
+import { RuralProperty, VillageStory, UserPreferences } from '@/types';
 
 interface SwipeStackProps {
   properties: RuralProperty[];
   stories: VillageStory[];
+  userPreferences?: UserPreferences;
+  useAI?: boolean;
   onSwipe: (direction: 'left' | 'right', property: RuralProperty) => void;
   onComplete: () => void;
 }
 
-export default function SwipeStack({ properties, stories, onSwipe, onComplete }: SwipeStackProps) {
+export default function SwipeStack({ 
+  properties, 
+  stories, 
+  userPreferences,
+  useAI = false,
+  onSwipe, 
+  onComplete 
+}: SwipeStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleCards] = useState(3); // 동시에 보여줄 카드 수
   const [removingCard, setRemovingCard] = useState<string | null>(null);
@@ -97,12 +107,21 @@ export default function SwipeStack({ properties, stories, onSwipe, onComplete }:
               }}
             >
               {index === 0 ? (
-                <SwipeCard
-                  property={property}
-                  story={story}
-                  onSwipe={handleSwipe}
-                  onRemove={handleRemove}
-                />
+                useAI && userPreferences ? (
+                  <AISwipeCard
+                    property={property}
+                    userPreferences={userPreferences}
+                    onSwipe={handleSwipe}
+                    onRemove={handleRemove}
+                  />
+                ) : (
+                  <SwipeCard
+                    property={property}
+                    story={story}
+                    onSwipe={handleSwipe}
+                    onRemove={handleRemove}
+                  />
+                )
               ) : (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-3xl shadow-xl h-full opacity-80">
                   <div className="h-64 bg-emerald-300 rounded-t-3xl" />

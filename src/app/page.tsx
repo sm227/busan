@@ -21,6 +21,8 @@ import {
 import QuestionCard from "@/components/QuestionCard";
 import SwipeStack from "@/components/SwipeStack";
 import AIChat from "@/components/AIChat";
+import MyPage from "@/components/MyPage";
+import KakaoKoreaMap from "@/components/KakaoKoreaMap";
 import { personalityQuestions } from "@/data/questions";
 import { sampleProperties } from "@/data/properties";
 import { villageStories } from "@/data/stories";
@@ -38,7 +40,9 @@ type AppState =
   | "community"
   | "stories"
   | "guide"
-  | "aiConsultation";
+  | "aiConsultation"
+  | "myPage"
+  | "koreaMap";
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>("welcome");
@@ -129,6 +133,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="max-w-md mx-auto bg-white shadow-lg min-h-screen">
       {/* 홈 화면 */}
       {appState === "welcome" && (
         <div className="min-h-screen bg-white flex flex-col justify-center px-4 py-8">
@@ -193,11 +198,19 @@ export default function Home() {
                 </h1>
               </div>
               <div className="flex items-center space-x-1">
-                <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
-                  <User className="w-5 h-5" />
+                <button 
+                  onClick={() => setAppState("koreaMap")}
+                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100"
+                  title="탐험 지도"
+                >
+                  <Map className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
-                  <Settings className="w-5 h-5" />
+                <button 
+                  onClick={() => setAppState("myPage")}
+                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100"
+                  title="마이페이지"
+                >
+                  <User className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -487,7 +500,7 @@ export default function Home() {
       {/* 결과 화면 */}
       {appState === "results" && (
         <div className="min-h-screen bg-gray-50">
-          <div className="max-w-md mx-auto px-4 pb-6">
+          <div className="px-4 pb-6">
             {/* 헤더 */}
             <div className="flex items-center py-4 mb-4">
               <button
@@ -576,7 +589,7 @@ export default function Home() {
       {/* 상세보기 페이지 */}
       {appState === "propertyDetail" && selectedProperty && (
         <div className="min-h-screen bg-gray-50">
-          <div className="max-w-md mx-auto px-4 pb-8">
+          <div className="px-4 pb-8">
             <div className="flex items-center py-4 mb-4">
               <button
                 onClick={() => setAppState("results")}
@@ -674,7 +687,7 @@ export default function Home() {
       {/* 연락하기 페이지 */}
       {appState === "contact" && selectedProperty && (
         <div className="min-h-screen bg-gray-50">
-          <div className="max-w-md mx-auto px-4 pb-8">
+          <div className="px-4 pb-8">
             <div className="flex items-center py-4 mb-4">
               <button
                 onClick={() => setAppState("propertyDetail")}
@@ -764,7 +777,7 @@ export default function Home() {
       {/* 커뮤니티 페이지 */}
       {appState === "community" && (
         <div className="min-h-screen bg-gray-50">
-          <div className="max-w-md mx-auto px-4 pb-8">
+          <div className="px-4 pb-8">
             {/* 헤더 */}
             <div className="flex items-center py-4 mb-4">
               <button
@@ -921,7 +934,7 @@ export default function Home() {
       {/* 이주 스토리 페이지 */}
       {appState === "stories" && (
         <div className="min-h-screen bg-gray-50">
-          <div className="max-w-md mx-auto px-4 pb-8">
+          <div className="px-4 pb-8">
             <div className="flex items-center py-4 mb-4">
               <button
                 onClick={goHome}
@@ -1019,7 +1032,7 @@ export default function Home() {
       {/* 이주 가이드 페이지 */}
       {appState === "guide" && (
         <div className="min-h-screen bg-gray-50">
-          <div className="max-w-md mx-auto px-4 pb-8">
+          <div className="px-4 pb-8">
             <div className="flex items-center py-4 mb-4">
               <button
                 onClick={goHome}
@@ -1159,7 +1172,7 @@ export default function Home() {
       {/* AI 상담 페이지 */}
       {appState === "aiConsultation" && (
         <div className="min-h-screen bg-gray-50">
-          <div className="max-w-md mx-auto px-4 pb-8">
+          <div className="px-4 pb-8">
             <div className="flex items-center py-4 mb-4">
               <button
                 onClick={goHome}
@@ -1209,6 +1222,17 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* 마이페이지 */}
+      {appState === "myPage" && (
+        <MyPage onBack={goHome} />
+      )}
+
+      {/* 한국 지도 */}
+      {appState === "koreaMap" && (
+        <KakaoKoreaMap onBack={goHome} />
+      )}
+      </div>
     </div>
   );
 }

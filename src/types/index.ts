@@ -70,15 +70,43 @@ export interface VillageStory {
   images: string[];
 }
 
+export interface VisitedRegion {
+  id: string;
+  name: string;
+  province: string;
+  city: string;
+  visitDate: Date;
+  duration: number; // 머문 기간 (일)
+  purpose: 'living' | 'visit' | 'work' | 'travel';
+  rating: number; // 1-5 평점
+  memo?: string;
+  coordinates: [number, number]; // [longitude, latitude]
+  populationRisk: 'high' | 'medium' | 'low'; // 인구 감소 위험도
+}
+
+export interface UserBadge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  earnedDate: Date;
+  category: 'explorer' | 'lifesaver' | 'pioneer' | 'community';
+}
+
 export interface User {
   id: string;
   preferences?: UserPreferences;
   matches: string[];
   favorites: string[];
+  visitedRegions: VisitedRegion[];
+  badges: UserBadge[];
   profile: {
     name: string;
     age?: number;
     currentLocation?: string;
     occupation?: string;
+    explorerLevel: number; // 탐험가 레벨
+    totalVisitDays: number; // 총 방문 일수
+    riskyRegionsHelped: number; // 도움을 준 위험 지역 수
   };
 }

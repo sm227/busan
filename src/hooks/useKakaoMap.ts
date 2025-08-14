@@ -15,6 +15,7 @@ export const useKakaoMap = ({
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadKakaoMapScript = () => {
@@ -25,7 +26,12 @@ export const useKakaoMap = ({
         }
 
         const script = document.createElement('script');
-        script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY}&libraries=services,clusterer,drawing&autoload=false`;
+        const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY;
+        if (!apiKey) {
+          reject(new Error('카카오맵 API 키가 설정되지 않았습니다'));
+          return;
+        }
+        script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&libraries=services,clusterer,drawing&autoload=false`;
         script.async = true;
         
         script.onload = () => {
@@ -58,6 +64,7 @@ export const useKakaoMap = ({
         setIsLoaded(true);
       } catch (error) {
         console.error('카카오맵 초기화 실패:', error);
+        setError(error instanceof Error ? error.message : '카카오맵 로드 실패');
       }
     };
 
@@ -67,6 +74,7 @@ export const useKakaoMap = ({
   return {
     mapRef,
     map,
-    isLoaded
+    isLoaded,
+    error
   };
 };

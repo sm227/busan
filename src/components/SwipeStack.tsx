@@ -21,12 +21,20 @@ export default function SwipeStack({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleCards] = useState(3); // 동시에 보여줄 카드 수
   const [removingCard, setRemovingCard] = useState<string | null>(null);
+  const [stackRenderKey, setStackRenderKey] = useState(0);
 
   useEffect(() => {
     if (currentIndex >= properties.length) {
       onComplete();
     }
   }, [currentIndex, properties.length, onComplete]);
+
+  useEffect(() => {
+    // properties 배열이 변경되면 stackRenderKey 리셋
+    setStackRenderKey(0);
+    setCurrentIndex(0);
+    setRemovingCard(null);
+  }, [properties]);
 
   const handleSwipe = (direction: 'left' | 'right', property: RuralProperty) => {
     onSwipe(direction, property);
@@ -39,6 +47,7 @@ export default function SwipeStack({
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
         setRemovingCard(null);
+        setStackRenderKey(prev => prev + 1); // 렌더 키 업데이트
       }, 100);
     }
   };
@@ -85,7 +94,7 @@ export default function SwipeStack({
           
           return (
             <motion.div
-              key={`${property.id}-${actualIndex}-${currentIndex}`}
+              key={`${property.id}-${actualIndex}-${stackRenderKey}`}
               className="absolute inset-0"
               initial={{ 
                 scale: 1 - index * 0.05,

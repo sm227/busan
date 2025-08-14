@@ -19,43 +19,43 @@ export default function QuestionCard({
   const progress = ((currentQuestion + 1) / totalQuestions) * 100;
 
   return (
-    <div className="w-full max-w-md mx-auto p-4">
+    <div className="w-full max-w-md mx-auto p-6">
       {/* Progress Bar */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-emerald-700">{currentQuestion + 1}/{totalQuestions}</span>
-          <span className="text-sm text-emerald-700">{Math.round(progress)}%</span>
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-emerald-700 font-bold">{currentQuestion + 1}/{totalQuestions}</span>
+          <span className="text-emerald-700 font-bold">{Math.round(progress)}%</span>
         </div>
-        <div className="w-full bg-emerald-200 rounded-full h-2">
+        <div className="w-full bg-emerald-200 rounded-full h-3">
           <div
-            className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
+            className="bg-emerald-500 h-3 rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
       {/* Question */}
-      <h2 className="text-lg font-medium text-gray-800 mb-6 text-center">
+      <h2 className="text-lg font-bold text-slate-800 mb-6 text-center leading-relaxed">
         {question.text}
       </h2>
 
       {/* Options */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {question.options.map((option, index) => (
           <button
             key={option.id}
             onClick={() => onAnswer(option)}
-            className="w-full p-4 text-left bg-white border border-gray-200 rounded-lg hover:bg-emerald-50 transition-colors"
+            className="w-full p-4 text-left card hover:bg-emerald-50/50 hover:border-emerald-200 transition-all duration-200 hover:scale-[1.02]"
           >
             <div className="flex items-start space-x-3">
-              <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-white text-sm font-medium mt-0.5">
+              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-bold shadow-md">
                 {String.fromCharCode(65 + index)}
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-gray-800 mb-1">
+                <h3 className="font-bold text-slate-800 mb-1">
                   {option.text}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-slate-600 text-sm leading-relaxed">
                   {option.description}
                 </p>
               </div>

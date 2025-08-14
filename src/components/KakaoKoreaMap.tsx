@@ -19,7 +19,7 @@ export default function KakaoKoreaMap({ onBack }: KakaoKoreaMapProps) {
   const [polygons, setPolygons] = useState<any[]>([]);
   const user = dummyUser;
 
-  const { mapRef, map, isLoaded } = useKakaoMap({
+  const { mapRef, map, isLoaded, error: mapError } = useKakaoMap({
     center: { lat: 36.5, lng: 127.5 }, // 한국 중앙
     level: 13, // 전국이 보이는 레벨
   });
@@ -275,11 +275,30 @@ export default function KakaoKoreaMap({ onBack }: KakaoKoreaMapProps) {
           <div className="relative h-80">
             <div ref={mapRef} className="w-full h-full" />
 
-            {!isLoaded && (
+            {!isLoaded && !mapError && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                 <div className="text-center">
                   <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mx-auto mb-2" />
                   <p className="text-gray-600 text-sm">지도를 불러오는 중...</p>
+                </div>
+              </div>
+            )}
+
+            {mapError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                <div className="text-center p-8">
+                  <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">지도 서비스 일시 중단</h3>
+                  <p className="text-gray-500 text-sm mb-4">
+                    카카오맵 서비스에 연결할 수 없습니다.<br />
+                    잠시 후 다시 시도해주세요.
+                  </p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm hover:bg-emerald-600 transition-colors"
+                  >
+                    새로고침
+                  </button>
                 </div>
               </div>
             )}

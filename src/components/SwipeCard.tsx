@@ -50,7 +50,7 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
         transition: { duration: 0.3 }
       } : {}}
     >
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden h-full relative">
+      <div className="card h-full relative">
         {/* Property Image */}
         <div className="relative h-48 overflow-hidden">
           <img 
@@ -60,58 +60,66 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
             style={{ display: 'block' }}
           />
           {/* 이미지가 없을 경우 폴백 */}
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-200 to-emerald-300 flex items-center justify-center -z-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center -z-10">
             <div className="text-center text-emerald-700">
-              <Home size={32} className="mx-auto mb-1" />
-              <p className="text-xs">시골 주택</p>
+              <div className="w-12 h-12 flex items-center justify-center mx-auto mb-2">
+                <Image 
+                  src="/logo.png" 
+                  alt="빈집다방 로고" 
+                  width={48} 
+                  height={48}
+                  className="object-contain"
+                />
+              </div>
+              <p className="text-xs font-medium">시골 주택</p>
             </div>
           </div>
           
           {/* Match Score Badge */}
-          <div className="absolute top-3 right-3 bg-white rounded-full px-2 py-1 shadow-sm">
-            <span className="text-xs font-medium text-emerald-700">
+          <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md">
+            <span className="text-sm font-bold text-emerald-600">
               {property.matchScore}% 매칭
             </span>
           </div>
 
           {/* Swipe Indicators */}
           <motion.div 
-            className="absolute inset-0 bg-red-500 bg-opacity-80 flex items-center justify-center"
+            className="absolute inset-0 bg-red-500/90 backdrop-blur-sm flex items-center justify-center rounded-t-2xl"
             style={{ opacity: useTransform(x, [-100, 0], [1, 0]) }}
           >
-            <X size={64} className="text-white" />
+            <X size={80} className="text-white drop-shadow-lg" />
           </motion.div>
           
           <motion.div 
-            className="absolute inset-0 bg-green-500 bg-opacity-80 flex items-center justify-center"
+            className="absolute inset-0 bg-emerald-500/90 backdrop-blur-sm flex items-center justify-center rounded-t-2xl"
             style={{ opacity: useTransform(x, [0, 100], [0, 1]) }}
           >
-            <Heart size={64} className="text-white" />
+            <Heart size={80} className="text-white drop-shadow-lg" />
           </motion.div>
         </div>
 
         {/* Property Info */}
-        <div className="p-4 space-y-3">
+        <div className="p-6 space-y-4">
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">
+            <h3 className="text-xl font-bold text-slate-900 mb-2">
               {property.title}
             </h3>
-            <div className="flex items-center text-gray-600 mb-2">
-              <MapPin size={14} className="mr-1" />
-              <span className="text-sm">
+            <div className="flex items-center text-slate-600 mb-3">
+              <MapPin size={16} className="mr-2" />
+              <span className="font-medium">
                 {property.location.district}, {property.location.city}
               </span>
             </div>
             
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-              <span>{property.details.rooms}룸 · {property.details.size}평</span>
-              <span>인구 {property.communityInfo.population}명</span>
+            <div className="flex items-center justify-between text-slate-600 mb-4">
+              <span className="font-medium">{property.details.rooms}룸 · {property.details.size}평</span>
+              <span className="font-medium">인구 {property.communityInfo.population}명</span>
             </div>
 
-            <div className="text-xl font-bold text-emerald-700 mb-3">
+            <div className="text-2xl font-bold text-emerald-600 mb-4">
               월 {property.price.rent?.toLocaleString()}원
               {property.price.deposit && (
-                <div className="text-sm text-gray-600 font-normal">
+                <div className="text-sm text-slate-600 font-medium mt-1">
                   보증금 {(property.price.deposit / 10000).toFixed(0)}만원
                 </div>
               )}
@@ -119,24 +127,24 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
           </div>
 
           {/* Story Preview */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="text-sm text-gray-700 leading-relaxed">
+          <div className="bg-emerald-50/50 rounded-2xl p-4 border border-emerald-100">
+            <p className="text-slate-700 leading-relaxed font-medium">
               {story.story.split('\n')[0]}
             </p>
           </div>
 
           {/* Features */}
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-2">
             {property.features.slice(0, 3).map((feature, index) => (
               <span 
                 key={index}
-                className="px-2 py-1 bg-emerald-100 rounded text-xs text-emerald-700"
+                className="px-3 py-1.5 bg-emerald-100 rounded-full text-sm text-emerald-700 font-medium"
               >
                 {feature}
               </span>
             ))}
             {property.features.length > 3 && (
-              <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">
+              <span className="px-3 py-1.5 bg-slate-100 rounded-full text-sm text-slate-600 font-medium">
                 +{property.features.length - 3}
               </span>
             )}
@@ -144,19 +152,19 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
         </div>
 
         {/* Action Buttons */}
-        <div className="absolute bottom-4 left-4 right-4 flex justify-center space-x-4">
+        <div className="absolute bottom-6 left-6 right-6 flex justify-center space-x-6">
           <button
             onClick={() => handleButtonClick('left')}
-            className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 shadow-md"
+            className="w-14 h-14 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-slate-300 rounded-full flex items-center justify-center text-slate-600 shadow-lg transition-all duration-200"
           >
-            <X size={20} />
+            <X size={24} />
           </button>
           
           <button
             onClick={() => handleButtonClick('right')}
-            className="w-12 h-12 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-md"
+            className="w-14 h-14 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 transition-all duration-200 hover:scale-105"
           >
-            <Heart size={20} />
+            <Heart size={24} />
           </button>
         </div>
       </div>

@@ -18,11 +18,14 @@ import {
   Bot,
   MessageCircle,
 } from "lucide-react";
+import Image from "next/image";
 import QuestionCard from "@/components/QuestionCard";
 import SwipeStack from "@/components/SwipeStack";
 import AIChat from "@/components/AIChat";
 import MyPage from "@/components/MyPage";
 import KakaoKoreaMap from "@/components/KakaoKoreaMap";
+import UserInfoForm from "@/components/UserInfoForm";
+import LoginForm from "@/components/LoginForm";
 import { personalityQuestions } from "@/data/questions";
 import { sampleProperties } from "@/data/properties";
 import { villageStories } from "@/data/stories";
@@ -31,6 +34,8 @@ import { UserPreferences, QuestionOption, RuralProperty } from "@/types";
 
 type AppState =
   | "welcome"
+  | "login"
+  | "userInfo"
   | "questionnaire"
   | "analyzing"
   | "matching"
@@ -58,6 +63,10 @@ export default function Home() {
   );
   const [selectedProperty, setSelectedProperty] =
     useState<RuralProperty | null>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    id: number;
+    nickname: string;
+  } | null>(null);
 
   const handleQuestionAnswer = (option: QuestionOption) => {
     setUserPreferences((prev) => ({
@@ -77,7 +86,29 @@ export default function Home() {
       setAppState("analyzing");
 
       // 2초 후 매칭 결과 처리 및 자동 매칭 시작
-      setTimeout(() => {
+      setTimeout(async () => {
+        // DB에 설문 결과 저장
+        if (currentUser) {
+          try {
+            const response = await fetch('/api/survey', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                userId: currentUser.id,
+                preferences: finalPreferences,
+              }),
+            });
+
+            if (!response.ok) {
+              console.error('설문 결과 저장 실패');
+            }
+          } catch (error) {
+            console.error('설문 결과 저장 오류:', error);
+          }
+        }
+
         const matchedProperties = MatchingAlgorithm.getRecommendations(
           finalPreferences,
           sampleProperties,
@@ -90,14 +121,56 @@ export default function Home() {
     }
   };
 
-  const handleSwipe = (
+  const handleSwipe = async (
     direction: "left" | "right",
     property: RuralProperty
   ) => {
     if (direction === "right") {
       setLikedProperties((prev) => [...prev, property]);
+      
+      // DB에 관심목록 저장
+      if (currentUser) {
+        try {
+          await fetch('/api/likes', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: currentUser.id,
+              property: {
+                id: property.id,
+                title: property.title,
+                location: `${property.location.district}, ${property.location.city}`,
+                price: property.price.rent || 0,
+                matchScore: property.matchScore || 0
+              }
+            }),
+          });
+        } catch (error) {
+          console.error('관심목록 저장 실패:', error);
+        }
+      }
     } else {
       setRejectedProperties((prev) => [...prev, property]);
+      
+      // 만약 이전에 좋아요를 했다가 취소하는 경우, DB에서도 삭제
+      if (currentUser && likedProperties.some(p => p.id === property.id)) {
+        try {
+          await fetch('/api/likes', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: currentUser.id,
+              propertyId: property.id
+            }),
+          });
+        } catch (error) {
+          console.error('관심목록 삭제 실패:', error);
+        }
+      }
     }
   };
 
@@ -128,21 +201,128 @@ export default function Home() {
     setAppState("matching");
   };
 
+  const handleUserInfoSubmit = async (nickname: string, password: string) => {
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nickname, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCurrentUser({ id: data.userId, nickname });
+        setAppState("questionnaire");
+      } else {
+        alert(data.error || '사용자 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('사용자 생성 오류:', error);
+      alert('네트워크 오류가 발생했습니다.');
+    }
+  };
+
+  const handleLogin = async (nickname: string, password: string) => {
+    try {
+      // 사용자 인증 (이미 LoginForm에서 완료됨)
+      const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nickname, password }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        const userId = data.user.id;
+        setCurrentUser({ id: userId, nickname: data.user.nickname });
+        
+        // 사용자의 설문 결과 불러오기
+        try {
+          const surveyResponse = await fetch(`/api/survey?userId=${userId}`);
+          const surveyData = await surveyResponse.json();
+          
+          if (surveyData.success && surveyData.data) {
+            const preferences = {
+              livingStyle: surveyData.data.living_style,
+              socialStyle: surveyData.data.social_style,
+              workStyle: surveyData.data.work_style,
+              hobbyStyle: surveyData.data.hobby_style,
+              pace: surveyData.data.pace,
+              budget: surveyData.data.budget
+            };
+            setUserPreferences(preferences);
+          }
+        } catch (error) {
+          console.error('설문 결과 불러오기 실패:', error);
+        }
+
+        // 사용자의 관심목록 불러오기
+        try {
+          const likesResponse = await fetch(`/api/likes?userId=${userId}`);
+          const likesData = await likesResponse.json();
+          
+          if (likesData.success && likesData.data) {
+            // 관심목록 데이터를 RuralProperty 형태로 변환
+            const savedLikes = likesData.data.map((like: any) => {
+              // sampleProperties에서 해당 property를 찾아서 완전한 객체로 만들기
+              const property = sampleProperties.find(p => p.id === like.property_id);
+              if (property) {
+                return { ...property, matchScore: like.match_score };
+              }
+              // 찾을 수 없으면 기본 객체 생성
+              return {
+                id: like.property_id,
+                title: like.property_title,
+                location: { district: like.property_location.split(',')[0] || '', city: like.property_location.split(',')[1] || '' },
+                price: { rent: like.property_price },
+                matchScore: like.match_score,
+                details: { rooms: 0, size: 0, type: '', condition: '' },
+                features: [],
+                surroundings: { nature: [], cultural: [], convenience: [] },
+                community: { population: 0, demographics: '', activities: [] }
+              };
+            });
+            setLikedProperties(savedLikes);
+          }
+        } catch (error) {
+          console.error('관심목록 불러오기 실패:', error);
+        }
+
+        setAppState("main");
+      }
+    } catch (error) {
+      console.error('로그인 오류:', error);
+      alert('로그인에 실패했습니다.');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto bg-white shadow-lg min-h-screen">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-md mx-auto bg-white min-h-screen">
         {/* 홈 화면 */}
         {appState === "welcome" && (
-          <div className="min-h-screen bg-white flex flex-col justify-center px-4 py-8">
+          <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-emerald-100/20 flex flex-col justify-center px-6 py-12">
             <div className="w-full max-w-sm mx-auto text-center">
-              <div className="mb-8">
-                <div className="w-14 h-14 bg-emerald-50 rounded-lg flex items-center justify-center mx-auto mb-6">
-                  <div className="text-2xl">🏡</div>
+              <div className="mb-12">
+                <div className="w-24 h-24 flex items-center justify-center mx-auto mb-8">
+                  <Image 
+                    src="/logo.png" 
+                    alt="빈집다방 로고" 
+                    width={96} 
+                    height={96}
+                    className="object-contain"
+                  />
                 </div>
-                <h1 className="text-2xl font-medium text-gray-800 mb-6">
+                <h1 className="text-3xl font-bold text-slate-800 mb-4 tracking-tight">
                   빈집다방
                 </h1>
-                <p className="text-gray-600 text-base mb-8 leading-relaxed">
+                <p className="text-slate-600 text-lg mb-12 leading-relaxed font-medium">
                   당신에게 맞는
                   <br />
                   시골 생활을 찾아보세요
@@ -151,29 +331,36 @@ export default function Home() {
 
               <div className="space-y-4">
                 <button
-                  onClick={() => setAppState("questionnaire")}
-                  className="w-full bg-emerald-500 text-white py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+                  onClick={() => setAppState("userInfo")}
+                  className="btn-primary w-full py-4 text-lg font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35"
                 >
                   시작하기
                 </button>
+                
+                <button
+                  onClick={() => setAppState("login")}
+                  className="btn-secondary w-full py-4 text-lg font-medium"
+                >
+                  로그인
+                </button>
 
-                <p className="text-sm text-gray-500">
+                <p className="text-slate-500 font-medium text-center">
                   몇 가지 간단한 질문에 답해주세요
                 </p>
               </div>
 
-              <div className="mt-10 grid grid-cols-3 gap-4 text-center">
-                <div className="p-2">
-                  <div className="text-lg mb-1">🌱</div>
-                  <p className="text-xs text-gray-500">맞춤 추천</p>
+              <div className="mt-16 grid grid-cols-3 gap-6 text-center">
+                <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-emerald-100/50">
+                  <div className="text-2xl mb-2">🌱</div>
+                  <p className="text-sm text-slate-600 font-medium">맞춤 추천</p>
                 </div>
-                <div className="p-2">
-                  <div className="text-lg mb-1">🍃</div>
-                  <p className="text-xs text-gray-500">쉬운 매칭</p>
+                <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-emerald-100/50">
+                  <div className="text-2xl mb-2">🍃</div>
+                  <p className="text-sm text-slate-600 font-medium">쉬운 매칭</p>
                 </div>
-                <div className="p-2">
-                  <div className="text-lg mb-1">🌿</div>
-                  <p className="text-xs text-gray-500">바로 연결</p>
+                <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-emerald-100/50">
+                  <div className="text-2xl mb-2">🌿</div>
+                  <p className="text-sm text-slate-600 font-medium">바로 연결</p>
                 </div>
               </div>
             </div>
@@ -182,29 +369,35 @@ export default function Home() {
 
         {/* 메인 홈화면 */}
         {appState === "main" && (
-          <div className="min-h-screen bg-gray-50">
+          <div className="min-h-screen bg-emerald-50/30">
             {/* 헤더 */}
-            <div className="bg-white border-b border-gray-200 px-4 py-4">
+            <div className="bg-white/80 backdrop-blur-md border-b border-emerald-100 px-6 py-5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  {/* <div className="w-7 h-7 bg-emerald-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-medium text-xs">시</span>
-                  </div> */}
-                  <h1 className="text-lg font-medium text-gray-800">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 flex items-center justify-center">
+                    <Image 
+                      src="/logo.png" 
+                      alt="빈집다방 로고" 
+                      width={40} 
+                      height={40}
+                      className="object-contain"
+                    />
+                  </div>
+                  <h1 className="text-xl font-bold text-slate-800">
                     빈집다방
                   </h1>
                 </div>
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setAppState("koreaMap")}
-                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100"
+                    className="p-3 text-slate-600 hover:text-emerald-600 transition-colors rounded-xl hover:bg-emerald-50"
                     title="탐험 지도"
                   >
                     <Map className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setAppState("myPage")}
-                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100"
+                    className="p-3 text-slate-600 hover:text-emerald-600 transition-colors rounded-xl hover:bg-emerald-50"
                     title="마이페이지"
                   >
                     <User className="w-5 h-5" />
@@ -214,22 +407,36 @@ export default function Home() {
             </div>
 
             {/* 메인 콘텐츠 */}
-            <div className="px-4 py-6 space-y-6">
+            <div className="px-6 py-8 pb-24 space-y-8">
               {/* 추천 시작 카드 */}
-              <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200">
+              <div className="card p-8">
                 <div className="text-center">
-                  <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <div className="text-lg">🏡</div>
+                  <div className="mb-6">
+                    <h3 className="text-emerald-600 font-bold mb-2">✨ AI 맞춤 추천</h3>
+                    <div className="grid grid-cols-3 gap-3 text-center text-xs">
+                      <div className="bg-emerald-50 rounded-lg p-2">
+                        <div className="text-lg mb-1">🏔️</div>
+                        <span className="text-slate-600">자연환경</span>
+                      </div>
+                      <div className="bg-emerald-50 rounded-lg p-2">
+                        <div className="text-lg mb-1">🏠</div>
+                        <span className="text-slate-600">주거조건</span>
+                      </div>
+                      <div className="bg-emerald-50 rounded-lg p-2">
+                        <div className="text-lg mb-1">👥</div>
+                        <span className="text-slate-600">생활스타일</span>
+                      </div>
+                    </div>
                   </div>
-                  <h2 className="text-lg font-medium text-gray-800 mb-2">
+                  <h2 className="text-2xl font-bold text-slate-800 mb-3">
                     시골 생활 찾기
                   </h2>
-                  <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                    당신의 취향에 맞는 시골 집을 추천해드려요
+                  <p className="text-slate-600 mb-6 leading-relaxed font-medium">
+                    당신의 취향을 분석해서 가장 적합한 시골 집을 추천해드려요
                   </p>
                   <button
                     onClick={startMatching}
-                    className="w-full bg-emerald-500 text-white py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+                    className="btn-primary w-full py-4 text-lg font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35"
                   >
                     추천받기
                   </button>
@@ -238,40 +445,40 @@ export default function Home() {
 
               {/* 최근 관심 목록 */}
               {likedProperties.length > 0 && (
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <Heart className="w-4 h-4 text-emerald-600" />
-                      <h3 className="font-medium text-gray-800">관심 목록</h3>
+                <div className="card p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center space-x-3">
+                      <Heart className="w-5 h-5 text-emerald-600" />
+                      <h3 className="font-bold text-slate-800 text-lg">관심 목록</h3>
                     </div>
                     <button
                       onClick={() => setAppState("results")}
-                      className="text-emerald-600 text-sm hover:text-emerald-700"
+                      className="text-emerald-600 font-medium hover:text-emerald-700 transition-colors"
                     >
                       전체보기
                     </button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {likedProperties.slice(0, 2).map((property) => (
                       <div
                         key={property.id}
                         onClick={() => handlePropertyDetail(property)}
-                        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors"
+                        className="flex items-center space-x-4 p-4 bg-emerald-50/50 rounded-2xl cursor-pointer hover:bg-emerald-100/50 transition-colors border border-emerald-100/50"
                       >
-                        <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
-                          <HomeIcon className="w-4 h-4 text-white" />
+                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-md">
+                          <HomeIcon className="w-5 h-5 text-white" />
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-800 text-sm">
+                          <h4 className="font-bold text-slate-800">
                             {property.title}
                           </h4>
-                          <p className="text-gray-600 text-xs">
+                          <p className="text-slate-600 font-medium">
                             {property.location.district},{" "}
                             {property.location.city}
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className="bg-emerald-500 text-white px-2 py-1 rounded text-xs">
+                          <div className="bg-emerald-500 text-white px-3 py-1.5 rounded-full text-sm font-bold">
                             {property.matchScore}%
                           </div>
                         </div>
@@ -282,46 +489,46 @@ export default function Home() {
               )}
 
               {/* 인기 지역 */}
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                <div className="flex items-center space-x-2 mb-3">
-                  <MapPin className="w-4 h-4 text-gray-600" />
-                  <h3 className="font-medium text-gray-800">인기 지역</h3>
+              <div className="card p-6">
+                <div className="flex items-center space-x-3 mb-5">
+                  <MapPin className="w-5 h-5 text-emerald-600" />
+                  <h3 className="font-bold text-slate-800 text-lg">인기 지역</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-emerald-50 transition-colors">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-emerald-50/50 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100/50 transition-colors border border-emerald-100/50">
                     <div className="text-center">
-                      <div className="text-sm mb-1">🏔️</div>
-                      <h4 className="font-medium text-gray-800 text-sm">
+                      <div className="text-2xl mb-2">🏔️</div>
+                      <h4 className="font-bold text-slate-800">
                         강원도
                       </h4>
-                      <p className="text-gray-600 text-xs">자연 속 휴양</p>
+                      <p className="text-slate-600 text-sm font-medium">자연 속 휴양</p>
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-emerald-50 transition-colors">
+                  <div className="bg-emerald-50/50 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100/50 transition-colors border border-emerald-100/50">
                     <div className="text-center">
-                      <div className="text-sm mb-1">🌊</div>
-                      <h4 className="font-medium text-gray-800 text-sm">
+                      <div className="text-2xl mb-2">🌊</div>
+                      <h4 className="font-bold text-slate-800">
                         제주도
                       </h4>
-                      <p className="text-gray-600 text-xs">바다 옆 생활</p>
+                      <p className="text-slate-600 text-sm font-medium">바다 옆 생활</p>
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-emerald-50 transition-colors">
+                  <div className="bg-emerald-50/50 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100/50 transition-colors border border-emerald-100/50">
                     <div className="text-center">
-                      <div className="text-sm mb-1">🌾</div>
-                      <h4 className="font-medium text-gray-800 text-sm">
+                      <div className="text-2xl mb-2">🌾</div>
+                      <h4 className="font-bold text-slate-800">
                         전라도
                       </h4>
-                      <p className="text-gray-600 text-xs">농촌 체험</p>
+                      <p className="text-slate-600 text-sm font-medium">농촌 체험</p>
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-emerald-50 transition-colors">
+                  <div className="bg-emerald-50/50 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100/50 transition-colors border border-emerald-100/50">
                     <div className="text-center">
-                      <div className="text-sm mb-1">🏕️</div>
-                      <h4 className="font-medium text-gray-800 text-sm">
+                      <div className="text-2xl mb-2">🏕️</div>
+                      <h4 className="font-bold text-slate-800">
                         경상도
                       </h4>
-                      <p className="text-gray-600 text-xs">전통 마을</p>
+                      <p className="text-slate-600 text-sm font-medium">전통 마을</p>
                     </div>
                   </div>
                 </div>
@@ -393,43 +600,43 @@ export default function Home() {
               </div>
 
               {/* 커뮤니티 & 기능 메뉴 */}
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                <div className="flex items-center space-x-2 mb-3">
-                  <Sparkles className="w-4 h-4 text-gray-600" />
-                  <h3 className="font-medium text-gray-800">더 많은 기능</h3>
+              <div className="card p-6">
+                <div className="flex items-center space-x-3 mb-5">
+                  <Sparkles className="w-5 h-5 text-emerald-600" />
+                  <h3 className="font-bold text-slate-800 text-lg">더 많은 기능</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <button
                     onClick={() => setAppState("aiConsultation")}
-                    className="flex flex-col items-center p-3 bg-gradient-to-br from-blue-50 to-emerald-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-emerald-100 transition-colors"
+                    className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-50 to-emerald-50 border-2 border-blue-200 rounded-2xl hover:from-blue-100 hover:to-emerald-100 transition-colors"
                   >
-                    <Bot className="w-5 h-5 text-blue-600 mb-1" />
-                    <span className="text-xs text-gray-700 font-medium">
+                    <Bot className="w-6 h-6 text-blue-600 mb-2" />
+                    <span className="text-sm text-slate-700 font-bold">
                       AI 상담
                     </span>
                   </button>
                   <button
                     onClick={() => setAppState("community")}
-                    className="flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors"
+                    className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-2xl hover:bg-emerald-100/50 transition-colors border border-emerald-100/50"
                   >
-                    <Users className="w-5 h-5 text-emerald-600 mb-1" />
-                    <span className="text-xs text-gray-700">커뮤니티</span>
+                    <Users className="w-6 h-6 text-emerald-600 mb-2" />
+                    <span className="text-sm text-slate-700 font-bold">커뮤니티</span>
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => setAppState("stories")}
-                    className="flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors"
+                    className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-2xl hover:bg-emerald-100/50 transition-colors border border-emerald-100/50"
                   >
-                    <BookOpen className="w-5 h-5 text-emerald-600 mb-1" />
-                    <span className="text-xs text-gray-700">이주 스토리</span>
+                    <BookOpen className="w-6 h-6 text-emerald-600 mb-2" />
+                    <span className="text-sm text-slate-700 font-bold">이주 스토리</span>
                   </button>
                   <button
                     onClick={() => setAppState("guide")}
-                    className="flex flex-col items-center p-3 bg-gray-50 rounded-lg hover:bg-emerald-50 transition-colors"
+                    className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-2xl hover:bg-emerald-100/50 transition-colors border border-emerald-100/50"
                   >
-                    <Map className="w-5 h-5 text-emerald-600 mb-1" />
-                    <span className="text-xs text-gray-700">이주 가이드</span>
+                    <Map className="w-6 h-6 text-emerald-600 mb-2" />
+                    <span className="text-sm text-slate-700 font-bold">이주 가이드</span>
                   </button>
                 </div>
               </div>
@@ -457,12 +664,63 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            {/* 하단 네비게이션 바 */}
+            <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-emerald-100">
+              <div className="grid grid-cols-4 py-2">
+                <button 
+                  onClick={() => setAppState("main")}
+                  className="flex flex-col items-center py-3 px-2 text-emerald-600"
+                >
+                  <HomeIcon className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium">홈</span>
+                </button>
+                <button 
+                  onClick={startMatching}
+                  className="flex flex-col items-center py-3 px-2 text-slate-600 hover:text-emerald-600 transition-colors"
+                >
+                  <Heart className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium">매칭</span>
+                </button>
+                <button 
+                  onClick={() => setAppState("community")}
+                  className="flex flex-col items-center py-3 px-2 text-slate-600 hover:text-emerald-600 transition-colors"
+                >
+                  <Users className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium">커뮤니티</span>
+                </button>
+                <button 
+                  onClick={() => setAppState("myPage")}
+                  className="flex flex-col items-center py-3 px-2 text-slate-600 hover:text-emerald-600 transition-colors"
+                >
+                  <User className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium">마이</span>
+                </button>
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* 로그인 화면 */}
+        {appState === "login" && (
+          <LoginForm
+            onLogin={handleLogin}
+            onBack={() => setAppState("welcome")}
+            onGoToSignup={() => setAppState("userInfo")}
+          />
+        )}
+
+        {/* 사용자 정보 입력 화면 */}
+        {appState === "userInfo" && (
+          <UserInfoForm
+            onSubmit={handleUserInfoSubmit}
+            onBack={() => setAppState("welcome")}
+          />
         )}
 
         {/* 질문 화면 */}
         {appState === "questionnaire" && (
-          <div className="min-h-screen flex flex-col justify-center px-4 py-8">
+          <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-emerald-100/20 flex flex-col justify-center px-6 py-12">
             <QuestionCard
               question={personalityQuestions[currentQuestionIndex]}
               onAnswer={handleQuestionAnswer}
@@ -474,19 +732,19 @@ export default function Home() {
 
         {/* 분석 중 화면 */}
         {appState === "analyzing" && (
-          <div className="min-h-screen bg-white flex flex-col justify-center px-4 py-8">
+          <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-emerald-100/20 flex flex-col justify-center px-6 py-12">
             <div className="w-full max-w-sm mx-auto text-center">
               {/* 심플한 로딩 */}
               <div className="mb-12">
-                <div className="w-8 h-8 mx-auto mb-6">
-                  <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin"></div>
+                <div className="w-12 h-12 mx-auto mb-8">
+                  <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin"></div>
                 </div>
 
-                <h2 className="text-lg font-medium text-gray-900 mb-6">
+                <h2 className="text-2xl font-bold text-slate-800 mb-6">
                   AI가 취향을 분석하고 있어요!
                 </h2>
 
-                <p className="text-gray-600 text-sm">잠시만 기다려주세요</p>
+                <p className="text-slate-600 font-medium">잠시만 기다려주세요</p>
               </div>
             </div>
           </div>
@@ -494,12 +752,12 @@ export default function Home() {
 
         {/* 매칭 화면 */}
         {appState === "matching" && (
-          <div className="min-h-screen flex flex-col px-4 py-8">
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-medium text-gray-900 mb-2">
+          <div className="min-h-screen bg-gradient-to-br from-emerald-50/30 to-emerald-100/20 flex flex-col px-6 py-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-800 mb-3">
                 추천 장소
               </h2>
-              <p className="text-gray-600 text-sm">
+              <p className="text-slate-600 font-medium">
                 마음에 드시면 ♥️, 아니면 ✕ 해주세요
               </p>
             </div>
@@ -517,61 +775,63 @@ export default function Home() {
 
         {/* 결과 화면 */}
         {appState === "results" && (
-          <div className="min-h-screen bg-gray-50">
-            <div className="px-4 pb-6">
+          <div className="min-h-screen bg-emerald-50/30">
+            <div className="px-6 pb-6">
               {/* 헤더 */}
-              <div className="flex items-center py-4 mb-4">
+              <div className="flex items-center py-6 mb-6">
                 <button
                   onClick={goHome}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="btn-secondary flex items-center space-x-2 px-4 py-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm">홈으로</span>
+                  <span>홈으로</span>
                 </button>
               </div>
 
-              <h2 className="text-xl font-medium text-gray-900 mb-6 text-center">
+              <h2 className="text-2xl font-bold text-slate-800 mb-8 text-center">
                 매칭 결과
               </h2>
 
               {likedProperties.length > 0 ? (
-                <div className="space-y-4 mb-8">
-                  <p className="text-gray-600 text-sm text-center mb-4">
-                    관심 표시한 곳 {likedProperties.length}개
-                  </p>
+                <div className="space-y-6 mb-8">
+                  <div className="text-center bg-emerald-100/50 rounded-2xl p-4">
+                    <p className="text-slate-700 font-semibold">
+                      관심 표시한 곳 {likedProperties.length}개
+                    </p>
+                  </div>
 
                   {likedProperties.map((property) => (
                     <div
                       key={property.id}
-                      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                      className="card p-6"
                     >
-                      <h4 className="font-medium text-gray-900 mb-1">
+                      <h4 className="font-bold text-slate-900 mb-2 text-lg">
                         {property.title}
                       </h4>
-                      <div className="flex items-center text-gray-600 mb-2">
-                        <MapPin className="w-3 h-3 mr-1" />
-                        <span className="text-sm">
+                      <div className="flex items-center text-slate-600 mb-3">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        <span>
                           {property.location.district}, {property.location.city}
                         </span>
                       </div>
-                      <div className="text-emerald-600 font-medium mb-3 text-sm">
+                      <div className="text-emerald-600 font-bold mb-4 text-lg">
                         {property.matchScore}% 매칭 · 월{" "}
                         {property.price.rent?.toLocaleString()}원
                       </div>
 
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-3">
                         <button
                           onClick={() => handlePropertyDetail(property)}
-                          className="flex-1 flex items-center justify-center space-x-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm transition-colors"
+                          className="btn-secondary flex-1 flex items-center justify-center space-x-2 py-3"
                         >
-                          <Eye className="w-3 h-3" />
+                          <Eye className="w-4 h-4" />
                           <span>상세보기</span>
                         </button>
                         <button
                           onClick={() => handleContact(property)}
-                          className="flex-1 flex items-center justify-center space-x-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg text-sm transition-colors"
+                          className="btn-primary flex-1 flex items-center justify-center space-x-2 py-3"
                         >
-                          <Phone className="w-3 h-3" />
+                          <Phone className="w-4 h-4" />
                           <span>연락하기</span>
                         </button>
                       </div>
@@ -579,8 +839,9 @@ export default function Home() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center text-gray-600 mb-8 py-8">
-                  <p className="mb-2">아직 마음에 드는 곳을 찾지 못하셨네요</p>
+                <div className="text-center bg-white rounded-3xl p-8 mx-4">
+                  <div className="text-4xl mb-4">🤔</div>
+                  <p className="text-slate-700 font-medium mb-2">아직 마음에 드는 곳을 찾지 못하셨네요</p>
                   <p className="text-sm">다시 한번 시도해보시겠어요?</p>
                 </div>
               )}
@@ -599,36 +860,36 @@ export default function Home() {
 
         {/* 상세보기 페이지 */}
         {appState === "propertyDetail" && selectedProperty && (
-          <div className="min-h-screen bg-gray-50">
-            <div className="px-4 pb-8">
-              <div className="flex items-center py-4 mb-4">
+          <div className="min-h-screen bg-emerald-50/30">
+            <div className="px-6 pb-8">
+              <div className="flex items-center py-6 mb-6">
                 <button
                   onClick={() => setAppState("results")}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="btn-secondary flex items-center space-x-2 px-4 py-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm">돌아가기</span>
+                  <span>돌아가기</span>
                 </button>
               </div>
 
-              <div className="space-y-4 mb-8">
-                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                  <h1 className="text-lg font-medium text-gray-900 mb-2">
+              <div className="space-y-6 mb-8">
+                <div className="card p-6">
+                  <h1 className="text-2xl font-bold text-slate-900 mb-3">
                     {selectedProperty.title}
                   </h1>
-                  <div className="flex items-center text-gray-600 mb-3">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    <span className="text-sm">
+                  <div className="flex items-center text-slate-600 mb-4">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    <span className="font-medium">
                       {selectedProperty.location.district},{" "}
                       {selectedProperty.location.city}
                     </span>
                   </div>
 
-                  <div className="text-xl font-bold text-emerald-600 mb-2">
+                  <div className="text-3xl font-bold text-emerald-600 mb-2">
                     월 {selectedProperty.price.rent?.toLocaleString()}원
                   </div>
                   {selectedProperty.price.deposit && (
-                    <div className="text-sm text-gray-600">
+                    <div className="text-slate-600 font-medium">
                       보증금{" "}
                       {(selectedProperty.price.deposit / 10000).toFixed(0)}
                       만원
@@ -636,38 +897,38 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                  <h3 className="font-medium text-gray-900 mb-3">기본 정보</h3>
-                  <div className="space-y-2 text-sm">
+                <div className="card p-6">
+                  <h3 className="font-bold text-slate-900 mb-4 text-lg">기본 정보</h3>
+                  <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">방/평수:</span>
-                      <span className="text-gray-900">
+                      <span className="text-slate-600 font-medium">방/평수:</span>
+                      <span className="text-slate-900 font-semibold">
                         {selectedProperty.details.rooms}룸 ·{" "}
                         {selectedProperty.details.size}평
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">유형:</span>
-                      <span className="text-gray-900">
+                      <span className="text-slate-600 font-medium">유형:</span>
+                      <span className="text-slate-900 font-semibold">
                         {selectedProperty.details.type}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">상태:</span>
-                      <span className="text-gray-900">
+                      <span className="text-slate-600 font-medium">상태:</span>
+                      <span className="text-slate-900 font-semibold">
                         {selectedProperty.details.condition}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                  <h3 className="font-medium text-gray-900 mb-3">특징</h3>
-                  <div className="flex flex-wrap gap-2">
+                <div className="card p-6">
+                  <h3 className="font-bold text-slate-900 mb-4 text-lg">특징</h3>
+                  <div className="flex flex-wrap gap-3">
                     {selectedProperty.features.map((feature, index) => (
                       <span
                         key={index}
-                        className="px-2 py-1 bg-emerald-100 rounded text-xs text-emerald-700"
+                        className="px-4 py-2 bg-emerald-100 rounded-full text-sm text-emerald-700 font-medium"
                       >
                         {feature}
                       </span>
@@ -676,19 +937,19 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="space-y-3 pb-8">
+              <div className="space-y-4 pb-8">
                 <button
                   onClick={() => handleContact(selectedProperty)}
-                  className="w-full flex items-center justify-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-medium transition-colors"
+                  className="btn-primary w-full flex items-center justify-center space-x-2 py-4"
                 >
-                  <Phone className="w-4 h-4" />
+                  <Phone className="w-5 h-5" />
                   <span>연락하기</span>
                 </button>
                 <button
                   onClick={goHome}
-                  className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium transition-colors"
+                  className="btn-secondary w-full flex items-center justify-center space-x-2 py-4"
                 >
-                  <HomeIcon className="w-4 h-4" />
+                  <HomeIcon className="w-5 h-5" />
                   <span>홈으로</span>
                 </button>
               </div>

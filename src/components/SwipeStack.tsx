@@ -3,14 +3,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SwipeCard from './SwipeCard';
-import AISwipeCard from './AISwipeCard';
 import { RuralProperty, VillageStory, UserPreferences } from '@/types';
 
 interface SwipeStackProps {
   properties: RuralProperty[];
   stories: VillageStory[];
-  userPreferences?: UserPreferences;
-  useAI?: boolean;
   onSwipe: (direction: 'left' | 'right', property: RuralProperty) => void;
   onComplete: () => void;
 }
@@ -18,8 +15,6 @@ interface SwipeStackProps {
 export default function SwipeStack({ 
   properties, 
   stories, 
-  userPreferences,
-  useAI = false,
   onSwipe, 
   onComplete 
 }: SwipeStackProps) {
@@ -107,21 +102,12 @@ export default function SwipeStack({
               }}
             >
               {index === 0 ? (
-                useAI && userPreferences ? (
-                  <AISwipeCard
-                    property={property}
-                    userPreferences={userPreferences}
-                    onSwipe={handleSwipe}
-                    onRemove={handleRemove}
-                  />
-                ) : (
-                  <SwipeCard
-                    property={property}
-                    story={story}
-                    onSwipe={handleSwipe}
-                    onRemove={handleRemove}
-                  />
-                )
+                <SwipeCard
+                  property={property}
+                  story={story}
+                  onSwipe={handleSwipe}
+                  onRemove={handleRemove}
+                />
               ) : (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-3xl shadow-xl h-full opacity-80">
                   <div className="h-64 bg-emerald-300 rounded-t-3xl" />

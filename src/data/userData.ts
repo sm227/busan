@@ -142,7 +142,7 @@ export const dummyUser: User = {
   visitedRegions: dummyVisitedRegions,
   badges: dummyBadges,
   profile: {
-    name: '김탐험',
+    name: '김라이즈',
     age: 29,
     currentLocation: '서울특별시',
     occupation: 'UI/UX 디자이너',

@@ -2,6 +2,7 @@
 
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { useState } from 'react';
+import Image from 'next/image';
 import { Heart, X, MapPin, Home, Users } from 'lucide-react';
 import { RuralProperty, VillageStory } from '@/types';
 
@@ -51,11 +52,18 @@ export default function SwipeCard({ property, story, onSwipe, onRemove }: SwipeC
     >
       <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden h-full relative">
         {/* Property Image */}
-        <div className="relative h-48 bg-emerald-100">
-          <div className="absolute inset-0 flex items-center justify-center">
+        <div className="relative h-48 overflow-hidden">
+          <img 
+            src={property.images[0]} 
+            alt={property.title}
+            className="w-full h-full object-cover"
+            style={{ display: 'block' }}
+          />
+          {/* 이미지가 없을 경우 폴백 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-200 to-emerald-300 flex items-center justify-center -z-10">
             <div className="text-center text-emerald-700">
               <Home size={32} className="mx-auto mb-1" />
-              <p className="text-xs">사진 준비중</p>
+              <p className="text-xs">시골 주택</p>
             </div>
           </div>
           

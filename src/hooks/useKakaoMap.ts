@@ -13,7 +13,7 @@ export const useKakaoMap = ({
   level = 13 // 전국이 보이는 레벨
 }: UseKakaoMapProps = {}) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<kakao.maps.Map | null>(null);
+  const [map, setMap] = useState<any | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {

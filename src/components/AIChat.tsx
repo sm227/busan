@@ -21,7 +21,7 @@ export default function AIChat({ userPreferences, currentLocation }: AIChatProps
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: '안녕하세요! 저는 시골 이주 전문 상담사입니다. 시골 생활에 대해 궁금한 것이 있으시면 언제든 물어보세요. 어떤 도움이 필요하신가요?',
+      content: '안녕하세요! 😊 빈집다방 AI 상담사예요. 시골 이주에 대해 궁금한 게 있으시면 간단히 물어보세요! 🏡',
       isUser: false,
       timestamp: new Date()
     }

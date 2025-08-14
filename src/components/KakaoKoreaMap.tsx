@@ -210,14 +210,17 @@ export default function KakaoKoreaMap({ onBack }: KakaoKoreaMapProps) {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-emerald-500 text-white rounded-lg p-3 text-center">
-            <div className="text-xl font-bold">{stats.visitedProvinces}</div>
-            <div className="text-sm text-emerald-100">방문한 지역</div>
+        <div className="flex items-center justify-between px-2 py-3 mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-1.5 h-8 bg-gray-900 rounded-full"></div>
+            <div>
+              <div className="text-xl font-bold text-gray-900">{stats.visitedProvinces}</div>
+              <div className="text-xs text-gray-500">방문한 지역</div>
+            </div>
           </div>
-          <div className="bg-red-500 text-white rounded-lg p-3 text-center">
-            <div className="text-xl font-bold">{stats.highRiskVisited}</div>
-            <div className="text-sm text-red-100">위험지역 도움</div>
+          <div className="text-right">
+            <div className="text-sm text-gray-600">총 17개 시도 중</div>
+            <div className="text-xs text-gray-400">{stats.highRiskVisited}곳 위험지역 포함</div>
           </div>
         </div>
 

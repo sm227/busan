@@ -11,13 +11,13 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [128.5183, 36.5392]
     },
     images: [
-      '/images/hanok-exterior.jpg',
+      '/house/house1.jpg',
       '/images/hanok-interior.jpg', 
       '/images/hanok-garden.jpg'
     ],
     price: {
-      rent: 400000,
-      deposit: 5000000
+      rent: 80000,
+      deposit: 500000
     },
     details: {
       rooms: 3,
@@ -55,13 +55,13 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [126.2876, 33.2269]
     },
     images: [
-      '/images/jeju-modern.jpg',
+      '/house/house2.jpeg',
       '/images/jeju-view.jpg',
       '/images/jeju-interior.jpg'
     ],
     price: {
-      rent: 800000,
-      deposit: 10000000
+      rent: 100000,
+      deposit: 800000
     },
     details: {
       rooms: 2,
@@ -99,13 +99,13 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [127.2899, 35.6036]
     },
     images: [
-      '/images/farm-house.jpg',
+      '/house/house3.jpeg',
       '/images/farm-field.jpg',
       '/images/farm-barn.jpg'
     ],
     price: {
-      rent: 250000,
-      deposit: 3000000
+      rent: 30000,
+      deposit: 200000
     },
     details: {
       rooms: 4,
@@ -143,13 +143,13 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [128.9012, 37.7519]
     },
     images: [
-      '/images/coastal-house.jpg',
+      '/house/house4.jpeg',
       '/images/coastal-beach.jpg',
       '/images/coastal-sunrise.jpg'
     ],
     price: {
-      rent: 600000,
-      deposit: 8000000
+      rent: 70000,
+      deposit: 400000
     },
     details: {
       rooms: 3,
@@ -179,46 +179,46 @@ export const sampleProperties: RuralProperty[] = [
   },
   {
     id: 'mountain-001',
-    title: '경북 봉화 산골마을 한옥',
+    title: '충북 단양 도담마을 한옥',
     location: {
-      district: '소천면',
-      city: '봉화군',
-      region: '경상북도',
-      coordinates: [128.7326, 36.8924]
+      district: '단성면',
+      city: '단양군',
+      region: '충청북도',
+      coordinates: [128.3656, 36.9659]
     },
     images: [
-      '/images/mountain-hanok.jpg',
+      '/house/house5.jpeg',
       '/images/mountain-valley.jpg',
       '/images/mountain-trail.jpg'
     ],
     price: {
-      rent: 200000,
-      deposit: 2000000
+      rent: 50000,
+      deposit: 300000
     },
     details: {
-      rooms: 2,
-      size: 80,
-      type: 'traditional',
-      yearBuilt: 1920,
-      condition: 'needs-repair'
+      rooms: 3,
+      size: 90,
+      type: 'hanok',
+      yearBuilt: 1915,
+      condition: 'good'
     },
     features: [
       '전통 구들',
       '나무 마루',
-      '산 전망',
+      '강 전망',
       '조용한 환경',
-      '별관 창고'
+      '석회동굴 인근'
     ],
     surroundings: {
-      nearbyFacilities: ['마을회관', '버스정류장', '약수터'],
-      transportation: ['봉화읍 40분', '대중교통 제한적'],
-      naturalFeatures: ['태백산맥', '계곡', '자연휴양림']
+      nearbyFacilities: ['마을회관', '버스정류장', '도담삼봉 관광지'],
+      transportation: ['단양읍 25분', '시내버스 운행'],
+      naturalFeatures: ['남한강', '도담삼봉', '석회동굴군']
     },
     communityInfo: {
-      population: 32,
-      averageAge: 68,
-      mainIndustries: ['임업', '산나물', '약초재배'],
-      culturalActivities: ['등산', '산나물 채취', '전통주 빚기']
+      population: 58,
+      averageAge: 64,
+      mainIndustries: ['관광업', '한방약초', '민박업'],
+      culturalActivities: ['동굴 탐험', '강변 산책', '전통차 만들기']
     }
   }
 ];

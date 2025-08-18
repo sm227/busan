@@ -128,7 +128,9 @@ export default function Home() {
     property: RuralProperty
   ) => {
     if (direction === "right") {
-      setLikedProperties((prev) => [...prev, property]);
+      setLikedProperties((prev) =>
+        prev.some((p) => p.id === property.id) ? prev : [...prev, property]
+      );
       
       // DB에 관심목록 저장
       if (currentUser) {
@@ -200,6 +202,19 @@ export default function Home() {
   };
 
   const startMatching = () => {
+    // 저장된 선호도가 없으면 설문으로 이동
+    if (Object.keys(userPreferences).length < 6) {
+      setAppState("questionnaire");
+      return;
+    }
+
+    // 선호도를 기반으로 추천 목록 생성 후 매칭 화면으로 이동
+    const recs = MatchingAlgorithm.getRecommendations(
+      userPreferences as UserPreferences,
+      sampleProperties,
+      5
+    );
+    setRecommendations(recs);
     setAppState("matching");
   };
 
@@ -290,7 +305,10 @@ export default function Home() {
                 community: { population: 0, demographics: '', activities: [] }
               };
             });
-            setLikedProperties(savedLikes);
+            // id 기준 중복 제거
+            const uniqueById = new globalThis.Map<string, RuralProperty>();
+            savedLikes.forEach((p: RuralProperty) => uniqueById.set(p.id, p));
+            setLikedProperties(Array.from(uniqueById.values()));
           }
         } catch (error) {
           console.error('관심목록 불러오기 실패:', error);
@@ -881,7 +899,13 @@ export default function Home() {
                 <div className="text-center bg-white rounded-3xl p-8 mx-4">
                   <div className="text-4xl mb-4">🤔</div>
                   <p className="text-slate-700 font-medium mb-2">아직 마음에 드는 곳을 찾지 못하셨네요</p>
-                  <p className="text-sm">다시 한번 시도해보시겠어요?</p>
+                  <p className="text-sm mb-4">다시 한번 시도해보시겠어요?</p>
+                  <button
+                    onClick={startMatching}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-medium transition-colors"
+                  >
+                    다시 매칭하기
+                  </button>
                 </div>
               )}
 

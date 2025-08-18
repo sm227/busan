@@ -23,6 +23,7 @@ import { VisitedRegion } from '@/types';
 interface MyPageProps {
   onBack: () => void;
   currentUser?: { id: number; nickname: string } | null;
+  onLogout?: () => void;
 }
 
 interface UserProfile {
@@ -41,7 +42,7 @@ interface UserProfile {
   badges: any[];
 }
 
-export default function MyPage({ onBack, currentUser }: MyPageProps) {
+export default function MyPage({ onBack, currentUser, onLogout }: MyPageProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'regions' | 'badges'>('profile');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -163,6 +164,17 @@ export default function MyPage({ onBack, currentUser }: MyPageProps) {
     }
   };
 
+  const handleLogout = () => {
+    // 로컬 스토리지에서 사용자 정보 삭제
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userPreferences');
+    
+    // 로그아웃 콜백 실행
+    if (onLogout) {
+      onLogout();
+    }
+  };
+
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
@@ -186,7 +198,17 @@ export default function MyPage({ onBack, currentUser }: MyPageProps) {
             <span>홈으로</span>
           </button>
           <h1 className="text-lg font-medium text-gray-900">마이페이지</h1>
-          <div className="w-16" /> {/* 스페이서 */}
+          {currentUser && (
+            <button
+              onClick={handleLogout}
+              className="back-button"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>로그아웃</span>
+            </button>
+          )}
         </div>
 
         {/* Profile Summary Card */}
@@ -386,6 +408,8 @@ export default function MyPage({ onBack, currentUser }: MyPageProps) {
             </div>
           )}
         </motion.div>
+
+
       </div>
     </div>
   );

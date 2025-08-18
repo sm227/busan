@@ -41,6 +41,7 @@ type AppState =
   | "analyzing"
   | "matching"
   | "results"
+  | "allProperties"
   | "propertyDetail"
   | "contact"
   | "main"
@@ -123,12 +124,26 @@ export default function Home() {
     }
   };
 
+  const handleLogout = () => {
+    // 사용자 상태 초기화
+    setCurrentUser(null);
+    setUserPreferences({});
+    setLikedProperties([]);
+    setRejectedProperties([]);
+    setRecommendations([]);
+    
+    // 홈으로 이동
+    setAppState("welcome");
+  };
+
   const handleSwipe = async (
     direction: "left" | "right",
     property: RuralProperty
   ) => {
     if (direction === "right") {
-      setLikedProperties((prev) => [...prev, property]);
+      setLikedProperties((prev) =>
+        prev.some((p) => p.id === property.id) ? prev : [...prev, property]
+      );
       
       // DB에 관심목록 저장
       if (currentUser) {
@@ -200,6 +215,19 @@ export default function Home() {
   };
 
   const startMatching = () => {
+    // 저장된 선호도가 없으면 설문으로 이동
+    if (Object.keys(userPreferences).length < 6) {
+      setAppState("questionnaire");
+      return;
+    }
+
+    // 선호도를 기반으로 추천 목록 생성 후 매칭 화면으로 이동
+    const recs = MatchingAlgorithm.getRecommendations(
+      userPreferences as UserPreferences,
+      sampleProperties,
+      5
+    );
+    setRecommendations(recs);
     setAppState("matching");
   };
 
@@ -290,7 +318,10 @@ export default function Home() {
                 community: { population: 0, demographics: '', activities: [] }
               };
             });
-            setLikedProperties(savedLikes);
+            // id 기준 중복 제거
+            const uniqueById = new globalThis.Map<string, RuralProperty>();
+            savedLikes.forEach((p: RuralProperty) => uniqueById.set(p.id, p));
+            setLikedProperties(Array.from(uniqueById.values()));
           }
         } catch (error) {
           console.error('관심목록 불러오기 실패:', error);
@@ -369,6 +400,68 @@ export default function Home() {
           </div>
         )}
 
+        {/* 모든 집 보기 화면 (개발용) */}
+        {appState === "allProperties" && (
+          <div className="min-h-screen bg-emerald-50/30">
+            <div className="px-6 pb-6">
+              <div className="flex items-center py-6 mb-4">
+                <button onClick={goHome} className="back-button">
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>홈으로</span>
+                </button>
+              </div>
+
+              <h2 className="text-2xl font-bold text-slate-800 mb-4 text-center">
+                모든 집 보기 (개발용)
+              </h2>
+              <p className="text-center text-slate-600 text-sm mb-6">`src/data/properties.ts`의 데이터가 올바르게 들어갔는지 확인하세요.</p>
+
+              <div className="space-y-4 mb-8">
+                {sampleProperties.map((property) => (
+                  <div key={property.id} className="card p-0 overflow-hidden">
+                    <div className="relative w-full h-48">
+                      <Image
+                        src={property.images?.[0] || "/house/house1.jpg"}
+                        alt={property.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-slate-900 truncate">{property.title}</h4>
+                          <p className="text-slate-600 text-sm font-medium truncate">
+                            {property.location.district}, {property.location.city}
+                          </p>
+                          <div className="text-emerald-600 font-bold text-sm mt-1">
+                            월 {property.price.rent?.toLocaleString()}원
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handlePropertyDetail(property)}
+                          className="btn-secondary px-3 py-2 text-sm whitespace-nowrap"
+                        >
+                          상세보기
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pb-6">
+                <button
+                  onClick={goHome}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-medium transition-colors"
+                >
+                  홈으로 가기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 메인 홈화면 */}
         {appState === "main" && (
           <div className="min-h-screen bg-emerald-50/30">
@@ -442,6 +535,12 @@ export default function Home() {
                   >
                     <span className="relative z-10">추천받기</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-0 hover:opacity-20 transition-opacity duration-300"></div>
+                  </button>
+                  <button
+                    onClick={() => setAppState("allProperties")}
+                    className="mt-3 btn-secondary w-full py-4 text-lg font-medium smooth-hover"
+                  >
+                    모든 집 보기
                   </button>
                 </div>
               </div>
@@ -881,7 +980,13 @@ export default function Home() {
                 <div className="text-center bg-white rounded-3xl p-8 mx-4">
                   <div className="text-4xl mb-4">🤔</div>
                   <p className="text-slate-700 font-medium mb-2">아직 마음에 드는 곳을 찾지 못하셨네요</p>
-                  <p className="text-sm">다시 한번 시도해보시겠어요?</p>
+                  <p className="text-sm mb-4">다시 한번 시도해보시겠어요?</p>
+                  <button
+                    onClick={startMatching}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-medium transition-colors"
+                  >
+                    다시 매칭하기
+                  </button>
                 </div>
               )}
 
@@ -1550,7 +1655,7 @@ export default function Home() {
         )}
 
                  {/* 마이페이지 */}
-         {appState === "myPage" && <MyPage onBack={goHome} currentUser={currentUser} />}
+         {appState === "myPage" && <MyPage onBack={goHome} currentUser={currentUser} onLogout={handleLogout} />}
 
         {/* 한국 지도 */}
         {appState === "koreaMap" && <KakaoKoreaMap onBack={goHome} />}

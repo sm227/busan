@@ -2,52 +2,8 @@ import { RuralProperty } from '@/types';
 
 export const sampleProperties: RuralProperty[] = [
   {
-    id: 'hanok-001',
-    title: '안동 하회마을 전통한옥',
-    location: {
-      district: '하회마을',
-      city: '안동시',
-      region: '경상북도',
-      coordinates: [128.5183, 36.5392]
-    },
-    images: [
-      '/house/house1.jpg',
-      '/images/hanok-interior.jpg', 
-      '/images/hanok-garden.jpg'
-    ],
-    price: {
-      rent: 80000,
-      deposit: 500000
-    },
-    details: {
-      rooms: 3,
-      size: 120,
-      type: 'hanok',
-      yearBuilt: 1890,
-      condition: 'good'
-    },
-    features: [
-      '전통 온돌',
-      '마당',
-      '텃밭',
-      '한옥 구조',
-      '문화재 보호구역'
-    ],
-    surroundings: {
-      nearbyFacilities: ['하회마을 전시관', '전통시장', '보건소'],
-      transportation: ['마을버스 10분', '안동역 30분'],
-      naturalFeatures: ['낙동강', '부용대', '전통정원']
-    },
-    communityInfo: {
-      population: 240,
-      averageAge: 65,
-      mainIndustries: ['관광업', '전통공예', '농업'],
-      culturalActivities: ['탈춤 공연', '전통 축제', '서원 강학']
-    }
-  },
-  {
     id: 'modern-001',
-    title: '제주 서귀포 모던 펜션',
+    title: '제주 서귀포 펜션',
     location: {
       district: '안덕면',
       city: '서귀포시', 
@@ -187,7 +143,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [128.3656, 36.9659]
     },
     images: [
-      '/house/house5.jpeg',
+      '/house/house1.jpg',
       '/images/mountain-valley.jpg',
       '/images/mountain-trail.jpg'
     ],
@@ -233,7 +189,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [126.6281, 33.2869]
     },
     images: [
-      '/house/house2.jpeg',
+      '/house/house7.jpeg',
       '/images/jeju-stone-house.jpg',
       '/images/jeju-ocean-view.jpg'
     ],
@@ -279,7 +235,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [126.9880, 35.3214]
     },
     images: [
-      '/house/house3.jpeg',
+      '/house/house10.jpg',
       '/images/damyang-bamboo.jpg',
       '/images/country-house.jpg'
     ],
@@ -325,7 +281,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [127.6158, 35.2031]
     },
     images: [
-      '/house/house4.jpeg',
+      '/house/house12.jpg',
       '/images/tea-field-house.jpg',
       '/images/hadong-view.jpg'
     ],
@@ -371,7 +327,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [126.8957, 36.2756]
     },
     images: [
-      '/house/house5.jpeg',
+      '/house/house13.jpeg',
       '/images/buyeo-hanok.jpg',
       '/images/baekje-village.jpg'
     ],
@@ -417,7 +373,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [128.0851, 37.6895]
     },
     images: [
-      '/house/house1.jpg',
+      '/house/house8.jpg',
       '/images/log-house.jpg',
       '/images/forest-view.jpg'
     ],
@@ -463,7 +419,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [128.1426, 36.7694]
     },
     images: [
-      '/house/house2.jpeg',
+      '/house/house9.jpg',
       '/images/pottery-village.jpg',
       '/images/ceramic-house.jpg'
     ],
@@ -509,7 +465,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [126.7017, 35.4350]
     },
     images: [
-      '/house/house3.jpeg',
+      '/house/house11.jpg',
       '/images/gochang-farm.jpg',
       '/images/dolmen-park.jpg'
     ],
@@ -555,7 +511,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [127.7764, 36.1750]
     },
     images: [
-      '/house/house4.jpeg',
+      '/house/house14.jpg',
       '/images/winery-house.jpg',
       '/images/vineyard-view.jpg'
     ],
@@ -647,7 +603,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [126.5431, 35.3678]
     },
     images: [
-      '/house/house1.jpg',
+      '/house/house15.jpg',
       '/images/gulbi-village.jpg',
       '/images/fishing-village.jpg'
     ],
@@ -693,7 +649,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [128.1697, 38.0697]
     },
     images: [
-      '/house/house2.jpeg',
+      '/house/house16.jpg',
       '/images/valley-house.jpg',
       '/images/mountain-stream.jpg'
     ],
@@ -728,52 +684,6 @@ export const sampleProperties: RuralProperty[] = [
     }
   },
 
-  // 16. 경북 예천 전통마을
-  {
-    id: 'yecheon-001',
-    title: '예천 회룡포 전망집',
-    location: {
-      district: '용문면',
-      city: '예천군',
-      region: '경상북도',
-      coordinates: [128.4567, 36.5431]
-    },
-    images: [
-      '/house/house3.jpeg',
-      '/images/hoeryongpo-view.jpg',
-      '/images/river-bend.jpg'
-    ],
-    price: {
-      rent: 60000,
-      deposit: 300000
-    },
-    details: {
-      rooms: 2,
-      size: 75,
-      type: 'modern',
-      yearBuilt: 2010,
-      condition: 'good'
-    },
-    features: [
-      '강 전망',
-      '회룡포 뷰',
-      '조용한 환경',
-      '전망대 인근',
-      '사진 명소'
-    ],
-    surroundings: {
-      nearbyFacilities: ['회룡포 전망대', '삼강주막', '예천박물관'],
-      transportation: ['예천읍 25분', '안동 40분'],
-      naturalFeatures: ['낙동강', '회룡포', '비봉산']
-    },
-    communityInfo: {
-      population: 72,
-      averageAge: 64,
-      mainIndustries: ['농업', '관광업', '민박업'],
-      culturalActivities: ['회룡포 축제', '강변 산책', '사진 촬영']
-    }
-  },
-
   // 17. 전북 무주 산골마을
   {
     id: 'muju-001',
@@ -785,7 +695,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [127.7361, 35.9075]
     },
     images: [
-      '/house/house4.jpeg',
+      '/house/house17.jpg',
       '/images/mountain-village.jpg',
       '/images/deogyusan-house.jpg'
     ],
@@ -831,7 +741,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [126.7344, 36.0567]
     },
     images: [
-      '/house/house5.jpeg',
+      '/house/house18.jpg',
       '/images/mudflat-village.jpg',
       '/images/tidal-flat.jpg'
     ],
@@ -877,7 +787,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [127.9167, 35.6833]
     },
     images: [
-      '/house/house1.jpg',
+      '/house/house19.jpg',
       '/images/suseungdae-valley.jpg',
       '/images/clear-stream.jpg'
     ],
@@ -923,7 +833,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [126.8456, 35.3011]
     },
     images: [
-      '/house/house2.jpeg',
+      '/house/house20.jpg',
       '/images/yellow-flower-field.jpg',
       '/images/hwangryong-river.jpg'
     ],
@@ -969,7 +879,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [127.4056, 37.7431]
     },
     images: [
-      '/house/house3.jpeg',
+      '/house/house21.jpg',
       '/images/lake-pension.jpg',
       '/images/cheongpyeong-lake.jpg'
     ],
@@ -1015,7 +925,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [128.9856, 37.1642]
     },
     images: [
-      '/house/house4.jpeg',
+      '/house/house22.jpg',
       '/images/mining-town.jpg',
       '/images/gumunsso.jpg'
     ],
@@ -1061,7 +971,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [126.8011, 36.4567]
     },
     images: [
-      '/house/house5.jpeg',
+      '/house/house23.jpg',
       '/images/chilgap-mountain.jpg',
       '/images/alpine-village.jpg'
     ],
@@ -1107,7 +1017,7 @@ export const sampleProperties: RuralProperty[] = [
       coordinates: [129.4156, 37.0531]
     },
     images: [
-      '/house/house1.jpg',
+      '/house/house24.jpg',
       '/images/fishing-port.jpg',
       '/images/east-sea-village.jpg'
     ],

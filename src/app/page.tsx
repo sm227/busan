@@ -124,6 +124,18 @@ export default function Home() {
     }
   };
 
+  const handleLogout = () => {
+    // 사용자 상태 초기화
+    setCurrentUser(null);
+    setUserPreferences({});
+    setLikedProperties([]);
+    setRejectedProperties([]);
+    setRecommendations([]);
+    
+    // 홈으로 이동
+    setAppState("welcome");
+  };
+
   const handleSwipe = async (
     direction: "left" | "right",
     property: RuralProperty
@@ -1643,7 +1655,7 @@ export default function Home() {
         )}
 
                  {/* 마이페이지 */}
-         {appState === "myPage" && <MyPage onBack={goHome} currentUser={currentUser} />}
+         {appState === "myPage" && <MyPage onBack={goHome} currentUser={currentUser} onLogout={handleLogout} />}
 
         {/* 한국 지도 */}
         {appState === "koreaMap" && <KakaoKoreaMap onBack={goHome} />}

@@ -26,6 +26,7 @@ import MyPage from "@/components/MyPage";
 import KakaoKoreaMap from "@/components/KakaoKoreaMap";
 import UserInfoForm from "@/components/UserInfoForm";
 import LoginForm from "@/components/LoginForm";
+import Guestbook from "@/components/Guestbook";
 import { personalityQuestions } from "@/data/questions";
 import { sampleProperties } from "@/data/properties";
 import { villageStories } from "@/data/stories";
@@ -48,7 +49,8 @@ type AppState =
   | "guide"
   | "aiConsultation"
   | "myPage"
-  | "koreaMap";
+  | "koreaMap"
+  | "guestbook";
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>("welcome");
@@ -303,8 +305,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-md mx-auto bg-white min-h-screen">
+    <div className="min-h-screen bg-slate-50 overflow-x-hidden">
+      <div className="max-w-md mx-auto bg-white min-h-screen relative">
         {/* 홈 화면 */}
         {appState === "welcome" && (
           <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-emerald-100/20 flex flex-col justify-center px-6 py-12">
@@ -319,48 +321,48 @@ export default function Home() {
                     className="object-contain"
                   />
                 </div>
-                <h1 className="text-3xl font-bold text-slate-800 mb-4 tracking-tight">
-                  빈집다방
-                </h1>
-                <p className="text-slate-600 text-lg mb-12 leading-relaxed font-medium">
-                  당신에게 맞는
-                  <br />
-                  시골 생활을 찾아보세요
-                </p>
+                                 <h1 className="text-3xl font-bold text-slate-900 mb-4 tracking-tight">
+                   빈집다방
+                 </h1>
+                 <p className="text-slate-700 text-lg mb-12 leading-relaxed font-semibold">
+                   당신에게 맞는
+                   <br />
+                   시골 생활을 찾아보세요
+                 </p>
               </div>
 
               <div className="space-y-4">
                 <button
                   onClick={() => setAppState("userInfo")}
-                  className="btn-primary w-full py-4 text-lg font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35"
+                  className="btn-primary w-full py-4 text-lg font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35 smooth-hover"
                 >
                   시작하기
                 </button>
                 
                 <button
                   onClick={() => setAppState("login")}
-                  className="btn-secondary w-full py-4 text-lg font-medium"
+                  className="btn-secondary w-full py-4 text-lg font-medium smooth-hover"
                 >
                   로그인
                 </button>
 
-                <p className="text-slate-500 font-medium text-center">
-                  몇 가지 간단한 질문에 답해주세요
-                </p>
+                                 <p className="text-slate-600 font-semibold text-center">
+                   몇 가지 간단한 질문에 답해주세요
+                 </p>
               </div>
 
               <div className="mt-16 grid grid-cols-3 gap-6 text-center">
                 <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-emerald-100/50">
                   <div className="text-2xl mb-2">🌱</div>
-                  <p className="text-sm text-slate-600 font-medium">맞춤 추천</p>
-                </div>
-                <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-emerald-100/50">
-                  <div className="text-2xl mb-2">🍃</div>
-                  <p className="text-sm text-slate-600 font-medium">쉬운 매칭</p>
-                </div>
-                <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-emerald-100/50">
-                  <div className="text-2xl mb-2">🌿</div>
-                  <p className="text-sm text-slate-600 font-medium">바로 연결</p>
+                                     <p className="text-sm text-slate-700 font-semibold">맞춤 추천</p>
+                 </div>
+                 <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-emerald-100/50">
+                   <div className="text-2xl mb-2">🍃</div>
+                   <p className="text-sm text-slate-700 font-semibold">쉬운 매칭</p>
+                 </div>
+                 <div className="p-4 bg-white/60 backdrop-blur-sm rounded-2xl border border-emerald-100/50">
+                   <div className="text-2xl mb-2">🌿</div>
+                   <p className="text-sm text-slate-700 font-semibold">바로 연결</p>
                 </div>
               </div>
             </div>
@@ -383,21 +385,21 @@ export default function Home() {
                       className="object-contain"
                     />
                   </div>
-                  <h1 className="text-xl font-bold text-slate-800">
-                    빈집다방
-                  </h1>
+                                     <h1 className="text-xl font-bold text-slate-900">
+                     빈집다방
+                   </h1>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setAppState("koreaMap")}
-                    className="p-3 text-slate-600 hover:text-emerald-600 transition-colors rounded-xl hover:bg-emerald-50"
+                    className="p-3 text-slate-700 hover:text-emerald-600 transition-colors rounded-xl hover:bg-emerald-50"
                     title="탐험 지도"
                   >
                     <Map className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setAppState("myPage")}
-                    className="p-3 text-slate-600 hover:text-emerald-600 transition-colors rounded-xl hover:bg-emerald-50"
+                    className="p-3 text-slate-700 hover:text-emerald-600 transition-colors rounded-xl hover:bg-emerald-50"
                     title="마이페이지"
                   >
                     <User className="w-5 h-5" />
@@ -428,17 +430,18 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-800 mb-3">
-                    시골 생활 찾기
-                  </h2>
-                  <p className="text-slate-600 mb-6 leading-relaxed font-medium">
-                    당신의 취향을 분석해서 가장 적합한 시골 집을 추천해드려요
-                  </p>
+                                     <h2 className="text-2xl font-bold text-slate-900 mb-3">
+                     시골 생활 찾기
+                   </h2>
+                   <p className="text-slate-700 mb-6 leading-relaxed font-semibold">
+                     당신의 취향을 분석해서 가장 적합한 시골 집을 추천해드려요
+                   </p>
                   <button
                     onClick={startMatching}
-                    className="btn-primary w-full py-4 text-lg font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35"
+                    className="btn-primary w-full py-4 text-lg font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35 smooth-hover relative overflow-hidden"
                   >
-                    추천받기
+                    <span className="relative z-10">추천받기</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-0 hover:opacity-20 transition-opacity duration-300"></div>
                   </button>
                 </div>
               </div>
@@ -463,7 +466,7 @@ export default function Home() {
                       <div
                         key={property.id}
                         onClick={() => handlePropertyDetail(property)}
-                        className="flex items-center space-x-4 p-4 bg-emerald-50/50 rounded-2xl cursor-pointer hover:bg-emerald-100/50 transition-colors border border-emerald-100/50"
+                        className="flex items-center space-x-4 p-4 bg-emerald-50/50 rounded-2xl cursor-pointer hover:bg-emerald-100/50 border border-emerald-100/50 card-hover"
                       >
                         <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-md">
                           <HomeIcon className="w-5 h-5 text-white" />
@@ -608,7 +611,7 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <button
                     onClick={() => setAppState("aiConsultation")}
-                    className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-50 to-emerald-50 border-2 border-blue-200 rounded-2xl hover:from-blue-100 hover:to-emerald-100 transition-colors"
+                    className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-50 to-emerald-50 border-2 border-blue-200 rounded-2xl hover:from-blue-100 hover:to-emerald-100 gentle-scale"
                   >
                     <Bot className="w-6 h-6 text-blue-600 mb-2" />
                     <span className="text-sm text-slate-700 font-bold">
@@ -616,24 +619,33 @@ export default function Home() {
                     </span>
                   </button>
                   <button
+                    onClick={() => setAppState("guestbook")}
+                    className="flex flex-col items-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl hover:from-purple-100 hover:to-pink-100 gentle-scale"
+                  >
+                    <MessageCircle className="w-6 h-6 text-purple-600 mb-2" />
+                    <span className="text-sm text-slate-700 font-bold">방명록</span>
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <button
                     onClick={() => setAppState("community")}
-                    className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-2xl hover:bg-emerald-100/50 transition-colors border border-emerald-100/50"
+                    className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-2xl hover:bg-emerald-100/50 gentle-scale border border-emerald-100/50"
                   >
                     <Users className="w-6 h-6 text-emerald-600 mb-2" />
                     <span className="text-sm text-slate-700 font-bold">커뮤니티</span>
                   </button>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={() => setAppState("stories")}
-                    className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-2xl hover:bg-emerald-100/50 transition-colors border border-emerald-100/50"
+                    className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-2xl hover:bg-emerald-100/50 gentle-scale border border-emerald-100/50"
                   >
                     <BookOpen className="w-6 h-6 text-emerald-600 mb-2" />
                     <span className="text-sm text-slate-700 font-bold">이주 스토리</span>
                   </button>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
                   <button
                     onClick={() => setAppState("guide")}
-                    className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-2xl hover:bg-emerald-100/50 transition-colors border border-emerald-100/50"
+                    className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-2xl hover:bg-emerald-100/50 gentle-scale border border-emerald-100/50"
                   >
                     <Map className="w-6 h-6 text-emerald-600 mb-2" />
                     <span className="text-sm text-slate-700 font-bold">이주 가이드</span>
@@ -666,8 +678,8 @@ export default function Home() {
             </div>
 
             {/* 하단 네비게이션 바 */}
-            <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-emerald-100">
-              <div className="grid grid-cols-4 py-2">
+            <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-md border-t border-emerald-100 shadow-lg">
+              <div className="grid grid-cols-5 py-2">
                 <button 
                   onClick={() => setAppState("main")}
                   className="flex flex-col items-center py-3 px-2 text-emerald-600"
@@ -681,6 +693,13 @@ export default function Home() {
                 >
                   <Heart className="w-5 h-5 mb-1" />
                   <span className="text-xs font-medium">매칭</span>
+                </button>
+                <button 
+                  onClick={() => setAppState("guestbook")}
+                  className="flex flex-col items-center py-3 px-2 text-slate-600 hover:text-purple-600 transition-colors"
+                >
+                  <MessageCircle className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium">방명록</span>
                 </button>
                 <button 
                   onClick={() => setAppState("community")}
@@ -734,17 +753,37 @@ export default function Home() {
         {appState === "analyzing" && (
           <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-emerald-100/20 flex flex-col justify-center px-6 py-12">
             <div className="w-full max-w-sm mx-auto text-center">
-              {/* 심플한 로딩 */}
+              {/* 개선된 로딩 */}
               <div className="mb-12">
-                <div className="w-12 h-12 mx-auto mb-8">
-                  <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin"></div>
+                <div className="relative w-20 h-20 mx-auto mb-8">
+                  <div className="absolute inset-0 border-4 border-emerald-200 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-t-emerald-500 border-r-emerald-400 rounded-full animate-spin"></div>
+                  <div className="absolute inset-2 border-2 border-emerald-100 rounded-full"></div>
+                  <div className="absolute inset-4 bg-emerald-50 rounded-full flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-emerald-600 animate-pulse" />
+                  </div>
                 </div>
 
-                <h2 className="text-2xl font-bold text-slate-800 mb-6">
+                <h2 className="text-2xl font-bold text-slate-800 mb-4">
                   AI가 취향을 분석하고 있어요!
                 </h2>
 
-                <p className="text-slate-600 font-medium">잠시만 기다려주세요</p>
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-center space-x-2 text-slate-600">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0s', animationDuration: '1.4s'}}></div>
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0.2s', animationDuration: '1.4s'}}></div>
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0.4s', animationDuration: '1.4s'}}></div>
+                  </div>
+                  <p className="text-slate-600 font-medium">당신에게 맞는 집을 찾고 있어요</p>
+                </div>
+
+                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-emerald-100/50">
+                  <div className="text-sm text-slate-600 space-y-2">
+                    <p>🏡 거주 스타일 분석 완료</p>
+                    <p>👥 사회적 성향 분석 완료</p>
+                    <p>💼 업무 환경 분석 중...</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -777,16 +816,16 @@ export default function Home() {
         {appState === "results" && (
           <div className="min-h-screen bg-emerald-50/30">
             <div className="px-6 pb-6">
-              {/* 헤더 */}
-              <div className="flex items-center py-6 mb-6">
-                <button
-                  onClick={goHome}
-                  className="btn-secondary flex items-center space-x-2 px-4 py-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>홈으로</span>
-                </button>
-              </div>
+                             {/* 헤더 */}
+               <div className="flex items-center py-6 mb-6">
+                 <button
+                   onClick={goHome}
+                   className="back-button"
+                 >
+                   <ArrowLeft className="w-4 h-4" />
+                   <span>홈으로</span>
+                 </button>
+               </div>
 
               <h2 className="text-2xl font-bold text-slate-800 mb-8 text-center">
                 매칭 결과
@@ -862,15 +901,15 @@ export default function Home() {
         {appState === "propertyDetail" && selectedProperty && (
           <div className="min-h-screen bg-emerald-50/30">
             <div className="px-6 pb-8">
-              <div className="flex items-center py-6 mb-6">
-                <button
-                  onClick={() => setAppState("results")}
-                  className="btn-secondary flex items-center space-x-2 px-4 py-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>돌아가기</span>
-                </button>
-              </div>
+                             <div className="flex items-center py-6 mb-6">
+                 <button
+                   onClick={() => setAppState("results")}
+                   className="back-button"
+                 >
+                   <ArrowLeft className="w-4 h-4" />
+                   <span>돌아가기</span>
+                 </button>
+               </div>
 
               <div className="space-y-6 mb-8">
                 <div className="card p-6">
@@ -961,15 +1000,15 @@ export default function Home() {
         {appState === "contact" && selectedProperty && (
           <div className="min-h-screen bg-gray-50">
             <div className="px-4 pb-8">
-              <div className="flex items-center py-4 mb-4">
-                <button
-                  onClick={() => setAppState("propertyDetail")}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm">돌아가기</span>
-                </button>
-              </div>
+                             <div className="flex items-center py-4 mb-4">
+                 <button
+                   onClick={() => setAppState("propertyDetail")}
+                   className="back-button"
+                 >
+                   <ArrowLeft className="w-4 h-4" />
+                   <span>돌아가기</span>
+                 </button>
+               </div>
 
               <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm mb-8">
                 <div className="text-center mb-6">
@@ -1053,16 +1092,16 @@ export default function Home() {
         {appState === "community" && (
           <div className="min-h-screen bg-gray-50">
             <div className="px-4 pb-8">
-              {/* 헤더 */}
-              <div className="flex items-center py-4 mb-4">
-                <button
-                  onClick={goHome}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm">홈으로</span>
-                </button>
-              </div>
+                             {/* 헤더 */}
+               <div className="flex items-center py-4 mb-4">
+                 <button
+                   onClick={goHome}
+                   className="back-button"
+                 >
+                   <ArrowLeft className="w-4 h-4" />
+                   <span>홈으로</span>
+                 </button>
+               </div>
 
               <h2 className="text-xl font-medium text-gray-900 mb-6 text-center">
                 빈집다방 커뮤니티
@@ -1210,19 +1249,19 @@ export default function Home() {
           </div>
         )}
 
-        {/* 이주 스토리 페이지 */}
-        {appState === "stories" && (
-          <div className="min-h-screen bg-gray-50">
-            <div className="px-4 pb-8">
-              <div className="flex items-center py-4 mb-4">
-                <button
-                  onClick={goHome}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm">홈으로</span>
-                </button>
-              </div>
+                 {/* 이주 스토리 페이지 */}
+         {appState === "stories" && (
+           <div className="min-h-screen bg-gray-50">
+             <div className="px-4 pb-8">
+               <div className="flex items-center py-4 mb-4">
+                 <button
+                   onClick={goHome}
+                   className="back-button"
+                 >
+                   <ArrowLeft className="w-4 h-4" />
+                   <span>홈으로</span>
+                 </button>
+               </div>
 
               <h2 className="text-xl font-medium text-gray-900 mb-6 text-center">
                 이주 스토리
@@ -1308,19 +1347,19 @@ export default function Home() {
           </div>
         )}
 
-        {/* 이주 가이드 페이지 */}
-        {appState === "guide" && (
-          <div className="min-h-screen bg-gray-50">
-            <div className="px-4 pb-8">
-              <div className="flex items-center py-4 mb-4">
-                <button
-                  onClick={goHome}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm">홈으로</span>
-                </button>
-              </div>
+                 {/* 이주 가이드 페이지 */}
+         {appState === "guide" && (
+           <div className="min-h-screen bg-gray-50">
+             <div className="px-4 pb-8">
+               <div className="flex items-center py-4 mb-4">
+                 <button
+                   onClick={goHome}
+                   className="back-button"
+                 >
+                   <ArrowLeft className="w-4 h-4" />
+                   <span>홈으로</span>
+                 </button>
+               </div>
 
               <h2 className="text-xl font-medium text-gray-900 mb-6 text-center">
                 시골 이주 가이드
@@ -1456,19 +1495,19 @@ export default function Home() {
           </div>
         )}
 
-        {/* AI 상담 페이지 */}
-        {appState === "aiConsultation" && (
-          <div className="min-h-screen bg-gray-50">
-            <div className="px-4 pb-8">
-              <div className="flex items-center py-4 mb-4">
-                <button
-                  onClick={goHome}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="text-sm">홈으로</span>
-                </button>
-              </div>
+                 {/* AI 상담 페이지 */}
+         {appState === "aiConsultation" && (
+           <div className="min-h-screen bg-gray-50">
+             <div className="px-4 pb-8">
+               <div className="flex items-center py-4 mb-4">
+                 <button
+                   onClick={goHome}
+                   className="back-button"
+                 >
+                   <ArrowLeft className="w-4 h-4" />
+                   <span>홈으로</span>
+                 </button>
+               </div>
 
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1510,11 +1549,19 @@ export default function Home() {
           </div>
         )}
 
-        {/* 마이페이지 */}
-        {appState === "myPage" && <MyPage onBack={goHome} />}
+                 {/* 마이페이지 */}
+         {appState === "myPage" && <MyPage onBack={goHome} currentUser={currentUser} />}
 
         {/* 한국 지도 */}
         {appState === "koreaMap" && <KakaoKoreaMap onBack={goHome} />}
+        
+        {/* 방명록 */}
+        {appState === "guestbook" && (
+          <Guestbook 
+            onBack={goHome} 
+            currentUser={currentUser}
+          />
+        )}
       </div>
     </div>
   );

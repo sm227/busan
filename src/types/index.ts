@@ -110,3 +110,19 @@ export interface User {
     riskyRegionsHelped: number; // 도움을 준 위험 지역 수
   };
 }
+
+export interface GuestbookEntry {
+  id: number;
+  user_id: number;
+  title: string;
+  content: string;
+  location?: string;
+  rating?: number;
+  category: 'experience' | 'review' | 'tip' | 'question';
+  property_id?: string;
+  tags?: string | string[];
+  likes_count: number;
+  created_at: string;
+  updated_at: string;
+  author_nickname?: string;
+}

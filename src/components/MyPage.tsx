@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   User, 
@@ -14,18 +14,136 @@ import {
   Map as MapIcon,
   Award,
   Clock,
-  Users
+  Users,
+  Loader
 } from 'lucide-react';
 import { dummyUser } from '@/data/userData';
 import { VisitedRegion } from '@/types';
 
 interface MyPageProps {
   onBack: () => void;
+  currentUser?: { id: number; nickname: string } | null;
 }
 
-export default function MyPage({ onBack }: MyPageProps) {
+interface UserProfile {
+  id: number;
+  nickname: string;
+  name: string;
+  occupation: string;
+  currentLocation: string;
+  explorerLevel: number;
+  joinDate: string;
+  daysSinceJoin: number;
+  totalLikes: number;
+  totalPosts: number;
+  riskyRegionsHelped: number;
+  preferences: any;
+  badges: any[];
+}
+
+export default function MyPage({ onBack, currentUser }: MyPageProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'regions' | 'badges'>('profile');
-  const user = dummyUser;
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 실제 사용자 데이터 로드
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserProfile(currentUser.id);
+    } else {
+      // 로그인하지 않은 경우 더미 데이터 사용
+      setUserProfile({
+        id: 0,
+        nickname: '게스트',
+        name: '게스트 사용자',
+        occupation: '시골 생활 탐험가',
+        currentLocation: '서울특별시',
+        explorerLevel: 1,
+        joinDate: new Date().toISOString(),
+        daysSinceJoin: 0,
+        totalLikes: 0,
+        totalPosts: 0,
+        riskyRegionsHelped: 0,
+        preferences: null,
+        badges: []
+      });
+      setLoading(false);
+    }
+  }, [currentUser]);
+
+  const fetchUserProfile = async (userId: number) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/users/profile?userId=${userId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setUserProfile(data.data);
+        setError(null);
+      } else {
+        setError('프로필을 불러올 수 없습니다.');
+      }
+    } catch (err) {
+      console.error('프로필 로드 오류:', err);
+      setError('프로필을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 로딩 상태
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="w-8 h-8 animate-spin text-emerald-500 mx-auto mb-4" />
+          <p className="text-gray-600">프로필을 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => currentUser && fetchUserProfile(currentUser.id)}
+            className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+          >
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">프로필 데이터를 찾을 수 없습니다.</p>
+      </div>
+    );
+  }
+
+  // 더미 데이터를 실제 데이터와 호환되도록 처리
+  const user = {
+    profile: {
+      name: userProfile.name,
+      occupation: userProfile.occupation,
+      currentLocation: userProfile.currentLocation,
+      explorerLevel: userProfile.explorerLevel,
+      riskyRegionsHelped: userProfile.riskyRegionsHelped,
+      joinDate: userProfile.joinDate,
+      totalLikes: userProfile.totalLikes,
+      totalPosts: userProfile.totalPosts
+    },
+    visitedRegions: dummyUser.visitedRegions, // 임시로 더미 데이터 사용
+    badges: userProfile.badges.length > 0 ? userProfile.badges : dummyUser.badges
+  };
 
   const getRiskColor = (risk: 'high' | 'medium' | 'low') => {
     switch (risk) {
@@ -62,10 +180,10 @@ export default function MyPage({ onBack }: MyPageProps) {
         <div className="flex items-center justify-between py-4 mb-4">
           <button
             onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+            className="back-button"
           >
             <MapIcon className="w-4 h-4" />
-            <span className="text-sm">뒤로</span>
+            <span>홈으로</span>
           </button>
           <h1 className="text-lg font-medium text-gray-900">마이페이지</h1>
           <div className="w-16" /> {/* 스페이서 */}
@@ -90,12 +208,12 @@ export default function MyPage({ onBack }: MyPageProps) {
               <div className="text-xs text-emerald-100">탐험가 레벨</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">{user.visitedRegions.length}</div>
-              <div className="text-xs text-emerald-100">방문 지역</div>
+              <div className="text-2xl font-bold">{user.profile.totalLikes}</div>
+              <div className="text-xs text-emerald-100">관심 표시</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">{user.profile.riskyRegionsHelped}</div>
-              <div className="text-xs text-emerald-100">위험지역 도움</div>
+              <div className="text-2xl font-bold">{user.profile.totalPosts}</div>
+              <div className="text-xs text-emerald-100">작성한 글</div>
             </div>
           </div>
         </div>
@@ -138,25 +256,23 @@ export default function MyPage({ onBack }: MyPageProps) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-700 text-sm">총 방문 일수</span>
+                      <span className="text-gray-700 text-sm">가입한 지</span>
                     </div>
-                    <span className="font-medium text-gray-900">{user.profile.totalVisitDays}일</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Shield className="w-4 h-4 text-red-500" />
-                      <span className="text-gray-700 text-sm">위험 지역 방문</span>
-                    </div>
-                    <span className="font-medium text-red-600">
-                      {user.visitedRegions.filter(r => r.populationRisk === 'high').length}곳
-                    </span>
+                    <span className="font-medium text-gray-900">{userProfile?.daysSinceJoin || 0}일</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Heart className="w-4 h-4 text-emerald-500" />
-                      <span className="text-gray-700 text-sm">관심 지역</span>
+                      <span className="text-gray-700 text-sm">관심 표시한 집</span>
                     </div>
-                    <span className="font-medium text-emerald-600">{user.favorites.length}곳</span>
+                    <span className="font-medium text-emerald-600">{user.profile.totalLikes}채</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Users className="w-4 h-4 text-blue-500" />
+                      <span className="text-gray-700 text-sm">방명록 작성</span>
+                    </div>
+                    <span className="font-medium text-blue-600">{user.profile.totalPosts}개</span>
                   </div>
                 </div>
               </div>
@@ -165,16 +281,30 @@ export default function MyPage({ onBack }: MyPageProps) {
                 <h3 className="font-medium text-gray-900 mb-3">미션 현황</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-700 text-sm">위험 지역 5곳 방문</span>
+                    <span className="text-gray-700 text-sm">관심목록 10개 수집</span>
                     <div className="flex items-center space-x-2">
                       <div className="w-20 bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-red-500 h-2 rounded-full"
-                          style={{ width: `${Math.min(100, (user.visitedRegions.filter(r => r.populationRisk === 'high').length / 5) * 100)}%` }}
+                          className="bg-emerald-500 h-2 rounded-full"
+                          style={{ width: `${Math.min(100, (user.profile.totalLikes / 10) * 100)}%` }}
                         ></div>
                       </div>
                       <span className="text-xs text-gray-500">
-                        {user.visitedRegions.filter(r => r.populationRisk === 'high').length}/5
+                        {user.profile.totalLikes}/10
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-700 text-sm">방명록 5개 작성</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-20 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-500 h-2 rounded-full"
+                          style={{ width: `${Math.min(100, (user.profile.totalPosts / 5) * 100)}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {user.profile.totalPosts}/5
                       </span>
                     </div>
                   </div>
@@ -183,7 +313,7 @@ export default function MyPage({ onBack }: MyPageProps) {
                     <div className="flex items-center space-x-2">
                       <div className="w-20 bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-emerald-500 h-2 rounded-full"
+                          className="bg-purple-500 h-2 rounded-full"
                           style={{ width: `${Math.min(100, (user.profile.explorerLevel / 5) * 100)}%` }}
                         ></div>
                       </div>

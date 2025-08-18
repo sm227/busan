@@ -193,10 +193,10 @@ export default function KakaoKoreaMap({ onBack }: KakaoKoreaMapProps) {
         <div className="flex items-center justify-between py-4 mb-4">
           <button
             onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+            className="back-button"
           >
             <Target className="w-4 h-4" />
-            <span className="text-sm">뒤로</span>
+            <span>홈으로</span>
           </button>
           <h1 className="text-lg font-medium text-gray-900">
             실시간 탐험 지도

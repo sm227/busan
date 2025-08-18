@@ -11,7 +11,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #2d3748;
+  --foreground: #1e293b;     /* 더 진한 텍스트 (slate-800) */
   
   /* Brand Colors */
   --primary: #10b981;        /* 에메랄드 그린 (emerald-500) */
@@ -21,11 +21,12 @@
   /* Secondary Colors */
   --secondary: #f8fafc;      /* 화이트/라이트 그레이 */
   --secondary-dark: #e2e8f0; /* 라이트 그레이 */
-  --text-secondary: #64748b; /* 다크 그레이 */
+  --text-secondary: #475569; /* 더 진한 보조 텍스트 (slate-600) */
+  --text-muted: #64748b;     /* 약한 텍스트 (slate-500) */
   
   /* Accent Colors */
-  --accent-blue: #60a5fa;    /* 소프트 블루 */
-  --accent-coral: #fb7185;   /* 코랄 */
+  --accent-blue: #3b82f6;    /* 더 진한 블루 (blue-500) */
+  --accent-coral: #ef4444;   /* 더 진한 레드 (red-500) */
   
   /* UI Colors */
   --card-bg: #ffffff;
@@ -42,6 +43,7 @@
   --color-secondary: var(--secondary);
   --color-secondary-dark: var(--secondary-dark);
   --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
   --color-accent-blue: var(--accent-blue);
   --color-accent-coral: var(--accent-coral);
   --color-card-bg: var(--card-bg);
@@ -57,13 +59,28 @@
   }
 }
 
-body {
+* {
+  box-sizing: border-box;
+}
+
+html, body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", sans-serif;
   line-height: 1.6;
   letter-spacing: -0.02em;
+  /* 부드러운 스크롤 */
+  scroll-behavior: smooth;
+  /* 가로 스크롤 방지만 적용 */
+  overflow-x: hidden;
 }
+
+/* 메인 컨테이너 높이 고정 */
+#__next {
+  min-height: 100vh;
+}
+
+/* 스크롤바 설정은 ScrollbarInit 컴포넌트에서 처리 */
 
 /* Global Styles */
 .btn-primary {
@@ -79,8 +96,8 @@ body {
 
 .btn-primary:hover {
   background: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--shadow);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow);
 }
 
 .btn-secondary {
@@ -107,4 +124,60 @@ body {
 
 .text-secondary {
   color: var(--text-secondary);
+}
+
+/* 부드러운 애니메이션 클래스들 */
+.smooth-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.smooth-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.gentle-scale {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gentle-scale:hover {
+  transform: scale(1.02);
+}
+
+.gentle-scale:active {
+  transform: scale(0.98);
+}
+
+/* 카드 hover 효과 */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* 통일된 뒤로가기 버튼 */
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  color: #334155;           /* 더 진한 텍스트 (slate-700) */
+  border: 1px solid #cbd5e1; /* 더 진한 테두리 (slate-300) */
+  border-radius: 0.75rem;
+  font-weight: 600;         /* 더 굵은 폰트 */
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.back-button:hover {
+  background: #f1f5f9;      /* 더 뚜렷한 호버 배경 (slate-100) */
+  color: #1e293b;           /* 더 진한 호버 텍스트 (slate-800) */
+  border-color: #94a3b8;    /* 더 진한 호버 테두리 (slate-400) */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }

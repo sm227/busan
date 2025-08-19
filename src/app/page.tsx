@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Heart,
   MapPin,
@@ -70,6 +70,84 @@ export default function Home() {
     id: number;
     nickname: string;
   } | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // 로그인 상태 복원
+  useEffect(() => {
+    const restoreLoginState = async () => {
+      try {
+        const savedUser = localStorage.getItem('busan-app-user');
+        if (savedUser) {
+          const user = JSON.parse(savedUser);
+          setCurrentUser(user);
+          
+          // 사용자의 설문 결과 불러오기
+          try {
+            const surveyResponse = await fetch(`/api/survey?userId=${user.id}`);
+            const surveyData = await surveyResponse.json();
+            
+            if (surveyData.success && surveyData.data) {
+              const preferences = {
+                livingStyle: surveyData.data.living_style,
+                socialStyle: surveyData.data.social_style,
+                workStyle: surveyData.data.work_style,
+                hobbyStyle: surveyData.data.hobby_style,
+                pace: surveyData.data.pace,
+                budget: surveyData.data.budget
+              };
+              setUserPreferences(preferences);
+            }
+          } catch (error) {
+            console.error('설문 결과 불러오기 실패:', error);
+          }
+
+          // 사용자의 관심목록 불러오기
+          try {
+            const likesResponse = await fetch(`/api/likes?userId=${user.id}`);
+            const likesData = await likesResponse.json();
+            
+            if (likesData.success && likesData.data) {
+              // 관심목록 데이터를 RuralProperty 형태로 변환
+              const savedLikes = likesData.data.map((like: any) => {
+                // sampleProperties에서 해당 property를 찾아서 완전한 객체로 만들기
+                const property = sampleProperties.find(p => p.id === like.property_id);
+                if (property) {
+                  return { ...property, matchScore: like.match_score };
+                }
+                // 찾을 수 없으면 기본 객체 생성
+                return {
+                  id: like.property_id,
+                  title: like.property_title,
+                  location: { district: like.property_location.split(',')[0] || '', city: like.property_location.split(',')[1] || '' },
+                  price: { rent: like.property_price },
+                  matchScore: like.match_score,
+                  details: { rooms: 0, size: 0, type: '', condition: '' },
+                  features: [],
+                  surroundings: { nature: [], cultural: [], convenience: [] },
+                  community: { population: 0, demographics: '', activities: [] }
+                };
+              });
+              // id 기준 중복 제거
+              const uniqueById = new globalThis.Map<string, RuralProperty>();
+              savedLikes.forEach((p: RuralProperty) => uniqueById.set(p.id, p));
+              setLikedProperties(Array.from(uniqueById.values()));
+            }
+          } catch (error) {
+            console.error('관심목록 불러오기 실패:', error);
+          }
+
+          setAppState("main");
+        }
+      } catch (error) {
+        console.error('로그인 상태 복원 실패:', error);
+        localStorage.removeItem('busan-app-user');
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    restoreLoginState();
+  }, []);
 
   const handleQuestionAnswer = (option: QuestionOption) => {
     setUserPreferences((prev) => ({
@@ -125,6 +203,9 @@ export default function Home() {
   };
 
   const handleLogout = () => {
+    // localStorage에서 사용자 정보 제거
+    localStorage.removeItem('busan-app-user');
+    
     // 사용자 상태 초기화
     setCurrentUser(null);
     setUserPreferences({});
@@ -244,7 +325,10 @@ export default function Home() {
       const data = await response.json();
 
       if (data.success) {
-        setCurrentUser({ id: data.userId, nickname });
+        const user = { id: data.userId, nickname };
+        setCurrentUser(user);
+        // localStorage에 사용자 정보 저장
+        localStorage.setItem('busan-app-user', JSON.stringify(user));
         setAppState("questionnaire");
       } else {
         alert(data.error || '사용자 생성에 실패했습니다.');
@@ -270,7 +354,10 @@ export default function Home() {
       
       if (data.success) {
         const userId = data.user.id;
-        setCurrentUser({ id: userId, nickname: data.user.nickname });
+        const user = { id: userId, nickname: data.user.nickname };
+        setCurrentUser(user);
+        // localStorage에 사용자 정보 저장
+        localStorage.setItem('busan-app-user', JSON.stringify(user));
         
         // 사용자의 설문 결과 불러오기
         try {
@@ -334,6 +421,15 @@ export default function Home() {
       alert('로그인에 실패했습니다.');
     }
   };
+
+  // 초기화가 완료되지 않았으면 로딩 화면 표시
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 overflow-x-hidden">

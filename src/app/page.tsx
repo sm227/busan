@@ -633,10 +633,14 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-0 hover:opacity-20 transition-opacity duration-300"></div>
                   </button>
                   <button
-                    onClick={() => setAppState("allProperties")}
+                    onClick={() => {
+                      setCurrentQuestionIndex(0);
+                      setUserPreferences({});
+                      setAppState("questionnaire");
+                    }}
                     className="mt-3 btn-secondary w-full py-4 text-lg font-medium smooth-hover"
                   >
-                    모든 집 보기
+                    설문 다시하기
                   </button>
                 </div>
               </div>

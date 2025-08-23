@@ -17,7 +17,15 @@ import {
   Filter,
   Search,
   Edit3,
-  Trash2
+  Trash2,
+  Bookmark,
+  BookmarkCheck,
+  Share,
+  Send,
+  X,
+  ChevronDown,
+  SortAsc,
+  SortDesc
 } from 'lucide-react';
 
 // 태그 처리 헬퍼 함수 (전역)
@@ -56,6 +64,7 @@ export default function Guestbook({ onBack, currentUser }: GuestbookProps) {
   const [selectedEntry, setSelectedEntry] = useState<GuestbookEntry | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingEntry, setEditingEntry] = useState<GuestbookEntry | null>(null);
+  const [likedEntries, setLikedEntries] = useState<Set<number>>(new Set());
 
   // 방명록 목록 불러오기
   const loadEntries = async (category?: string) => {
@@ -70,11 +79,38 @@ export default function Guestbook({ onBack, currentUser }: GuestbookProps) {
       
       if (data.success) {
         setEntries(data.data || []);
+        
+        // 현재 사용자가 좋아요한 글들 확인
+        if (currentUser && data.data) {
+          loadLikedEntries(data.data);
+        }
       }
     } catch (error) {
       console.error('방명록 불러오기 실패:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 사용자가 좋아요한 글들 확인
+  const loadLikedEntries = async (entriesData: GuestbookEntry[]) => {
+    if (!currentUser) return;
+    
+    try {
+      const likedSet = new Set<number>();
+      
+      for (const entry of entriesData) {
+        const response = await fetch(`/api/guestbook/likes?userId=${currentUser.id}&entryId=${entry.id}`);
+        const data = await response.json();
+        
+        if (data.success && data.isLiked) {
+          likedSet.add(entry.id);
+        }
+      }
+      
+      setLikedEntries(likedSet);
+    } catch (error) {
+      console.error('좋아요 상태 확인 실패:', error);
     }
   };
 
@@ -84,25 +120,52 @@ export default function Guestbook({ onBack, currentUser }: GuestbookProps) {
 
   // 좋아요 처리
   const handleLike = async (entryId: number) => {
+    if (!currentUser) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
     try {
       const response = await fetch('/api/guestbook/likes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ entryId }),
+        body: JSON.stringify({ 
+          userId: currentUser.id,
+          entryId 
+        }),
       });
 
-      if (response.ok) {
-        // 좋아요 수 증가 반영
-        setEntries(prev => prev.map(entry => 
-          entry.id === entryId 
-            ? { ...entry, likes_count: entry.likes_count + 1 }
-            : entry
-        ));
+      const data = await response.json();
+
+      if (data.success) {
+        // 좋아요 상태 업데이트
+        const newLikedEntries = new Set(likedEntries);
+        if (data.action === 'added') {
+          newLikedEntries.add(entryId);
+          // 좋아요 수 증가
+          setEntries(prev => prev.map(entry => 
+            entry.id === entryId 
+              ? { ...entry, likes_count: entry.likes_count + 1 }
+              : entry
+          ));
+        } else {
+          newLikedEntries.delete(entryId);
+          // 좋아요 수 감소
+          setEntries(prev => prev.map(entry => 
+            entry.id === entryId 
+              ? { ...entry, likes_count: Math.max(0, entry.likes_count - 1) }
+              : entry
+          ));
+        }
+        setLikedEntries(newLikedEntries);
+      } else {
+        alert(data.error || '좋아요 처리에 실패했습니다.');
       }
     } catch (error) {
       console.error('좋아요 처리 실패:', error);
+      alert('네트워크 오류가 발생했습니다.');
     }
   };
 
@@ -406,9 +469,17 @@ export default function Guestbook({ onBack, currentUser }: GuestbookProps) {
                         e.stopPropagation();
                         handleLike(entry.id);
                       }}
-                      className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors"
+                      className={`flex items-center space-x-2 transition-colors ${
+                        likedEntries.has(entry.id)
+                          ? 'text-red-500 hover:text-red-600'
+                          : 'text-gray-600 hover:text-red-500'
+                      }`}
                     >
-                      <Heart className="w-4 h-4" />
+                      <Heart 
+                        className={`w-4 h-4 ${
+                          likedEntries.has(entry.id) ? 'fill-current' : ''
+                        }`} 
+                      />
                       <span className="text-sm">{entry.likes_count}</span>
                     </button>
                     
@@ -735,6 +806,28 @@ interface GuestbookDetailProps {
 function GuestbookDetail({ entry, onBack, onLike, onEdit, onDelete, currentUser }: GuestbookDetailProps) {
   // 작성자인지 확인
   const isAuthor = currentUser && currentUser.id === entry.user_id;
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(entry.likes_count);
+
+  // 좋아요 상태 확인
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!currentUser) return;
+      
+      try {
+        const response = await fetch(`/api/guestbook/likes?userId=${currentUser.id}&entryId=${entry.id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setIsLiked(data.isLiked);
+        }
+      } catch (error) {
+        console.error('좋아요 상태 확인 실패:', error);
+      }
+    };
+    
+    checkLikeStatus();
+  }, [currentUser, entry.id]);
   
 
 
@@ -745,6 +838,46 @@ function GuestbookDetail({ entry, onBack, onLike, onEdit, onDelete, currentUser 
   const handleDelete = () => {
     if (confirm('정말로 이 글을 삭제하시겠습니까?')) {
       onDelete?.(entry.id);
+    }
+  };
+
+  // 좋아요 처리
+  const handleDetailLike = async () => {
+    if (!currentUser) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/guestbook/likes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userId: currentUser.id,
+          entryId: entry.id 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (data.action === 'added') {
+          setIsLiked(true);
+          setLikesCount(prev => prev + 1);
+        } else {
+          setIsLiked(false);
+          setLikesCount(prev => Math.max(0, prev - 1));
+        }
+        // 부모 컴포넌트의 onLike도 호출하여 목록 업데이트
+        onLike(entry.id);
+      } else {
+        alert(data.error || '좋아요 처리에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('좋아요 처리 실패:', error);
+      alert('네트워크 오류가 발생했습니다.');
     }
   };
   const formatDate = (dateString: string) => {
@@ -879,11 +1012,15 @@ function GuestbookDetail({ entry, onBack, onLike, onEdit, onDelete, currentUser 
           {/* 좋아요 버튼 */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
             <button
-              onClick={() => onLike(entry.id)}
-              className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
+              onClick={handleDetailLike}
+              className={`flex items-center space-x-2 transition-colors px-4 py-2 rounded-lg hover:bg-gray-50 ${
+                isLiked
+                  ? 'text-red-500 hover:text-red-600'
+                  : 'text-gray-600 hover:text-red-500'
+              }`}
             >
-              <Heart className="w-5 h-5" />
-              <span className="font-medium">{entry.likes_count}</span>
+              <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+              <span className="font-medium">{likesCount}</span>
               <span className="text-sm">좋아요</span>
             </button>
 

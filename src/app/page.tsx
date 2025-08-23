@@ -17,6 +17,7 @@ import {
   Map,
   Bot,
   MessageCircle,
+  Calendar,
 } from "lucide-react";
 import Image from "next/image";
 import QuestionCard from "@/components/QuestionCard";
@@ -26,7 +27,8 @@ import MyPage from "@/components/MyPage";
 import KakaoKoreaMap from "@/components/KakaoKoreaMap";
 import UserInfoForm from "@/components/UserInfoForm";
 import LoginForm from "@/components/LoginForm";
-import Guestbook from "@/components/Guestbook";
+import GuestbookEnhanced from "@/components/GuestbookEnhanced";
+import PopularPostsSlider from "@/components/PopularPostsSlider";
 import { personalityQuestions } from "@/data/questions";
 import { sampleProperties } from "@/data/properties";
 import { villageStories } from "@/data/stories";
@@ -71,6 +73,8 @@ export default function Home() {
     nickname: string;
   } | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [showPostModal, setShowPostModal] = useState(false);
 
   // 로그인 상태 복원
   useEffect(() => {
@@ -310,6 +314,20 @@ export default function Home() {
     );
     setRecommendations(recs);
     setAppState("matching");
+  };
+
+  const handlePostClick = async (postId: number) => {
+    try {
+      const response = await fetch(`/api/guestbook?entryId=${postId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setSelectedPost(data.data);
+        setShowPostModal(true);
+      }
+    } catch (error) {
+      console.error('방명록 글 로드 실패:', error);
+    }
   };
 
   const handleUserInfoSubmit = async (nickname: string, password: string) => {
@@ -599,6 +617,11 @@ export default function Home() {
 
             {/* 메인 콘텐츠 */}
             <div className="px-6 py-8 pb-24 space-y-8">
+              {/* 인기 게시글 슬라이더 */}
+              <PopularPostsSlider 
+                onPostClick={handlePostClick}
+              />
+
               {/* 추천 시작 카드 */}
               <div className="card p-8">
                 <div className="text-center">
@@ -1762,10 +1785,109 @@ export default function Home() {
         
         {/* 방명록 */}
         {appState === "guestbook" && (
-          <Guestbook 
+          <GuestbookEnhanced 
             onBack={goHome} 
             currentUser={currentUser}
           />
+        )}
+
+        {/* 게시글 상세보기 모달 */}
+        {showPostModal && selectedPost && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-hidden">
+              {/* 헤더 */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <span className="text-lg">
+                    {selectedPost.category === 'experience' ? '📖' :
+                     selectedPost.category === 'review' ? '⭐' :
+                     selectedPost.category === 'tip' ? '💡' : '❓'}
+                  </span>
+                  <span className="text-sm text-emerald-600 font-medium">
+                    {selectedPost.category === 'experience' ? '이주 경험' :
+                     selectedPost.category === 'review' ? '후기' :
+                     selectedPost.category === 'tip' ? '팁' : '질문'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowPostModal(false)}
+                  className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* 내용 */}
+              <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+                <div className="p-4">
+                  {/* 제목 */}
+                  <h2 className="text-xl font-bold text-gray-900 mb-3 leading-tight">
+                    {selectedPost.title}
+                  </h2>
+
+                  {/* 메타 정보 */}
+                  <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+                    <span>by {selectedPost.author_nickname}</span>
+                    {selectedPost.location && (
+                      <div className="flex items-center space-x-1">
+                        <MapPin className="w-3 h-3" />
+                        <span>{selectedPost.location}</span>
+                      </div>
+                    )}
+                    {selectedPost.rating && (
+                      <div className="flex items-center space-x-1">
+                        <span>⭐</span>
+                        <span>{selectedPost.rating}점</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 통계 */}
+                  <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-1">
+                      <Heart className="w-4 h-4" />
+                      <span>{selectedPost.likes_count?.toLocaleString() || 0} 좋아요</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(selectedPost.created_at).toLocaleDateString('ko-KR')}</span>
+                    </div>
+                  </div>
+
+                  {/* 태그 */}
+                  {selectedPost.tags && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {JSON.parse(selectedPost.tags).map((tag: string, index: number) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 본문 */}
+                  <div className="prose prose-sm max-w-none">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {selectedPost.content}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 푸터 */}
+              <div className="p-4 border-t border-gray-200 bg-gray-50">
+                <button
+                  onClick={() => setShowPostModal(false)}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

@@ -47,11 +47,14 @@ export default function MyPage({ onBack, currentUser, onLogout }: MyPageProps) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userBadges, setUserBadges] = useState<any[]>([]);
+  const [allBadges, setAllBadges] = useState<any[]>([]);
+  const [userStats, setUserStats] = useState<any>(null);
 
   // 실제 사용자 데이터 로드
   useEffect(() => {
     if (currentUser) {
-      fetchUserProfile(currentUser.id);
+      fetchUserData(currentUser.id);
     } else {
       // 로그인하지 않은 경우 더미 데이터 사용
       setUserProfile({
@@ -73,21 +76,51 @@ export default function MyPage({ onBack, currentUser, onLogout }: MyPageProps) {
     }
   }, [currentUser]);
 
-  const fetchUserProfile = async (userId: number) => {
+  const fetchUserData = async (userId: number) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/users/profile?userId=${userId}`);
-      const data = await response.json();
       
-      if (data.success) {
-        setUserProfile(data.data);
+      // 사용자 통계 및 뱃지 정보 병렬 로드
+      const [badgesResponse, statsResponse] = await Promise.all([
+        fetch(`/api/badges?userId=${userId}&action=all`),
+        fetch(`/api/badges?userId=${userId}&action=stats`)
+      ]);
+      
+      const badgesData = await badgesResponse.json();
+      const statsData = await statsResponse.json();
+      
+      if (badgesData.success && statsData.success) {
+        setUserBadges(badgesData.data.userBadges || []);
+        setAllBadges(badgesData.data.badges || []);
+        setUserStats(statsData.data);
+        
+        // 사용자 프로필 생성
+        const joinDate = new Date();
+        joinDate.setDate(joinDate.getDate() - (statsData.data.guestbookCount * 7)); // 임시 로직
+        
+        setUserProfile({
+          id: userId,
+          nickname: currentUser?.nickname || '',
+          name: currentUser?.nickname || '사용자',
+          occupation: '시골 생활 탐험가',
+          currentLocation: '대한민국',
+          explorerLevel: Math.floor(statsData.data.propertyLiked / 10) + 1,
+          joinDate: joinDate.toISOString(),
+          daysSinceJoin: Math.max(1, statsData.data.guestbookCount * 7),
+          totalLikes: statsData.data.propertyLiked,
+          totalPosts: statsData.data.guestbookCount,
+          riskyRegionsHelped: 0,
+          preferences: null,
+          badges: badgesData.data.userBadges || []
+        });
+        
         setError(null);
       } else {
-        setError('프로필을 불러올 수 없습니다.');
+        setError('데이터를 불러올 수 없습니다.');
       }
     } catch (err) {
-      console.error('프로필 로드 오류:', err);
-      setError('프로필을 불러오는 중 오류가 발생했습니다.');
+      console.error('데이터 로드 오류:', err);
+      setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -112,7 +145,7 @@ export default function MyPage({ onBack, currentUser, onLogout }: MyPageProps) {
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={() => currentUser && fetchUserProfile(currentUser.id)}
+            onClick={() => currentUser && fetchUserData(currentUser.id)}
             className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
           >
             다시 시도
@@ -330,18 +363,38 @@ export default function MyPage({ onBack, currentUser, onLogout }: MyPageProps) {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-700 text-sm">탐험가 레벨 5 달성</span>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-20 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-purple-500 h-2 rounded-full"
-                          style={{ width: `${Math.min(100, (user.profile.explorerLevel / 5) * 100)}%` }}
-                        ></div>
+                  {userStats && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 text-sm">좋아요 10개 받기</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-red-500 h-2 rounded-full"
+                              style={{ width: `${Math.min(100, (userStats.likesReceived / 10) * 100)}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {userStats.likesReceived}/10
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-xs text-gray-500">{user.profile.explorerLevel}/5</span>
-                    </div>
-                  </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 text-sm">좋아요 20개 누르기</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-purple-500 h-2 rounded-full"
+                              style={{ width: `${Math.min(100, (userStats.likesGiven / 20) * 100)}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {userStats.likesGiven}/20
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -386,25 +439,83 @@ export default function MyPage({ onBack, currentUser, onLogout }: MyPageProps) {
 
           {/* Badges Tab */}
           {activeTab === 'badges' && (
-            <div className="grid grid-cols-2 gap-4">
-              {user.badges.map((badge) => (
-                <div key={badge.id} className="bg-white rounded-lg p-4 shadow-sm text-center">
-                  <div className="text-3xl mb-2">{badge.icon}</div>
-                  <h3 className="font-medium text-gray-900 text-sm mb-1">{badge.name}</h3>
-                  <p className="text-xs text-gray-600 mb-2">{badge.description}</p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(badge.earnedDate).toLocaleDateString('ko-KR')}
-                  </p>
+            <div className="space-y-6">
+              {/* 획득한 뱃지 */}
+              {userBadges.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-gray-900 mb-3 flex items-center space-x-2">
+                    <Trophy className="w-5 h-5 text-yellow-500" />
+                    <span>획득한 뱃지 ({userBadges.length}개)</span>
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {userBadges.map((badge) => (
+                      <div key={badge.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-4 shadow-sm text-center">
+                        <div className="text-3xl mb-2">{badge.icon}</div>
+                        <h4 className="font-bold text-gray-900 text-sm mb-1">{badge.name}</h4>
+                        <p className="text-xs text-gray-600 mb-2">{badge.description}</p>
+                        <p className="text-xs text-yellow-600 font-medium">
+                          {new Date(badge.earned_at).toLocaleDateString('ko-KR')} 획득
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-              
-              {/* 잠긴 배지 예시 */}
-              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                <div className="text-3xl mb-2 opacity-50">🏆</div>
-                <h3 className="font-medium text-gray-500 text-sm mb-1">전국 정복자</h3>
-                <p className="text-xs text-gray-400 mb-2">모든 도(道)를 방문하세요</p>
-                <p className="text-xs text-gray-400">미달성</p>
-              </div>
+              )}
+
+              {/* 미획득 뱃지 */}
+              {allBadges.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-3 flex items-center space-x-2">
+                    <Target className="w-5 h-5 text-gray-500" />
+                    <span>도전 가능한 뱃지</span>
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {allBadges
+                      .filter(badge => !badge.earned)
+                      .map((badge) => (
+                        <div key={badge.id} className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                          <div className="text-3xl mb-2 opacity-50">{badge.icon}</div>
+                          <h4 className="font-medium text-gray-500 text-sm mb-1">{badge.name}</h4>
+                          <p className="text-xs text-gray-400 mb-2">{badge.description}</p>
+                          <div className="text-xs text-gray-400 space-y-1">
+                            <p>
+                              {badge.condition_type === 'guestbook_count' && `방명록 ${badge.condition_value}개 작성`}
+                              {badge.condition_type === 'likes_received' && `좋아요 ${badge.condition_value}개 받기`}
+                              {badge.condition_type === 'likes_given' && `좋아요 ${badge.condition_value}개 누르기`}
+                              {badge.condition_type === 'property_liked' && `관심목록 ${badge.condition_value}개 추가`}
+                              {badge.condition_type === 'visit_count' && '첫 방문 완료'}
+                            </p>
+                            {userStats && (
+                              <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
+                                <div 
+                                  className="bg-emerald-500 h-1 rounded-full"
+                                  style={{ 
+                                    width: `${Math.min(100, 
+                                      badge.condition_type === 'guestbook_count' ? (userStats.guestbookCount / badge.condition_value) * 100 :
+                                      badge.condition_type === 'likes_received' ? (userStats.likesReceived / badge.condition_value) * 100 :
+                                      badge.condition_type === 'likes_given' ? (userStats.likesGiven / badge.condition_value) * 100 :
+                                      badge.condition_type === 'property_liked' ? (userStats.propertyLiked / badge.condition_value) * 100 :
+                                      100
+                                    )}%` 
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 뱃지가 없는 경우 */}
+              {userBadges.length === 0 && allBadges.length === 0 && (
+                <div className="text-center py-8">
+                  <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 font-medium">아직 뱃지가 없습니다</p>
+                  <p className="text-gray-500 text-sm mt-2">활동을 통해 뱃지를 획득해보세요!</p>
+                </div>
+              )}
             </div>
           )}
         </motion.div>

@@ -109,22 +109,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 목록 조회
-    const options: any = {};
+    // 목록 조회 (고도화된 필터 지원)
+    const filters: any = {};
     
-    if (category) {
-      options.category = category;
-    }
-    
-    if (limit) {
-      options.limit = parseInt(limit);
-    }
-    
-    if (offset) {
-      options.offset = parseInt(offset);
-    }
+    // 검색/필터 파라미터들
+    if (searchParams.get('search')) filters.search = searchParams.get('search');
+    if (category) filters.category = category;
+    if (searchParams.get('location')) filters.location = searchParams.get('location');
+    if (searchParams.get('tag')) filters.tag = searchParams.get('tag');
+    if (searchParams.get('minRating')) filters.minRating = parseInt(searchParams.get('minRating')!);
+    if (searchParams.get('sortBy')) filters.sortBy = searchParams.get('sortBy');
+    if (searchParams.get('sortOrder')) filters.sortOrder = searchParams.get('sortOrder');
+    if (limit) filters.limit = parseInt(limit);
+    if (offset) filters.offset = parseInt(offset);
 
-    const entries = getGuestbookEntries(options);
+    const entries = getGuestbookEntries(filters);
     
     return NextResponse.json({
       success: true,

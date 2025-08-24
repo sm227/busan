@@ -28,6 +28,7 @@ import KakaoKoreaMap from "@/components/KakaoKoreaMap";
 import UserInfoForm from "@/components/UserInfoForm";
 import LoginForm from "@/components/LoginForm";
 import GuestbookEnhanced from "@/components/GuestbookEnhanced";
+import Community from "@/components/Community";
 import PopularPostsSlider from "@/components/PopularPostsSlider";
 import { personalityQuestions } from "@/data/questions";
 import { sampleProperties } from "@/data/properties";
@@ -1318,163 +1319,10 @@ export default function Home() {
 
         {/* 커뮤니티 페이지 */}
         {appState === "community" && (
-          <div className="min-h-screen bg-gray-50">
-            <div className="px-4 pb-8">
-                             {/* 헤더 */}
-               <div className="flex items-center py-4 mb-4">
-                 <button
-                   onClick={goHome}
-                   className="back-button"
-                 >
-                   <ArrowLeft className="w-4 h-4" />
-                   <span>홈으로</span>
-                 </button>
-               </div>
-
-              <h2 className="text-xl font-medium text-gray-900 mb-6 text-center">
-                빈집다방 커뮤니티
-              </h2>
-
-              <div className="space-y-4">
-                {/* 최근 게시글 */}
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                  <h3 className="font-medium text-gray-900 mb-3">
-                    💬 최근 게시글
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="border-b border-gray-100 pb-3">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 text-sm font-medium">
-                            김
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            강원도 정착 후기
-                          </h4>
-                          <p className="text-gray-600 text-xs mt-1">
-                            도시에서 강원도로 이주한 지 1년이 되었습니다. 처음엔
-                            걱정이 많았는데...
-                          </p>
-                          <div className="flex items-center text-xs text-gray-500 mt-2">
-                            <span>김정민</span>
-                            <span className="mx-1">·</span>
-                            <span>2시간 전</span>
-                            <span className="mx-1">·</span>
-                            <span>댓글 12</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border-b border-gray-100 pb-3">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <span className="text-green-600 text-sm font-medium">
-                            이
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            제주도 집 구하기 팁
-                          </h4>
-                          <p className="text-gray-600 text-xs mt-1">
-                            제주도에서 집 구할 때 주의할 점들을 정리해봤어요.
-                            특히 바람이...
-                          </p>
-                          <div className="flex items-center text-xs text-gray-500 mt-2">
-                            <span>이수정</span>
-                            <span className="mx-1">·</span>
-                            <span>5시간 전</span>
-                            <span className="mx-1">·</span>
-                            <span>댓글 8</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                          <span className="text-amber-600 text-sm font-medium">
-                            박
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">
-                            농사 초보 질문있어요
-                          </h4>
-                          <p className="text-gray-600 text-xs mt-1">
-                            텃밭을 시작하려고 하는데 어떤 작물부터 키우는 게
-                            좋을까요?
-                          </p>
-                          <div className="flex items-center text-xs text-gray-500 mt-2">
-                            <span>박민수</span>
-                            <span className="mx-1">·</span>
-                            <span>1일 전</span>
-                            <span className="mx-1">·</span>
-                            <span>댓글 15</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 인기 토픽 */}
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                  <h3 className="font-medium text-gray-900 mb-3">
-                    🔥 인기 토픽
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                      #정착후기
-                    </span>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                      #농사팁
-                    </span>
-                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs">
-                      #집구하기
-                    </span>
-                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
-                      #이웃소식
-                    </span>
-                    <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
-                      #생활정보
-                    </span>
-                  </div>
-                </div>
-
-                {/* 지역별 모임 */}
-                <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                  <h3 className="font-medium text-gray-900 mb-3">
-                    🌍 지역별 모임
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <span className="text-sm text-gray-900">
-                        강원도 이주민 모임
-                      </span>
-                      <span className="text-xs text-gray-600">124명</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <span className="text-sm text-gray-900">
-                        제주 귀농귀촌
-                      </span>
-                      <span className="text-xs text-gray-600">89명</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <span className="text-sm text-gray-900">
-                        전라도 농사모임
-                      </span>
-                      <span className="text-xs text-gray-600">67명</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Community 
+            onBack={goHome} 
+            currentUser={currentUser}
+          />
         )}
 
                  {/* 이주 스토리 페이지 */}

@@ -23,6 +23,9 @@ export function getDatabase() {
     // WAL 모드로 설정 (성능 향상)
     db.pragma('journal_mode = WAL');
     
+    // 외래 키 제약 조건 활성화
+    db.pragma('foreign_keys = ON');
+    
     // 테이블 생성
     initializeTables();
   }
@@ -77,6 +80,7 @@ function initializeTables() {
   `);
   
   // 외래 키 참조 테이블들을 먼저 삭제 (중복 방지)
+  db.exec(`DROP TABLE IF EXISTS comment_likes`);
   db.exec(`DROP TABLE IF EXISTS comments`);
   db.exec(`DROP TABLE IF EXISTS bookmarks`);
   db.exec(`DROP TABLE IF EXISTS guestbook_likes`);
@@ -122,11 +126,25 @@ function initializeTables() {
       user_id INTEGER NOT NULL,
       content TEXT NOT NULL,
       parent_id INTEGER,
+      likes_count INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (guestbook_id) REFERENCES guestbook (id),
       FOREIGN KEY (user_id) REFERENCES users (id),
       FOREIGN KEY (parent_id) REFERENCES comments (id)
+    )
+  `);
+
+  // 댓글 좋아요 테이블
+  db.exec(`
+    CREATE TABLE comment_likes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      comment_id INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (id),
+      FOREIGN KEY (comment_id) REFERENCES comments (id),
+      UNIQUE(user_id, comment_id)
     )
   `);
 
@@ -202,6 +220,11 @@ function initializeTables() {
     CREATE INDEX IF NOT EXISTS idx_guestbook_created_at ON guestbook(created_at);
     CREATE INDEX IF NOT EXISTS idx_guestbook_likes_user_id ON guestbook_likes(user_id);
     CREATE INDEX IF NOT EXISTS idx_guestbook_likes_guestbook_id ON guestbook_likes(guestbook_id);
+    CREATE INDEX IF NOT EXISTS idx_comments_guestbook_id ON comments(guestbook_id);
+    CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
+    CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON comments(parent_id);
+    CREATE INDEX IF NOT EXISTS idx_comment_likes_user_id ON comment_likes(user_id);
+    CREATE INDEX IF NOT EXISTS idx_comment_likes_comment_id ON comment_likes(comment_id);
     CREATE INDEX IF NOT EXISTS idx_badges_category ON badges(category);
     CREATE INDEX IF NOT EXISTS idx_badges_condition_type ON badges(condition_type);
     CREATE INDEX IF NOT EXISTS idx_user_badges_user_id ON user_badges(user_id);
@@ -794,7 +817,7 @@ interface GuestbookFilters {
   location?: string;
   tag?: string;
   minRating?: number;
-  sortBy?: 'created_at' | 'likes_count' | 'rating';
+  sortBy?: 'created_at' | 'likes_count' | 'rating' | 'comments_count' | 'latest_comment';
   sortOrder?: 'ASC' | 'DESC';
   limit?: number;
   offset?: number;
@@ -804,7 +827,8 @@ export function getGuestbookEntries(filters: GuestbookFilters = {}) {
   const db = getDatabase();
   
   let query = `
-    SELECT g.*, u.nickname as author_nickname
+    SELECT g.*, u.nickname as author_nickname,
+           (SELECT COUNT(*) FROM comments c WHERE c.guestbook_id = g.id) as comments_count
     FROM guestbook g
     JOIN users u ON g.user_id = u.id
     WHERE 1=1
@@ -814,8 +838,8 @@ export function getGuestbookEntries(filters: GuestbookFilters = {}) {
   
   // 검색 필터
   if (filters.search) {
-    query += ` AND (g.title LIKE ? OR g.content LIKE ?)`;
-    params.push(`%${filters.search}%`, `%${filters.search}%`);
+    query += ` AND (g.title LIKE ? OR g.content LIKE ? OR u.nickname LIKE ?)`;
+    params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
   }
   
   // 카테고리 필터
@@ -845,7 +869,53 @@ export function getGuestbookEntries(filters: GuestbookFilters = {}) {
   // 정렬
   const sortBy = filters.sortBy || 'created_at';
   const sortOrder = filters.sortOrder || 'DESC';
-  query += ` ORDER BY g.${sortBy} ${sortOrder}`;
+  
+  let orderClause = '';
+  switch (sortBy) {
+    case 'likes_count':
+      orderClause = `ORDER BY g.likes_count ${sortOrder}`;
+      break;
+    case 'comments_count':
+      orderClause = `ORDER BY comments_count ${sortOrder}`;
+      break;
+    case 'latest_comment':
+      // 최신 댓글순 정렬
+      query = `
+        SELECT g.*, u.nickname as author_nickname,
+               (SELECT COUNT(*) FROM comments c WHERE c.guestbook_id = g.id) as comments_count,
+               (SELECT MAX(c.created_at) FROM comments c WHERE c.guestbook_id = g.id) as latest_comment_at
+        FROM guestbook g
+        JOIN users u ON g.user_id = u.id
+        WHERE 1=1
+      `;
+      
+      // 필터 조건들을 다시 추가
+      if (filters.search) {
+        query += ` AND (g.title LIKE ? OR g.content LIKE ? OR u.nickname LIKE ?)`;
+      }
+      if (filters.category) {
+        query += ` AND g.category = ?`;
+      }
+      if (filters.location) {
+        query += ` AND g.location LIKE ?`;
+      }
+      if (filters.tag) {
+        query += ` AND g.tags LIKE ?`;
+      }
+      if (filters.minRating) {
+        query += ` AND g.rating >= ?`;
+      }
+      
+      orderClause = `ORDER BY latest_comment_at ${sortOrder} NULLS LAST, g.created_at ${sortOrder}`;
+      break;
+    case 'rating':
+      orderClause = `ORDER BY g.rating ${sortOrder} NULLS LAST, g.created_at ${sortOrder}`;
+      break;
+    default:
+      orderClause = `ORDER BY g.${sortBy} ${sortOrder}`;
+  }
+  
+  query += ` ${orderClause}`;
   
   // 페이지네이션
   if (filters.limit) {
@@ -867,6 +937,7 @@ export function getGuestbookEntries(filters: GuestbookFilters = {}) {
       tags: entry.tags ? JSON.parse(entry.tags) : []
     }));
   } catch (error) {
+    console.error('방명록 조회 실패:', error);
     return [];
   }
 }
@@ -875,15 +946,21 @@ export function getGuestbookEntries(filters: GuestbookFilters = {}) {
 export function getComments(guestbookId: number) {
   const db = getDatabase();
   const stmt = db.prepare(`
-    SELECT c.*, u.nickname as author_nickname
+    SELECT c.*, u.nickname as author_nickname,
+           (SELECT COUNT(*) FROM comment_likes cl WHERE cl.comment_id = c.id) as likes_count
     FROM comments c
     JOIN users u ON c.user_id = u.id
     WHERE c.guestbook_id = ?
-    ORDER BY c.created_at ASC
+    ORDER BY 
+      CASE WHEN c.parent_id IS NULL THEN c.id ELSE c.parent_id END,
+      c.parent_id IS NULL DESC,
+      c.created_at ASC
   `);
   
   try {
-    return stmt.all(guestbookId);
+    const result = stmt.all(guestbookId);
+    console.log(`댓글 조회 결과 (guestbookId: ${guestbookId}):`, result);
+    return result;
   } catch (error) {
     console.error('댓글 조회 실패:', error);
     return [];
@@ -906,19 +983,153 @@ export function createComment(guestbookId: number, userId: number, content: stri
   }
 }
 
-export function deleteComment(commentId: number, userId: number) {
+export function updateComment(commentId: number, userId: number, content: string) {
   const db = getDatabase();
   const stmt = db.prepare(`
-    DELETE FROM comments 
+    UPDATE comments 
+    SET content = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ? AND user_id = ?
   `);
   
   try {
-    const result = stmt.run(commentId, userId);
+    const result = stmt.run(content, commentId, userId);
     return { success: result.changes > 0 };
+  } catch (error) {
+    console.error('댓글 수정 실패:', error);
+    return { success: false, error: '댓글 수정에 실패했습니다.' };
+  }
+}
+
+export function deleteComment(commentId: number, userId: number) {
+  const db = getDatabase();
+  
+  try {
+    const transaction = db.transaction(() => {
+      // 대댓글이 있는지 확인
+      const childCommentsStmt = db.prepare(`
+        SELECT COUNT(*) as count FROM comments WHERE parent_id = ?
+      `);
+      const childCount = childCommentsStmt.get(commentId) as { count: number };
+      
+      if (childCount.count > 0) {
+        // 대댓글이 있으면 내용만 삭제하고 "[삭제된 댓글입니다]"로 변경
+        const updateStmt = db.prepare(`
+          UPDATE comments 
+          SET content = '[삭제된 댓글입니다]', updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND user_id = ?
+        `);
+        const result = updateStmt.run(commentId, userId);
+        return { success: result.changes > 0, type: 'soft_delete' };
+      } else {
+        // 대댓글이 없으면 완전 삭제
+        const deleteStmt = db.prepare(`
+          DELETE FROM comments 
+          WHERE id = ? AND user_id = ?
+        `);
+        const result = deleteStmt.run(commentId, userId);
+        return { success: result.changes > 0, type: 'hard_delete' };
+      }
+    });
+    
+    return transaction();
   } catch (error) {
     console.error('댓글 삭제 실패:', error);
     return { success: false, error: '댓글 삭제에 실패했습니다.' };
+  }
+}
+
+// 댓글 좋아요 관련 함수들
+export function toggleCommentLike(userId: number, commentId: number) {
+  const db = getDatabase();
+  
+  // 먼저 댓글이 존재하는지 확인
+  const commentExistsStmt = db.prepare(`
+    SELECT id FROM comments WHERE id = ?
+  `);
+  const commentExists = commentExistsStmt.get(commentId);
+  
+  if (!commentExists) {
+    return { success: false, error: '댓글을 찾을 수 없습니다.' };
+  }
+  
+  // 기존 좋아요 확인
+  const checkStmt = db.prepare(`
+    SELECT id FROM comment_likes 
+    WHERE user_id = ? AND comment_id = ?
+  `);
+  
+  const existing = checkStmt.get(userId, commentId);
+  
+  try {
+    const transaction = db.transaction(() => {
+      if (existing) {
+        // 좋아요 해제
+        const deleteStmt = db.prepare(`
+          DELETE FROM comment_likes 
+          WHERE user_id = ? AND comment_id = ?
+        `);
+        deleteStmt.run(userId, commentId);
+        
+        // 댓글의 좋아요 수 감소
+        const updateStmt = db.prepare(`
+          UPDATE comments 
+          SET likes_count = CASE WHEN likes_count > 0 THEN likes_count - 1 ELSE 0 END
+          WHERE id = ?
+        `);
+        updateStmt.run(commentId);
+        
+        return { success: true, action: 'removed' };
+      } else {
+        // 좋아요 추가
+        const insertStmt = db.prepare(`
+          INSERT INTO comment_likes (user_id, comment_id)
+          VALUES (?, ?)
+        `);
+        insertStmt.run(userId, commentId);
+        
+        // 댓글의 좋아요 수 증가
+        const updateStmt = db.prepare(`
+          UPDATE comments 
+          SET likes_count = likes_count + 1
+          WHERE id = ?
+        `);
+        updateStmt.run(commentId);
+        
+        return { success: true, action: 'added' };
+      }
+    });
+    
+    return transaction();
+  } catch (error) {
+    console.error('댓글 좋아요 처리 실패:', error);
+    return { success: false, error: '좋아요 처리에 실패했습니다.' };
+  }
+}
+
+export function checkCommentLike(userId: number, commentId: number) {
+  const db = getDatabase();
+  const stmt = db.prepare(`
+    SELECT id FROM comment_likes 
+    WHERE user_id = ? AND comment_id = ?
+  `);
+  
+  const result = stmt.get(userId, commentId);
+  return !!result;
+}
+
+// 댓글 수 조회
+export function getCommentCount(guestbookId: number) {
+  const db = getDatabase();
+  const stmt = db.prepare(`
+    SELECT COUNT(*) as count FROM comments WHERE guestbook_id = ?
+  `);
+  
+  try {
+    const result = stmt.get(guestbookId) as { count: number };
+    return result.count;
+  } catch (error) {
+    console.error('댓글 수 조회 실패:', error);
+    return 0;
   }
 }
 

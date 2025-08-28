@@ -100,7 +100,7 @@ export async function DELETE(request: NextRequest) {
       });
     } else {
       return NextResponse.json(
-        { success: false, error: result.error },
+        { success: false, error: (result as any).error || '삭제에 실패했습니다.' },
         { status: 500 }
       );
     }

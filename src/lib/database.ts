@@ -1,7 +1,5 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import { runMigrations } from './migrations';
-import { seedDatabase } from './seeders';
 import * as fs from "node:fs";
 
 // 데이터베이스 파일 경로
@@ -455,8 +453,8 @@ function initializePopularPosts() {
   `);
   
   try {
-    const insertTransaction = db.transaction((posts) => {
-      posts.forEach((post, index) => {
+    const insertTransaction = db.transaction((posts: any[]) => {
+      posts.forEach((post: any, index: number) => {
         insertStmt.run(
           index + 1,
           post.title,
@@ -1440,7 +1438,7 @@ export function checkAndAwardBadges(userId: number) {
       const availableBadges = badgesStmt.all(userId);
       
       // 각 뱃지 조건 확인
-      for (const badge of availableBadges) {
+      for (const badge of availableBadges as any[]) {
         let shouldAward = false;
         
         switch (badge.condition_type) {
@@ -1499,7 +1497,7 @@ export function getUserStats(userId: number) {
     const guestbookStmt = db.prepare(`
       SELECT COUNT(*) as count FROM guestbook WHERE user_id = ?
     `);
-    const guestbookCount = guestbookStmt.get(userId)?.count || 0;
+    const guestbookCount = (guestbookStmt.get(userId) as any)?.count || 0;
     
     // 받은 좋아요 수
     const likesReceivedStmt = db.prepare(`
@@ -1507,19 +1505,19 @@ export function getUserStats(userId: number) {
       FROM guestbook g 
       WHERE g.user_id = ?
     `);
-    const likesReceived = likesReceivedStmt.get(userId)?.total || 0;
+    const likesReceived = (likesReceivedStmt.get(userId) as any)?.total || 0;
     
     // 누른 좋아요 수
     const likesGivenStmt = db.prepare(`
       SELECT COUNT(*) as count FROM guestbook_likes WHERE user_id = ?
     `);
-    const likesGiven = likesGivenStmt.get(userId)?.count || 0;
+    const likesGiven = (likesGivenStmt.get(userId) as any)?.count || 0;
     
     // 관심목록에 추가한 집 수
     const propertyLikedStmt = db.prepare(`
       SELECT COUNT(*) as count FROM user_likes WHERE user_id = ?
     `);
-    const propertyLiked = propertyLikedStmt.get(userId)?.count || 0;
+    const propertyLiked = (propertyLikedStmt.get(userId) as any)?.count || 0;
     
     return {
       guestbookCount,

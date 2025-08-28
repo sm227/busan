@@ -918,11 +918,11 @@ export default function Home() {
                   <span className="text-xs font-medium">매칭</span>
                 </button>
                 <button 
-                  onClick={() => setAppState("guestbook")}
-                  className="flex flex-col items-center py-3 px-2 text-slate-600 hover:text-purple-600 transition-colors"
+                  onClick={() => setAppState("aiConsultation")}
+                  className="flex flex-col items-center py-3 px-2 text-slate-600 hover:text-blue-600 transition-colors"
                 >
-                  <MessageCircle className="w-5 h-5 mb-1" />
-                  <span className="text-xs font-medium">방명록</span>
+                  <Bot className="w-5 h-5 mb-1" />
+                  <span className="text-xs font-medium">AI 상담</span>
                 </button>
                 <button 
                   onClick={() => setAppState("community")}

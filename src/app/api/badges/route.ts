@@ -33,11 +33,14 @@ export async function GET(request: NextRequest) {
       const userBadges = getUserBadges(parseInt(userId));
       const userBadgeIds = new Set(userBadges.map((badge: any) => badge.id));
       
-      const badgesWithStatus = allBadges.map((badge: any) => ({
-        ...badge,
-        earned: userBadgeIds.has(badge.id),
-        earnedAt: userBadges.find((ub: any) => ub.id === badge.id)?.earned_at
-      }));
+      const badgesWithStatus = allBadges.map((badge: any) => {
+        const userBadge = userBadges.find((ub: any) => ub.id === badge.id) as any;
+        return {
+          ...badge,
+          earned: userBadgeIds.has(badge.id),
+          earnedAt: userBadge?.earned_at || null
+        };
+      });
 
       return NextResponse.json({
         success: true,
@@ -79,11 +82,12 @@ export async function POST(request: NextRequest) {
     const result = checkAndAwardBadges(userId);
 
     if (result.success) {
+      const newBadges = result.newBadges || [];
       return NextResponse.json({
         success: true,
-        newBadges: result.newBadges,
-        message: result.newBadges.length > 0 
-          ? `${result.newBadges.length}개의 새로운 뱃지를 획득했습니다!`
+        newBadges: newBadges,
+        message: newBadges.length > 0 
+          ? `${newBadges.length}개의 새로운 뱃지를 획득했습니다!`
           : '새로운 뱃지가 없습니다.'
       });
     } else {

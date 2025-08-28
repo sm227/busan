@@ -289,9 +289,11 @@ export default function KakaoKoreaMap({ onBack }: KakaoKoreaMapProps) {
                 <div className="text-center p-8">
                   <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-700 mb-2">지도 서비스 일시 중단</h3>
-                  <p className="text-gray-500 text-sm mb-4">
-                    카카오맵 서비스에 연결할 수 없습니다.<br />
-                    잠시 후 다시 시도해주세요.
+                  <p className="text-gray-500 text-sm mb-2">
+                    카카오맵 서비스에 연결할 수 없습니다.
+                  </p>
+                  <p className="text-xs text-gray-400 mb-4">
+                    오류: {mapError}
                   </p>
                   <button
                     onClick={() => window.location.reload()}

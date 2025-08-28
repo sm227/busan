@@ -16,14 +16,15 @@ export async function POST(request: NextRequest) {
     const result = toggleGuestbookLike(userId, entryId);
 
     if (result.success) {
+      const action = (result as any).action;
       return NextResponse.json({
         success: true,
-        action: result.action,
-        message: result.action === 'added' ? '좋아요가 추가되었습니다.' : '좋아요가 취소되었습니다.'
+        action: action,
+        message: action === 'added' ? '좋아요가 추가되었습니다.' : '좋아요가 취소되었습니다.'
       });
     } else {
       return NextResponse.json(
-        { success: false, error: result.error },
+        { success: false, error: (result as any).error || '좋아요 처리에 실패했습니다.' },
         { status: 500 }
       );
     }

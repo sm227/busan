@@ -28,20 +28,27 @@ export const useKakaoMap = ({
         const script = document.createElement('script');
         const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY;
         if (!apiKey) {
-          reject(new Error('카카오맵 API 키가 설정되지 않았습니다'));
+          reject(new Error('카카오맵 API 키가 설정되지 않았습니다. .env.local 파일을 확인해주세요'));
           return;
         }
+        
+        console.log('카카오맵 API 키 확인됨:', apiKey.substring(0, 10) + '...');
         script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&libraries=services,clusterer,drawing&autoload=false`;
         script.async = true;
         
         script.onload = () => {
-          window.kakao.maps.load(() => {
-            resolve();
-          });
+          if (window.kakao?.maps) {
+            window.kakao.maps.load(() => {
+              resolve();
+            });
+          } else {
+            reject(new Error('카카오맵 스크립트가 로드되었지만 kakao.maps 객체를 찾을 수 없습니다'));
+          }
         };
         
-        script.onerror = () => {
-          reject(new Error('카카오맵 스크립트 로드 실패'));
+        script.onerror = (error) => {
+          console.error('카카오맵 스크립트 로드 에러:', error);
+          reject(new Error('카카오맵 스크립트 로드 실패: 네트워크 오류 또는 잘못된 API 키'));
         };
         
         document.head.appendChild(script);

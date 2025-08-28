@@ -4,8 +4,7 @@ import {
   getGuestbookEntries, 
   getGuestbookEntry,
   updateGuestbookEntry,
-  deleteGuestbookEntry,
-  incrementGuestbookLikes
+  deleteGuestbookEntry
 } from '@/lib/database';
 
 // 커뮤니티 글 작성

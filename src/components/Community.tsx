@@ -210,7 +210,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
 
       if (response.ok) {
         // 목록 새로고침
-        loadEntries(activeTab === 'all' ? undefined : activeTab);
+        loadEntries();
         // 상세보기에서 메인으로 돌아가기
         setSelectedEntry(null);
         alert('글이 성공적으로 삭제되었습니다.');
@@ -296,7 +296,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
         onSubmit={() => {
           setShowWriteForm(false);
           setEditingEntry(null);
-          loadEntries(activeTab);
+          loadEntries();
         }}
         editingEntry={editingEntry}
         currentUser={currentUser}

@@ -136,16 +136,17 @@ export async function DELETE(request: NextRequest) {
     const result = deleteComment(parseInt(commentId), parseInt(userId));
 
     if (result.success) {
+      const type = (result as any).type;
       return NextResponse.json({
         success: true,
-        type: result.type,
-        message: result.type === 'soft_delete' 
+        type: type,
+        message: type === 'soft_delete' 
           ? '댓글이 삭제 처리되었습니다.' 
           : '댓글이 완전히 삭제되었습니다.'
       });
     } else {
       return NextResponse.json(
-        { success: false, error: result.error || '댓글 삭제에 실패했습니다.' },
+        { success: false, error: (result as any).error || '댓글 삭제에 실패했습니다.' },
         { status: 500 }
       );
     }

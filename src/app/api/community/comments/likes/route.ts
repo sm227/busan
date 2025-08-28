@@ -21,15 +21,16 @@ export async function POST(request: NextRequest) {
     console.log('toggleCommentLike 함수 호출 후, 결과:', result);
 
     if (result.success) {
+      const action = (result as any).action;
       return NextResponse.json({
         success: true,
-        action: result.action,
-        message: result.action === 'added' ? '댓글에 좋아요를 눌렀습니다.' : '댓글 좋아요를 취소했습니다.'
+        action: action,
+        message: action === 'added' ? '댓글에 좋아요를 눌렀습니다.' : '댓글 좋아요를 취소했습니다.'
       });
     } else {
-      console.log('toggleCommentLike 실패:', result.error);
+      console.log('toggleCommentLike 실패:', (result as any).error);
       return NextResponse.json(
-        { success: false, error: result.error },
+        { success: false, error: (result as any).error || '좋아요 처리에 실패했습니다.' },
         { status: 500 }
       );
     }

@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Recommendation {
+  id        String   @id @default(cuid())
+  userId    Int?
+  villageId String   // 마을 ID (villId)
+
+  // 기본 정보
+  title     String
+  district  String   // 시도명
+  city      String   // 시군구명
+  region    String?  // 읍면동명
+
+  // 가격 정보
+  rent      Int
+  sale      Int?
+  deposit   Int?
+
+  // 상세 정보
+  rooms     Int
+  size      Int
+  type      String
+  yearBuilt Int?
+  condition String
+
+  // 이미지 (JSON 배열로 저장)
+  images    Json
+
+  // 특징 (JSON 배열로 저장)
+  features  Json
+
+  // 주변 환경 (JSON 객체로 저장)
+  surroundings Json
+
+  // 마을 정보 (JSON 객체로 저장)
+  communityInfo Json
+
+  // AI 추천 이유
+  aiReason  String?
+
+  // 생성 시간
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([villageId])
+}

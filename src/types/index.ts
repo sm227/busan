@@ -58,6 +58,7 @@ export interface RuralProperty {
     culturalActivities: string[];
   };
   matchScore?: number;
+  aiReason?: string; // AI가 추천한 이유
 }
 
 export interface VillageStory {

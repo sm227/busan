@@ -1,19 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
 import { Sparkles } from "lucide-react";
 import { MatchingAlgorithm } from "@/lib/matching";
-import { sampleProperties } from "@/data/properties";
 import { UserPreferences } from "@/types";
+import { transformApiResponse, RuralVillageApiResponse } from "@/lib/apiTransformer";
 
 export default function AnalyzingPage() {
   const router = useRouter();
   const { currentUser, userPreferences, setRecommendations } = useApp();
+  const [analysisStep, setAnalysisStep] = useState(0);
 
   useEffect(() => {
     const analyze = async () => {
+      setAnalysisStep(1); // 거주 스타일 분석 중
+
       // DB에 설문 결과 저장
       if (currentUser) {
         try {
@@ -36,19 +39,73 @@ export default function AnalyzingPage() {
         }
       }
 
-      // 매칭 알고리즘 실행
-      const matchedProperties = MatchingAlgorithm.getRecommendations(
-        userPreferences as UserPreferences,
-        sampleProperties,
-        5
-      );
+      setAnalysisStep(2); // 사회적 성향 분석 중
 
-      setRecommendations(matchedProperties);
+      // AI 추천 API 호출
+      try {
+        console.log('🚀 AI 추천 시작:', userPreferences);
 
-      // 2초 후 매칭 페이지로 이동
-      setTimeout(() => {
-        router.push("/matching");
-      }, 2000);
+        const aiResponse = await fetch('/api/ai-recommend', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userPreferences }),
+        });
+
+        setAnalysisStep(3); // 업무 환경 분석 중
+
+        if (!aiResponse.ok) {
+          throw new Error('AI 추천 API 호출 실패');
+        }
+
+        const aiData = await aiResponse.json();
+
+        if (!aiData.success || !aiData.recommendations || aiData.recommendations.length === 0) {
+          throw new Error(aiData.error || '추천 결과가 없습니다');
+        }
+
+        console.log('✅ AI 추천 성공:', {
+          추천지역: aiData.aiRegions,
+          마을수: aiData.recommendations.length
+        });
+
+        setRecommendations(aiData.recommendations);
+
+        // 2초 후 매칭 페이지로 이동
+        setTimeout(() => {
+          router.push("/matching");
+        }, 2000);
+      } catch (error) {
+        console.error('❌ AI 추천 실패:', error);
+
+        // 에러 발생시 기존 알고리즘으로 fallback
+        try {
+          const fallbackResponse = await fetch('/api/rural-villages?numOfRows=100');
+          if (fallbackResponse.ok) {
+            const fallbackData: RuralVillageApiResponse = await fallbackResponse.json();
+            const fallbackProperties = transformApiResponse(fallbackData);
+
+            if (fallbackProperties.length > 0) {
+              const recs = MatchingAlgorithm.getRecommendations(
+                userPreferences as UserPreferences,
+                fallbackProperties,
+                20
+              );
+
+              const shuffledRecs = [...recs].sort(() => Math.random() - 0.5);
+              setRecommendations(shuffledRecs.slice(0, 10));
+            }
+          }
+        } catch {
+          console.error('Fallback도 실패');
+        }
+
+        // 2초 후 매칭 페이지로 이동
+        setTimeout(() => {
+          router.push("/matching");
+        }, 2000);
+      }
     };
 
     analyze();
@@ -85,9 +142,15 @@ export default function AnalyzingPage() {
 
               <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-emerald-100/50">
                 <div className="text-sm text-slate-600 space-y-2">
-                  <p>🏡 거주 스타일 분석 완료</p>
-                  <p>👥 사회적 성향 분석 완료</p>
-                  <p>💼 업무 환경 분석 중...</p>
+                  <p className={analysisStep >= 1 ? 'text-emerald-600 font-semibold' : ''}>
+                    {analysisStep >= 1 ? '✅' : '🏡'} 거주 스타일 분석 {analysisStep >= 1 ? '완료' : '중...'}
+                  </p>
+                  <p className={analysisStep >= 2 ? 'text-emerald-600 font-semibold' : ''}>
+                    {analysisStep >= 2 ? '✅' : '👥'} 사회적 성향 분석 {analysisStep >= 2 ? '완료' : '중...'}
+                  </p>
+                  <p className={analysisStep >= 3 ? 'text-emerald-600 font-semibold' : ''}>
+                    {analysisStep >= 3 ? '✅' : '💼'} AI 지역 추천 {analysisStep >= 3 ? '완료' : '중...'}
+                  </p>
                 </div>
               </div>
             </div>

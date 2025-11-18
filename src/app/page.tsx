@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
 import {
@@ -21,8 +21,8 @@ import {
 import Image from "next/image";
 import PopularPostsSlider from "@/components/PopularPostsSlider";
 import { MatchingAlgorithm } from "@/lib/matching";
-import { sampleProperties } from "@/data/properties";
-import { UserPreferences } from "@/types";
+import { UserPreferences, RuralProperty } from "@/types";
+import { transformApiResponse, RuralVillageApiResponse } from "@/lib/apiTransformer";
 
 export default function Home() {
   const router = useRouter();
@@ -38,25 +38,96 @@ export default function Home() {
     isInitialized,
   } = useApp();
 
+  const [isLoadingProperties, setIsLoadingProperties] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
   useEffect(() => {
     if (isInitialized && !currentUser) {
       router.push("/welcome");
     }
   }, [isInitialized, currentUser, router]);
 
-  const startMatching = () => {
+  const startMatching = async () => {
     if (Object.keys(userPreferences).length < 6) {
       router.push("/questionnaire");
       return;
     }
 
-    const recs = MatchingAlgorithm.getRecommendations(
-      userPreferences as UserPreferences,
-      sampleProperties,
-      5
-    );
-    setRecommendations(recs);
-    router.push("/matching");
+    setIsLoadingProperties(true);
+    setApiError(null);
+
+    try {
+      console.log('🚀 AI 추천 시작:', userPreferences);
+
+      // AI 추천 API 호출 (모든 로직이 서버에서 처리됨)
+      const aiResponse = await fetch('/api/ai-recommend', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userPreferences }),
+      });
+
+      if (!aiResponse.ok) {
+        throw new Error('AI 추천 API 호출 실패');
+      }
+
+      const aiData = await aiResponse.json();
+
+      if (!aiData.success || !aiData.recommendations || aiData.recommendations.length === 0) {
+        throw new Error(aiData.error || '추천 결과가 없습니다');
+      }
+
+      console.log('✅ AI 추천 성공:', {
+        추천지역: aiData.aiRegions,
+        선택지역: aiData.selectedRegion,
+        마을수: aiData.recommendations.length
+      });
+
+      setRecommendations(aiData.recommendations);
+      router.push("/matching");
+    } catch (error) {
+      console.error('❌ AI 추천 실패:', error);
+      setApiError('AI 추천에 실패했습니다. 기본 알고리즘으로 진행합니다.');
+
+      // 에러 발생시 기존 알고리즘으로 fallback
+      try {
+        const fallbackResponse = await fetch('/api/rural-villages?numOfRows=100');
+        if (fallbackResponse.ok) {
+          const fallbackData: RuralVillageApiResponse = await fallbackResponse.json();
+          const fallbackProperties = transformApiResponse(fallbackData)
+            .filter(p => p.communityInfo.population <= 300);
+
+          if (fallbackProperties.length > 0) {
+            const recs = MatchingAlgorithm.getRecommendations(
+              userPreferences as UserPreferences,
+              fallbackProperties,
+              20
+            );
+
+            const shuffledRecs = [...recs].sort(() => Math.random() - 0.5);
+            setRecommendations(shuffledRecs.slice(0, 10));
+          } else {
+            setApiError('추천할 농촌 마을이 없습니다. 다시 시도해주세요.');
+            return;
+          }
+        } else {
+          setApiError('데이터를 불러올 수 없습니다. 다시 시도해주세요.');
+          return;
+        }
+      } catch {
+        setApiError('데이터를 불러올 수 없습니다. 다시 시도해주세요.');
+        return;
+      }
+
+      // 3초 후 매칭 페이지로 이동
+      setTimeout(() => {
+        setApiError(null);
+        router.push("/matching");
+      }, 3000);
+    } finally {
+      setIsLoadingProperties(false);
+    }
   };
 
   const handlePropertyDetail = (propertyId: string) => {
@@ -160,16 +231,32 @@ export default function Home() {
                 <p className="text-slate-700 mb-6 leading-relaxed font-semibold">
                   당신의 취향을 분석해서 가장 적합한 시골 집을 추천해드려요
                 </p>
+                {apiError && (
+                  <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800 text-sm">
+                    {apiError}
+                  </div>
+                )}
                 <button
                   onClick={startMatching}
-                  className="btn-primary w-full py-4 text-lg font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35 smooth-hover relative overflow-hidden"
+                  disabled={isLoadingProperties}
+                  className="btn-primary w-full py-4 text-lg font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/35 smooth-hover relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span className="relative z-10">추천받기</span>
+                  <span className="relative z-10 flex items-center justify-center">
+                    {isLoadingProperties ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        불러오는 중...
+                      </>
+                    ) : (
+                      "추천받기"
+                    )}
+                  </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-600 opacity-0 hover:opacity-20 transition-opacity duration-300"></div>
                 </button>
                 <button
                   onClick={() => router.push("/questionnaire")}
-                  className="mt-3 btn-secondary w-full py-4 text-lg font-medium smooth-hover"
+                  disabled={isLoadingProperties}
+                  className="mt-3 btn-secondary w-full py-4 text-lg font-medium smooth-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   설문 다시하기
                 </button>
@@ -419,7 +506,8 @@ export default function Home() {
               </button>
               <button
                 onClick={startMatching}
-                className="flex flex-col items-center py-3 px-2 text-slate-600 hover:text-emerald-600 transition-colors"
+                disabled={isLoadingProperties}
+                className="flex flex-col items-center py-3 px-2 text-slate-600 hover:text-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Heart className="w-5 h-5 mb-1" />
                 <span className="text-xs font-medium">매칭</span>

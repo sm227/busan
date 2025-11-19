@@ -72,35 +72,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
             console.error('설문 결과 불러오기 실패:', error);
           }
 
-          // 사용자의 관심목록 불러오기
+          // 사용자의 관심목록 불러오기 (DB의 recommendations 테이블에서)
           try {
-            const likesResponse = await fetch(`/api/likes?userId=${user.id}`);
-            const likesData = await likesResponse.json();
+            const recommendationsResponse = await fetch(`/api/recommendations?userId=${user.id}`);
+            const recommendationsData = await recommendationsResponse.json();
 
-            if (likesData.success && likesData.data) {
-              const savedLikes = likesData.data.map((like: any) => {
-                const property = sampleProperties.find(p => p.id === like.property_id);
-                if (property) {
-                  return { ...property, matchScore: like.match_score };
-                }
-                return {
-                  id: like.property_id,
-                  title: like.property_title,
-                  location: { district: like.property_location.split(',')[0] || '', city: like.property_location.split(',')[1] || '' },
-                  price: { rent: like.property_price },
-                  matchScore: like.match_score,
-                  details: { rooms: 0, size: 0, type: '', condition: '' },
-                  features: [],
-                  surroundings: { nature: [], cultural: [], convenience: [] },
-                  community: { population: 0, demographics: '', activities: [] }
-                };
-              });
-              const uniqueById = new globalThis.Map<string, RuralProperty>();
-              savedLikes.forEach((p: RuralProperty) => uniqueById.set(p.id, p));
-              setLikedProperties(Array.from(uniqueById.values()));
+            if (recommendationsData.success && recommendationsData.data) {
+              setLikedProperties(recommendationsData.data);
+              console.log('✅ DB에서 관심목록 로드:', recommendationsData.data.length, '개');
             }
           } catch (error) {
-            console.error('관심목록 불러오기 실패:', error);
+            console.error('❌ 관심목록 불러오기 실패:', error);
           }
         }
       } catch (error) {

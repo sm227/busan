@@ -1,14 +1,49 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Phone, Home as HomeIcon } from "lucide-react";
-import { sampleProperties } from "@/data/properties";
+import { RuralProperty } from "@/types";
 
 export default function ContactPage() {
   const router = useRouter();
   const params = useParams();
+  const [property, setProperty] = useState<RuralProperty | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const property = sampleProperties.find(p => p.id === params.id);
+  useEffect(() => {
+    const fetchProperty = async () => {
+      try {
+        const response = await fetch(`/api/recommendations/${params.id}`);
+        const data = await response.json();
+
+        if (data.success && data.property) {
+          setProperty(data.property);
+        } else {
+          setProperty(null);
+        }
+      } catch (error) {
+        console.error('매물 조회 실패:', error);
+        setProperty(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperty();
+  }, [params.id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 overflow-x-hidden">
+        <div className="max-w-md mx-auto bg-white min-h-screen relative flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-slate-600">로딩 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!property) {
     return (

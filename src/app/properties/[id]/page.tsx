@@ -2,33 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useApp } from "@/contexts/AppContext";
-import { ArrowLeft, MapPin, Phone, Home as HomeIcon } from "lucide-react";
-import { sampleProperties } from "@/data/properties";
+import { ArrowLeft, MapPin, Phone, Home as HomeIcon, ChevronDown } from "lucide-react";
 import { RuralProperty } from "@/types";
+import { SupportProgram } from "@/types/support";
+import helpData from "/help.json";
 
 export default function PropertyDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { setSelectedProperty, recommendations, likedProperties } = useApp();
   const [property, setProperty] = useState<RuralProperty | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProperty = async () => {
-      // 1. Context에서 먼저 찾기
-      const contextProperty =
-        sampleProperties.find(p => p.id === params.id) ||
-        recommendations.find(p => p.id === params.id || String(p.id) === params.id) ||
-        likedProperties.find(p => p.id === params.id || String(p.id) === params.id);
-
-      if (contextProperty) {
-        setProperty(contextProperty);
-        setLoading(false);
-        return;
-      }
-
-      // 2. Context에 없으면 데이터베이스에서 조회
+      // DB에서만 조회
       try {
         const response = await fetch(`/api/recommendations/${params.id}`);
         const data = await response.json();
@@ -47,7 +35,7 @@ export default function PropertyDetailPage() {
     };
 
     fetchProperty();
-  }, [params.id, recommendations, likedProperties]);
+  }, [params.id]);
 
   if (loading) {
     return (
@@ -80,8 +68,61 @@ export default function PropertyDetailPage() {
   }
 
   const handleContact = () => {
-    setSelectedProperty(property);
-    router.push(`/properties/${property.id}/contact`);
+    if (property) {
+      router.push(`/properties/${property.id}/contact`);
+    }
+  };
+
+  // 지역명을 region_code로 매핑
+  const getRegionCode = (district: string): string | null => {
+    const mapping: { [key: string]: string } = {
+      '충청북도': 'CHUNGBUK',
+      '충청남도': 'CHUNGNAM',
+      '전라북도': 'JEONBUK',
+      '전라남도': 'JEONNAM',
+      '경상북도': 'GYEONGBUK',
+      '경상남도': 'GYEONGNAM',
+    };
+    return mapping[district] || null;
+  };
+
+  // 해당 지역의 지원 프로그램 가져오기
+  const getRegionPrograms = (): SupportProgram[] => {
+    if (!property) return [];
+
+    const regionCode = getRegionCode(property.location.district);
+    if (!regionCode) return [];
+
+    const region = helpData.regions.find(r => r.region_code === regionCode);
+    if (!region) return [];
+
+    // 경북은 군 단위 + 경상북도 전체 프로그램 모두 표시
+    if (regionCode === 'GYEONGBUK') {
+      // property.location.city와 일치하는 군 프로그램 + "경상북도" 전체 프로그램
+      return region.programs.filter((p: SupportProgram) =>
+        p.district === property.location.city || p.district === '경상북도'
+      );
+    }
+
+    return region.programs;
+  };
+
+  const regionPrograms = getRegionPrograms();
+
+  const getProgramTypeLabel = (type: string): string => {
+    const labels: { [key: string]: string } = {
+      'SETTLEMENT_SUPPORT': '정착지원',
+      'HOUSING_SUPPORT': '주거지원',
+      'LOAN_SUPPORT': '융자지원',
+      'EDUCATION': '교육지원',
+      'EXPERIENCE_PROGRAM': '체험프로그램',
+      'STARTUP_SUPPORT': '창업지원',
+      'CONSULTING': '컨설팅',
+      'MOVING_SUPPORT': '이사지원',
+      'VILLAGE_SUPPORT': '마을활동지원',
+      'PROMOTION_SUPPORT': '홍보지원',
+    };
+    return labels[type] || type;
   };
 
   return (
@@ -267,6 +308,113 @@ export default function PropertyDetailPage() {
                         </div>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {regionPrograms.length > 0 && (
+                <div className="card p-6">
+                  <h3 className="font-bold text-slate-900 mb-4 text-lg">
+                    이 지역의 귀농귀촌 지원사업
+                  </h3>
+                  <p className="text-slate-600 text-sm mb-4">
+                    {property.location.district}에서 제공하는 지원 프로그램입니다
+                  </p>
+                  <div className="space-y-3">
+                    {regionPrograms.map((program) => (
+                      <div
+                        key={program.program_id}
+                        className="border border-slate-200 rounded-lg overflow-hidden"
+                      >
+                        <button
+                          onClick={() =>
+                            setExpandedProgram(
+                              expandedProgram === program.program_id
+                                ? null
+                                : program.program_id
+                            )
+                          }
+                          className="w-full px-4 py-3 bg-white hover:bg-slate-50 transition-colors flex items-center justify-between"
+                        >
+                          <div className="flex items-center space-x-3 flex-1 text-left">
+                            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded font-medium">
+                              {getProgramTypeLabel(program.program_type)}
+                            </span>
+                            <div className="flex-1">
+                              <p className="font-medium text-slate-900 text-sm">
+                                {program.program_name}
+                              </p>
+                              <p className="text-slate-600 text-xs mt-1">
+                                {program.district}
+                              </p>
+                            </div>
+                          </div>
+                          <ChevronDown
+                            className={`w-5 h-5 text-slate-400 transition-transform ${
+                              expandedProgram === program.program_id
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        </button>
+                        {expandedProgram === program.program_id && (
+                          <div className="px-4 py-3 bg-slate-50 border-t border-slate-200">
+                            <div className="space-y-3 text-sm">
+                              {program.support_amount && (
+                                <div>
+                                  <p className="text-slate-600 font-medium mb-1">
+                                    지원금액
+                                  </p>
+                                  <p className="text-slate-900">
+                                    {program.support_amount.toLocaleString()}원
+                                  </p>
+                                </div>
+                              )}
+                              {program.target_audience && (
+                                <div>
+                                  <p className="text-slate-600 font-medium mb-1">
+                                    지원대상
+                                  </p>
+                                  <p className="text-slate-900">
+                                    {program.target_audience}
+                                  </p>
+                                </div>
+                              )}
+                              {program.support_content && (
+                                <div>
+                                  <p className="text-slate-600 font-medium mb-1">
+                                    지원내용
+                                  </p>
+                                  <p className="text-slate-900">
+                                    {program.support_content}
+                                  </p>
+                                </div>
+                              )}
+                              {program.application_period && (
+                                <div>
+                                  <p className="text-slate-600 font-medium mb-1">
+                                    신청기간
+                                  </p>
+                                  <p className="text-slate-900">
+                                    {program.application_period}
+                                  </p>
+                                </div>
+                              )}
+                              {program.contact && (
+                                <div>
+                                  <p className="text-slate-600 font-medium mb-1">
+                                    문의처
+                                  </p>
+                                  <p className="text-slate-900">
+                                    {program.contact}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

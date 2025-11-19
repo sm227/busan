@@ -2,14 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
-import { ArrowLeft, MapPin, Eye, Phone } from "lucide-react";
+import { ArrowLeft, MapPin, Eye, Phone, X } from "lucide-react";
 import { MatchingAlgorithm } from "@/lib/matching";
 import { sampleProperties } from "@/data/properties";
 import { UserPreferences, RuralProperty } from "@/types";
 
 export default function ResultsPage() {
   const router = useRouter();
-  const { likedProperties, userPreferences, setSelectedProperty, setRecommendations } = useApp();
+  const { currentUser, likedProperties, userPreferences, setSelectedProperty, setRecommendations, setLikedProperties } = useApp();
 
   const handlePropertyDetail = (property: RuralProperty) => {
     setSelectedProperty(property);
@@ -34,6 +34,47 @@ export default function ResultsPage() {
     );
     setRecommendations(recs);
     router.push("/matching");
+  };
+
+  const handleRemoveProperty = async (property: RuralProperty) => {
+    console.log('🗑️ 삭제 시작:', {
+      propertyId: property.id,
+      userId: currentUser?.id,
+      title: property.title
+    });
+
+    // DB에서 먼저 삭제
+    if (currentUser) {
+      try {
+        const response = await fetch('/api/recommendations', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            villageId: String(property.id)
+          }),
+        });
+
+        const result = await response.json();
+        console.log('🗑️ DB 삭제 응답:', result);
+
+        if (result.success) {
+          // DB 삭제 성공 시에만 로컬 상태에서 제거
+          setLikedProperties(likedProperties.filter(p => p.id !== property.id));
+          console.log('✅ 로컬 상태에서도 제거 완료');
+        } else {
+          console.error('❌ DB 삭제 실패:', result);
+        }
+      } catch (error) {
+        console.error('❌ 삭제 요청 실패:', error);
+      }
+    } else {
+      // 로그인 안 한 경우 로컬 상태에서만 제거
+      setLikedProperties(likedProperties.filter(p => p.id !== property.id));
+      console.log('⚠️ 비로그인 상태 - 로컬에서만 제거');
+    }
   };
 
   return (
@@ -66,9 +107,18 @@ export default function ResultsPage() {
                 {likedProperties.map((property) => (
                   <div
                     key={property.id}
-                    className="card p-6"
+                    className="card p-6 relative"
                   >
-                    <h4 className="font-bold text-slate-900 mb-2 text-lg">
+                    {/* X 버튼 - 우측 상단 */}
+                    <button
+                      onClick={() => handleRemoveProperty(property)}
+                      className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors"
+                      aria-label="관심 표시 삭제"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+
+                    <h4 className="font-bold text-slate-900 mb-2 text-lg pr-8">
                       {property.title}
                     </h4>
                     <div className="flex items-center text-slate-600 mb-3">

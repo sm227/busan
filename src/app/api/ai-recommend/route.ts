@@ -123,66 +123,61 @@ JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"
       throw new Error('추천 지역에서 마을을 찾을 수 없습니다');
     }
 
-    // 4. 시군구별로 검색
-    const bySigungu = allProperties.reduce((acc: any, prop: any) => {
-      const key = `${prop.location.district}_${prop.location.city}`;
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(prop);
+    // 4. 지역별로 그룹핑 (충남, 충북, 경북, 경남, 전남, 전북)
+    const targetRegions = ['충청남도', '충청북도', '경상북도', '경상남도', '전라남도', '전라북도'];
+    const byRegion = allProperties.reduce((acc: any, prop: any) => {
+      const region = prop.location.district;
+      if (targetRegions.includes(region)) {
+        if (!acc[region]) acc[region] = [];
+        acc[region].push(prop);
+      }
       return acc;
     }, {});
 
-    console.log('시군구별 마을 수:', Object.keys(bySigungu).length, '개 시군구');
+    console.log('지역별 마을 수:', Object.keys(byRegion).map(r => `${r}: ${byRegion[r].length}`).join(', '));
 
-    // 5. 각 시군구에서 1개씩만 선택
-    const recommendations: any[] = [];
+    // 5. 각 지역에서 최소 1개씩 먼저 선택 (다양성 보장)
+    const finalRecommendations: any[] = [];
+    const selectedIds = new Set<string>();
 
-    const sigunguKeys = Object.keys(bySigungu).sort(() => Math.random() - 0.5);
-
-    sigunguKeys.forEach(key => {
-      const villages = bySigungu[key];
-      const shuffled = [...villages].sort(() => Math.random() - 0.5);
-      recommendations.push(shuffled[0]);
+    // 5-1. 각 지역에서 1개씩 필수 선택
+    targetRegions.forEach(region => {
+      if (byRegion[region] && byRegion[region].length > 0) {
+        const shuffled = [...byRegion[region]].sort(() => Math.random() - 0.5);
+        const selected = shuffled[0];
+        finalRecommendations.push(selected);
+        selectedIds.add(selected.id);
+      }
     });
 
-    // console.log('시군구별 선택 후:', recommendations.length, '개');
+    // 5-2. 10개가 될 때까지 남은 마을에서 추가 선택
+    const needed = 10 - finalRecommendations.length;
+    if (needed > 0) {
+      const remainingProperties = allProperties.filter(p =>
+        !selectedIds.has(p.id) && targetRegions.includes(p.location.district)
+      );
 
-    let finalRecommendations = [...recommendations];
+      const shuffled = [...remainingProperties].sort(() => Math.random() - 0.5);
+      const additional = shuffled.slice(0, needed);
 
-    if (finalRecommendations.length < 10) {
-      const needed = 10 - finalRecommendations.length;
-      const selectedIds = new Set(finalRecommendations.map(p => p.id));
-
-      const secondPicks: any[] = [];
-      sigunguKeys.forEach(key => {
-        const villages = bySigungu[key];
-        if (villages.length > 1) {
-          const notSelected = villages.filter((p: any) => !selectedIds.has(p.id));
-          if (notSelected.length > 0) {
-            const shuffled = [...notSelected].sort(() => Math.random() - 0.5);
-            secondPicks.push(shuffled[0]);
-          }
-        }
+      additional.forEach(prop => {
+        finalRecommendations.push(prop);
       });
-
-      const shuffledSecond = [...secondPicks].sort(() => Math.random() - 0.5);
-      finalRecommendations.push(...shuffledSecond.slice(0, needed));
     }
 
-    const finalShuffled = [...finalRecommendations].sort(() => Math.random() - 0.5);
-    finalRecommendations = finalShuffled.slice(0, 10);
+    // 5-3. 최종 셔플 (순서를 무작위로)
+    const shuffledFinal = [...finalRecommendations].sort(() => Math.random() - 0.5);
 
-    console.log('최종 추천:', finalRecommendations.length, '개');
-
-    const regionCounts = finalRecommendations.reduce((acc: any, prop: any) => {
+    const regionCounts = shuffledFinal.reduce((acc: any, prop: any) => {
       const region = prop.location.district;
       acc[region] = (acc[region] || 0) + 1;
       return acc;
     }, {});
-    console.log('최종 지역별 분포:', regionCounts);
+
 
     return NextResponse.json({
       success: true,
-      recommendations: finalRecommendations,
+      recommendations: shuffledFinal,
       aiRegions: recommendedRegions,
       regionDistribution: regionCounts,
     });

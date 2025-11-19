@@ -1,0 +1,482 @@
+{
+  "regions": [
+    {
+      "region_code": "GYEONGBUK",
+      "region_name": "경상북도",
+      "programs": [
+        {
+          "program_id": "GYEONGBUK_GUNWI_01",
+          "district": "군위군",
+          "program_name": "농인 영농정착 지원사업",
+          "support_amount": 30000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 80,
+          "self_pay_rate": 20,
+          "target_audience": "도시지역에서 1년 이상 농업 외 산업에 종사한 사람이 농업경영을 목적으로 가족(부부이상)과 함께 고령군에 전입한지 5년 이내/ 만 65세 이하 세대주/ 고령군에서 실시하는 귀농·귀촌 교육이수",
+          "program_type": "SETTLEMENT_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_GUNWI_02",
+          "district": "군위군",
+          "program_name": "귀농인 정착지원금 지원",
+          "support_amount": 60000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 100,
+          "self_pay_rate": 0,
+          "target_audience": "도시지역에서 1년 이상 농업 외 산업에 종사한 사람이 농업경영을 목적으로 가족(부부이상)과 함께 고령군에 전입한지 1년 이후 3년 이내/ 만 65세 이하 세대주/ 고령군에서 실시하는 귀농·귀촌 교육이수",
+          "program_type": "SETTLEMENT_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_GUNWI_03",
+          "district": "군위군",
+          "program_name": "귀농인 주택수리비 지원",
+          "support_amount": 10000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 100,
+          "self_pay_rate": 0,
+          "target_audience": "도시지역에서 1년 이상 농업 외 산업에 종사한 사람이 농업경영을 목적으로 가족(부부이상)과 함께 고령군에 전입한지 5년 이내/ 만 65세 이하 세대주/ 1년이상 거주한 주택은 제외/ 고령군에서 실시하는 귀농·귀촌 교육이수",
+          "program_type": "HOUSING_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_SEONGJU_01",
+          "district": "성주군",
+          "program_name": "귀농인 정착 지원사업",
+          "support_amount": 40000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 80,
+          "self_pay_rate": 20,
+          "target_audience": "타 도시지역에서 농업 외의 산업분야에 1년 이상 종사한 사람이 성주군 농촌지역으로 전입한지 5년 이내/ 만 65세 이하 세대주로서 실제 영농에 종사하는 자",
+          "program_type": "SETTLEMENT_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_CHILGOK_01",
+          "district": "칠곡군",
+          "program_name": "귀농인 정착 지원사업",
+          "support_amount": 5000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 80,
+          "self_pay_rate": 20,
+          "target_audience": "도시지역에서 농업 외 타 산업분야에 종사하며 1년 이상 거주하다가 칠곡군으로 전입한지 5년 이내인 만 65세 이하 세대주로서 실제 영농에 종사하는 자",
+          "program_type": "SETTLEMENT_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_CHILGOK_02",
+          "district": "칠곡군",
+          "program_name": "귀농 농업창업 및 주택구입 지원(융자)",
+          "support_amount": null,
+          "support_amount_detail": {
+            "startup_fund": 300000000,
+            "housing_fund": 75000000
+          },
+          "support_amount_unit": "원",
+          "loan_type": "융자 100%",
+          "loan_interest_rate": 2,
+          "loan_term": "5년 거치 10년 원금균등 분할상환",
+          "target_audience": "신청연도 기준 만 65세 이하(1959. 1. 1. 이후 출생자)인 자로서, 각 대상자별 지원자격 요건을 충족하는 자",
+          "program_type": "LOAN_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_YECHEON_01",
+          "district": "예천군",
+          "program_name": "귀농인 영농기반 지원사업",
+          "support_amount": 125000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 80,
+          "self_pay_rate": 20,
+          "target_audience": "타 도시지역에서 농업 외의 산업분야에 1년 이상 종사한 사람이 예천군 농촌지역으로 전입한지 5년 이내인 만 65세 이하인 실제 영농에 종사하는 자",
+          "program_type": "SETTLEMENT_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_YECHEON_02",
+          "district": "예천군",
+          "program_name": "귀농인 농가주택 수리비 지원사업",
+          "support_amount": 30000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 80,
+          "self_pay_rate": 20,
+          "target_audience": "타 도시지역에서 농업 외의 산업분야에 1년 이상 종사한 사람이 예천군 농촌지역으로 전입한지 2년 이내 영농에 종사하지 않은 자가 농업을 전업으로 하거나 나 농업에 종사하려는 자",
+          "program_type": "HOUSING_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_BONGHWA_01",
+          "district": "봉화군",
+          "program_name": "귀농인 이사비용 지원사업",
+          "support_amount": 30000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 100,
+          "self_pay_rate": 0,
+          "target_audience": "타 도시지역에서 농업 외의 산업분야에 1년 이상 종사한 사람이 가족(부부 이상)과 함께 봉화군 농촌지역으로 전입한 세대주로 만 65세 이하인 실제 영농에 종사하는 자",
+          "program_type": "MOVING_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_BONGHWA_02",
+          "district": "봉화군",
+          "program_name": "농인 빈집수리비 지원사업",
+          "support_amount": 9000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 80,
+          "self_pay_rate": 20,
+          "target_audience": "타 도시지역에서 농업 외의 산업분야에 1년 이상 종사한 사람이 가족(부부 이상)과 함께 봉화군 농촌지역으로 전입한 세대주로 만 65세 이하인 실제 영농에 종사하는 자. 직계 존·비속 세대에 세대합가하되는 경우 제외",
+          "program_type": "HOUSING_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_ULJIN_01",
+          "district": "울진군",
+          "program_name": "귀농인 주택수리비 지원사업",
+          "support_amount": 25000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 80,
+          "self_pay_rate": 20,
+          "target_audience": "타·시군 농촌이외의 지역(읍·면이외의 지역)에서 1년 이상 거주하다가 농업경영을 목적으로 농촌 지역에 가족이 전입한지 지 중 만 65세 이하 세대주(최근 5년 이내 전입한 자)",
+          "program_type": "HOUSING_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_ULJIN_02",
+          "district": "울진군",
+          "program_name": "귀농인 정착 지원사업",
+          "support_amount": 25000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 80,
+          "self_pay_rate": 20,
+          "target_audience": "타·시군 농촌이외의 지역(읍·면이외의 지역)에서 1년 이상 거주하다가 농업경영을 목적으로 농촌지역에 가족이 전입한지 중 만 65세 이하 세대주(최근 5년 이내 전입한 자)",
+          "program_type": "SETTLEMENT_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_ULLEUNG_01",
+          "district": "울릉군",
+          "program_name": "농촌에서 살아보기",
+          "support_amount": 20000000,
+          "support_amount_unit": "원",
+          "target_audience": "참여 희망하는 타 시지역 거주 도시민*(만 18세 이상)",
+          "program_type": "EXPERIENCE_PROGRAM"
+        },
+        {
+          "program_id": "GYEONGBUK_ULLEUNG_02",
+          "district": "울릉군",
+          "program_name": "귀농·귀촌 아카데미",
+          "support_amount": 47000000,
+          "support_amount_unit": "원",
+          "target_audience": "참여 희망하는 타 시지역 거주 도시민*(만 18세 이상)",
+          "program_type": "EDUCATION"
+        },
+        {
+          "program_id": "GYEONGBUK_PROVINCE_01",
+          "district": "경상북도",
+          "program_name": "귀농귀촌 체험교육",
+          "support_amount": null,
+          "target_audience": "농촌 지역으로 귀농·귀촌을 희망하는 도시민과 전입한 지 1년 이내인 귀농·귀촌인",
+          "support_content": "현장 견학 및 체험 단기 교육 (7시간), 귀농·귀촌 교육 수료증 발급",
+          "application_period": "매년 가을 (9월 이후)",
+          "contact": "경상북도 귀농귀촌종합지원센터",
+          "program_type": "EXPERIENCE_PROGRAM"
+        },
+        {
+          "program_id": "GYEONGBUK_PROVINCE_02",
+          "district": "경상북도",
+          "program_name": "귀농·귀촌 지원정책 및 피해 예방 교육",
+          "support_amount": null,
+          "target_audience": "농촌 지역으로 귀농·귀촌을 희망하는 도시민과 전입한 지 1년 이내인 귀농·귀촌인",
+          "support_content": "지자체 지원정책 안내, 각종 피해사례 소개 및 예방 교육",
+          "contact": "경상북도 귀농귀촌종합지원센터",
+          "program_type": "EDUCATION"
+        },
+        {
+          "program_id": "GYEONGBUK_PROVINCE_03",
+          "district": "경상북도",
+          "program_name": "청년창농인 스마트팜 기초교육",
+          "support_amount": null,
+          "target_audience": "사업 시행 연도 1월 1일 기준 만 18세 이상 40세 미만 (1순위), 청년 이외의 경상북도 스마트팜 창농 희망자 및 창농인 (2순위)",
+          "support_content": "스마트팜 기초교육 5시간, 수료증 발급",
+          "contact": "경상북도 귀농귀촌종합지원센터",
+          "program_type": "EDUCATION"
+        },
+        {
+          "program_id": "GYEONGBUK_PROVINCE_04",
+          "district": "경상북도",
+          "program_name": "귀농·귀촌아카데미",
+          "support_amount": 150000,
+          "support_amount_unit": "원",
+          "subsidy_rate": null,
+          "self_pay_rate": 100,
+          "target_audience": "대구, 경북 거주자 및 경상북도 귀농 희망자, 영농개시 1년 미만의 귀농인",
+          "support_content": "8주 비합숙 과정, 주중 이론수업 (지역·품목 선택, 법률, 세금 혜택 등), 주말 체험 위주 수업",
+          "contact": "경북농민사관학교",
+          "program_type": "EDUCATION"
+        },
+        {
+          "program_id": "GYEONGBUK_PROVINCE_05",
+          "district": "경상북도",
+          "program_name": "월급 받는 청년농부제",
+          "support_amount": null,
+          "support_amount_detail": {
+            "employment_support": "인건비 및 정착지원비 (2년)",
+            "incentive": 10000000
+          },
+          "support_amount_unit": "원",
+          "target_audience": "사업 시행연도 기준 만 18세~39세 이하 청년",
+          "support_content": "농업법인 취업 시 인건비 및 정착지원비 지원 (2년), 정규직 전환 시 인센티브 1,000만원 지원",
+          "program_type": "STARTUP_SUPPORT"
+        },
+        {
+          "program_id": "GYEONGBUK_UISEONG_01",
+          "district": "의성군",
+          "program_name": "귀농체험마을",
+          "support_amount": null,
+          "target_audience": "주민등록상 농어촌 이외의 도시지역에서 1년 이상 거주한 만 65세 이하 예비 귀농인 부부",
+          "support_content": "단독주택 및 개인 텃밭 제공 (1년간, 무상), 입주 후 15일 이내 전입 필수",
+          "program_type": "EXPERIENCE_PROGRAM"
+        },
+        {
+          "program_id": "GYEONGBUK_PROVINCE_06",
+          "district": "경상북도",
+          "program_name": "귀농·귀촌인-지역민 융화 교육",
+          "support_amount": null,
+          "target_audience": "경상북도 내 귀농·귀촌인과 지역민 (1순위), 경상북도 귀농·귀촌 희망인 (2순위)",
+          "support_content": "농촌사회 이해 및 주민 갈등관리 교육 (7시간, 농업교육포털 인정), 우수사례 공유",
+          "program_type": "EDUCATION"
+        },
+        {
+          "program_id": "GYEONGBUK_PROVINCE_07",
+          "district": "경상북도",
+          "program_name": "귀농귀촌인 정착지원사업",
+          "support_amount": 4000000,
+          "support_amount_unit": "원",
+          "subsidy_rate": 80,
+          "self_pay_rate": 20,
+          "target_audience": "경상북도에 농업경영을 목적으로 가족이 함께 전입한 지 5년 이내인 만 65세 이하 세대주",
+          "support_content": "경종농업 규모 확대, 시설 확충 및 개보수, 농기계·묘목·종근 구입, 관수시설 설치 등 지원 (중고 농기계, 농지·시설물 구입·임차비 제외)",
+          "support_condition": "사후관리: 건물·부속설비 10년, 기계·장비 5년",
+          "program_type": "SETTLEMENT_SUPPORT"
+        }
+      ]
+    },
+    {
+      "region_code": "CHUNGBUK",
+      "region_name": "충청북도",
+      "programs": [
+        {
+          "program_id": "CHUNGBUK_01",
+          "district": "충청북도",
+          "program_name": "충북에서 살아보기",
+          "support_amount": null,
+          "target_audience": "충북으로 귀농귀촌을 희망하는 도시민",
+          "support_content": "참여자 연수비 및 거주시설·프로그램 제공(3~6개월) 등",
+          "support_condition": "월15일 이상 프로그램(농촌체험·영농교육·화합 등) 참여 시",
+          "program_type": "EXPERIENCE_PROGRAM"
+        },
+        {
+          "program_id": "CHUNGBUK_02",
+          "district": "충청북도",
+          "program_name": "귀농 농업창업 및 주택구입 융자 지원",
+          "support_amount": null,
+          "support_amount_detail": {
+            "startup_fund": 300000000,
+            "housing_fund": 75000000
+          },
+          "support_amount_unit": "원",
+          "target_audience": "만65세 이하 귀농(예정)인 세대주, 농업교육 100시간 필수",
+          "loan_type": "융자",
+          "loan_interest_rate": 1.5,
+          "loan_term": "5년거치 10년 균분 상환",
+          "program_type": "LOAN_SUPPORT"
+        },
+        {
+          "program_id": "CHUNGBUK_03",
+          "district": "충청북도",
+          "program_name": "신규농업인 영농 기초기술교육",
+          "support_amount": null,
+          "target_audience": "귀농귀촌인, 영농 기초교육 희망자 등",
+          "support_content": "기초농업기술, 농업정보 및 농기계 활용 교육 등(연 40시간)",
+          "program_type": "EDUCATION"
+        },
+        {
+          "program_id": "CHUNGBUK_04",
+          "district": "충청북도",
+          "program_name": "신규농업인 현장실습교육 지원",
+          "support_amount": null,
+          "support_amount_detail": {
+            "mentee_monthly": 800000,
+            "mentor_monthly": 400000
+          },
+          "support_amount_unit": "원",
+          "target_audience": "전입 5년이내 귀농인, 만40세 미만 청년층",
+          "support_content": "연수생 희망 작목별 5개월 내외 선도농가 협력를 통한 멘토-멘티 현장실습",
+          "program_type": "EDUCATION"
+        },
+        {
+          "program_id": "CHUNGBUK_05",
+          "district": "충청북도",
+          "program_name": "농업경영컨설팅 지원",
+          "support_amount": null,
+          "target_audience": "개별경영체(후계농, 귀농인), 법인경영체(영농조합법인, 농업회사법인 등)",
+          "support_content": "농업경영체 기초컨설팅, 역량진단 등을 통한 기반조성, 경영역량 강화, 지속성장을 위해 맞춤형 경영컨설팅 지원(최대 3년)",
+          "program_type": "CONSULTING"
+        },
+        {
+          "program_id": "CHUNGBUK_06",
+          "district": "충청북도",
+          "program_name": "귀농창업 활성화 지원",
+          "support_amount": 8000000,
+          "support_amount_unit": "원",
+          "target_audience": "신규농업인 현장실습교육 이수자, 기초영농정착교육 이수자 등",
+          "support_content": "영농 창업 심화교육 및 1:1 맞춤형 코칭",
+          "program_type": "STARTUP_SUPPORT"
+        },
+        {
+          "program_id": "CHUNGBUK_07",
+          "district": "충청북도",
+          "program_name": "귀농귀촌인과 지역주민 융화교육 지원",
+          "support_amount": 3000000,
+          "support_amount_unit": "원",
+          "support_content": "귀농귀촌인과 지역주민이 함께하는 다양한 융화프로그램 운영 지원",
+          "program_type": "EDUCATION"
+        },
+        {
+          "program_id": "CHUNGBUK_08",
+          "district": "충청북도",
+          "program_name": "귀농인의 집",
+          "support_amount": null,
+          "target_audience": "충북으로 귀농귀촌을 희망하는 도시민",
+          "support_content": "귀농귀촌 희망자에게 임시거주처 제공(1년 내외)",
+          "program_type": "HOUSING_SUPPORT"
+        }
+      ]
+    },
+    {
+      "region_code": "CHUNGNAM",
+      "region_name": "충청남도",
+      "programs": [
+        {
+          "program_id": "CHUNGNAM_01",
+          "district": "충청남도",
+          "program_name": "스마트팜 청년창업 교육",
+          "support_amount": null,
+          "subsidy_rate": 100,
+          "support_content": "교육비 전액 지원",
+          "program_type": "EDUCATION"
+        },
+        {
+          "program_id": "CHUNGNAM_02",
+          "district": "충청남도",
+          "program_name": "귀농인 임시거주 지원",
+          "support_amount": null,
+          "support_content": "1년동안 저렴하게 거주공간 제공",
+          "program_type": "HOUSING_SUPPORT"
+        },
+        {
+          "program_id": "CHUNGNAM_03",
+          "district": "충청남도",
+          "program_name": "보금자리 조성사업",
+          "support_amount": null,
+          "target_audience": "만 40세 미만 귀농귀촌 청년, 만 40세 미만 신혼부부",
+          "support_content": "공공임대주택, 부대시설 조성하여 지원",
+          "program_type": "HOUSING_SUPPORT"
+        }
+      ]
+    },
+    {
+      "region_code": "JEONBUK",
+      "region_name": "전라북도",
+      "programs": [
+        {
+          "program_id": "JEONBUK_01",
+          "district": "전라북도",
+          "program_name": "임시 거주시설 조성",
+          "support_amount": null,
+          "support_content": "젊은 귀농귀촌인이 안정적으로 장기체류할 수 있는 거주시설을 제공하여 농촌지역에 가족단위 귀농귀촌 유입 지원",
+          "program_type": "HOUSING_SUPPORT"
+        },
+        {
+          "program_id": "JEONBUK_02",
+          "district": "전라북도",
+          "program_name": "귀농귀촌 둥지마을 조성",
+          "support_amount": null,
+          "support_content": "귀농귀촌 우수마을 발굴·홍보하고, 귀촌청년들의 활동 거점으로 활용하여 젊은 귀농귀촌세대 유입 지원",
+          "program_type": "VILLAGE_SUPPORT"
+        },
+        {
+          "program_id": "JEONBUK_03",
+          "district": "전라북도",
+          "program_name": "귀농귀촌 유치지원",
+          "support_amount": null,
+          "support_content": "도시민 농촌 유치 프로그램 운영을 지원하여 귀농귀촌 희망자의 안정적인 정착 유도 지원",
+          "program_type": "SETTLEMENT_SUPPORT"
+        },
+        {
+          "program_id": "JEONBUK_04",
+          "district": "전라북도",
+          "program_name": "귀농귀촌 활성화 지원",
+          "support_amount": null,
+          "support_content": "귀농귀촌 홍보 및 교육사업 지원으로 귀농귀촌인의 안정적 정착 지원",
+          "program_type": "PROMOTION_SUPPORT"
+        },
+        {
+          "program_id": "JEONBUK_05",
+          "district": "전라북도",
+          "program_name": "귀농창업 및 주택자금 융자 지원",
+          "support_amount": null,
+          "support_amount_detail": {
+            "startup_fund": 300000000,
+            "housing_fund": 75000000
+          },
+          "support_amount_unit": "원",
+          "target_audience": "귀농을 희망하는 도시민",
+          "support_content": "안정적으로 농촌에 정착할 수 있도록 농업창업 및 주건공간 마련 자금(융자) 지원",
+          "loan_type": "융자",
+          "loan_interest_rate": 1.5,
+          "loan_interest_type": "고정금리 또는 변동금리 선택",
+          "loan_term": "5년 거치 10년 원금균등 분할상환",
+          "program_type": "LOAN_SUPPORT"
+        }
+      ]
+    },
+    {
+      "region_code": "JEONNAM",
+      "region_name": "전라남도",
+      "programs": [
+        {
+          "program_id": "JEONNAM_01",
+          "district": "전라남도",
+          "program_name": "창업 및 주택구입 지원사업(융자)",
+          "support_amount": null,
+          "target_audience": "사업신청 연도기준 만 65세 이하",
+          "support_content": "지자체 보조: (청년어업인 정착지원금) 국고 70%, 지방비 30% / (행정비) 국고 50%, 지방비 50% / 민간 보조: 국고 100%",
+          "program_type": "LOAN_SUPPORT"
+        }
+      ]
+    },
+    {
+      "region_code": "GYEONGNAM",
+      "region_name": "경상남도",
+      "programs": [
+        {
+          "program_id": "GYEONGNAM_01",
+          "district": "경상남도",
+          "program_name": "귀농인 창업지원",
+          "support_amount": 6000000,
+          "support_amount_detail": {
+            "subsidy": 3000000,
+            "self_pay": 3000000
+          },
+          "support_amount_unit": "원",
+          "target_audience": "농촌지역 전입 5년 이내의 관내 귀농인",
+          "support_content": "농업기계 구입, 하우스 설치, 저장가공시설 등 농업,축산기반 및 시설 확충 지원",
+          "purpose": "귀농인의 창업지원으로 안정적인 소득원 확보 및 농업기반 확충",
+          "program_type": "STARTUP_SUPPORT"
+        }
+      ]
+    }
+  ],
+  "program_types": {
+    "SETTLEMENT_SUPPORT": "정착지원",
+    "HOUSING_SUPPORT": "주거지원",
+    "LOAN_SUPPORT": "융자지원",
+    "EDUCATION": "교육지원",
+    "EXPERIENCE_PROGRAM": "체험프로그램",
+    "STARTUP_SUPPORT": "창업지원",
+    "CONSULTING": "컨설팅지원",
+    "MOVING_SUPPORT": "이사지원",
+    "VILLAGE_SUPPORT": "마을조성지원",
+    "PROMOTION_SUPPORT": "홍보지원"
+  }
+}

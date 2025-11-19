@@ -15,49 +15,49 @@ export default function MatchingPage() {
     property: RuralProperty
   ) => {
     if (direction === "right") {
+      // 로컬 상태 업데이트
       setLikedProperties(
         likedProperties.some((p) => p.id === property.id) ? likedProperties : [...likedProperties, property]
       );
 
+      // DB에 저장 (recommendation 테이블에만)
       if (currentUser) {
         try {
-          await fetch('/api/likes', {
+          await fetch('/api/recommendations', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               userId: currentUser.id,
-              property: {
-                id: property.id,
-                title: property.title,
-                location: `${property.location.district}, ${property.location.city}`,
-                price: property.price.rent || 0,
-                matchScore: property.matchScore || 0
-              }
+              property: property
             }),
           });
+          console.log('💾 하트 클릭 - recommendation 저장:', property.title);
         } catch (error) {
-          console.error('관심목록 저장 실패:', error);
+          console.error('저장 실패:', error);
         }
       }
     } else {
+      // 왼쪽 스와이프: 거절
       setRejectedProperties([...rejectedProperties, property]);
 
+      // 이미 좋아요 했던 매물이면 DB에서도 삭제
       if (currentUser && likedProperties.some(p => p.id === property.id)) {
         try {
-          await fetch('/api/likes', {
+          await fetch('/api/recommendations', {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               userId: currentUser.id,
-              propertyId: property.id
+              villageId: String(property.id)
             }),
           });
+          console.log('🗑️ 왼쪽 스와이프 - recommendation 삭제:', property.title);
         } catch (error) {
-          console.error('관심목록 삭제 실패:', error);
+          console.error('삭제 실패:', error);
         }
       }
     }

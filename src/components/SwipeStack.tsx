@@ -80,7 +80,7 @@ const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
 
   if (currentIndex >= properties.length) {
     return (
-      <div className="h-[600px] flex items-center justify-center px-4">
+      <div className="h-[500px] flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -108,7 +108,7 @@ const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
   }
 
   return (
-    <div className="relative h-[600px] w-full max-w-md mx-auto perspective-1000">
+    <div className="relative h-[500px] w-full max-w-md mx-auto perspective-1000">
       <AnimatePresence mode="wait">
         {properties.slice(currentIndex, currentIndex + visibleCards)
           .filter(property => removingCard !== property.id)
@@ -148,7 +148,7 @@ const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
                 />
               ) : (
                 <div className="bg-white border border-stone-200 rounded-3xl shadow-xl h-full overflow-hidden relative">
-                  <div className="h-[55%] bg-stone-200 animate-pulse" />
+                  <div className="h-[35%] bg-stone-200 animate-pulse" />
                   <div className="p-6 space-y-3 opacity-40 filter blur-[1px]">
                     <div className="h-6 bg-stone-200 rounded w-3/4" />
                     <div className="h-4 bg-stone-100 rounded w-1/2" />

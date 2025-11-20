@@ -19,50 +19,67 @@ export default function QuestionCard({
   const progress = ((currentQuestion + 1) / totalQuestions) * 100;
 
   return (
-    <div className="w-full max-w-md mx-auto p-6">
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-3">
-          <span className="text-emerald-700 font-bold">{currentQuestion + 1}/{totalQuestions}</span>
-          <span className="text-emerald-700 font-bold">{Math.round(progress)}%</span>
+    <div className="w-full max-w-md mx-auto px-6 py-8">
+      
+      {/* 1. 진행률 표시 */}
+      <div className="mb-10">
+        <div className="flex justify-between items-end mb-3 px-1">
+          <span className="text-stone-400 text-xs font-bold tracking-widest uppercase">
+            Question {currentQuestion + 1}
+          </span>
+          <span className="text-orange-500 font-bold text-sm">
+            {Math.round(progress)}%
+          </span>
         </div>
-        <div className="w-full bg-emerald-200 rounded-full h-3">
-          <div
-            className="bg-emerald-500 h-3 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
+        <div className="w-full bg-stone-200 rounded-full h-2 overflow-hidden">
+          <motion.div
+            className="bg-orange-500 h-2 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           />
         </div>
       </div>
 
-      {/* Question */}
-      <h2 className="text-lg font-bold text-slate-800 mb-6 text-center leading-relaxed">
-        {question.text}
-      </h2>
+      {/* 2. 질문 텍스트 */}
+      <motion.div
+        key={question.id}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <h2 className="text-2xl font-serif font-bold text-stone-800 mb-8 leading-snug break-keep">
+          {question.text}
+        </h2>
 
-      {/* Options */}
-      <div className="space-y-4">
-        {question.options.map((option, index) => (
-          <button
-            key={option.id}
-            onClick={() => onAnswer(option)}
-            className="w-full p-4 text-left card hover:bg-emerald-50/50 hover:border-emerald-200 transition-all duration-200 hover:scale-[1.02]"
-          >
-            <div className="flex items-start space-x-3">
-              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-bold shadow-md">
+        {/* 3. 선택지 목록 (심플 버전) */}
+        <div className="space-y-3">
+          {question.options.map((option, index) => (
+            <button
+              key={option.id}
+              onClick={() => onAnswer(option)}
+              className="w-full p-5 text-left bg-white border border-stone-200 rounded-2xl hover:bg-stone-50 hover:border-stone-300 transition-all duration-200 flex items-start gap-4"
+            >
+              {/* 번호 (A, B, C...) */}
+              <div className="shrink-0 w-8 h-8 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center text-sm font-bold">
                 {String.fromCharCode(65 + index)}
               </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-slate-800 mb-1">
+
+              {/* 텍스트 */}
+              <div className="flex-1 pt-0.5">
+                <h3 className="font-bold text-stone-800 text-base mb-1">
                   {option.text}
                 </h3>
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  {option.description}
-                </p>
+                {option.description && (
+                  <p className="text-stone-500 text-xs leading-relaxed font-medium">
+                    {option.description}
+                  </p>
+                )}
               </div>
-            </div>
-          </button>
-        ))}
-      </div>
+            </button>
+          ))}
+        </div>
+      </motion.div>
     </div>
   );
 }

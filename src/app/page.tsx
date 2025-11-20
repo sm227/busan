@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Calendar,
   ChevronRight,
+  ExternalLink, // 외부 링크 아이콘은 Travelight 배너에 유지하여 링크임을 명확히 합니다.
 } from "lucide-react";
 import Image from "next/image";
 import PopularPostsSlider from "@/components/PopularPostsSlider";
@@ -41,6 +42,18 @@ export default function Home() {
 
   const [isLoadingProperties, setIsLoadingProperties] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // --- 배너 슬라이더 상태 관리 ---
+  const [bannerIndex, setBannerIndex] = useState(0);
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBannerIndex((prev) => (prev === 0 ? 1 : 0));
+    }, 5000); // 5초마다 자동 전환
+
+    return () => clearInterval(timer);
+  }, []);
+  // ---------------------------
 
   useEffect(() => {
     if (isInitialized && !currentUser) {
@@ -202,23 +215,60 @@ export default function Home() {
             </div>
             <PopularPostsSlider onPostClick={handlePostClick} />
 
-            {/* 세제혜택 안내 */}
-            <div className="card p-6">
-              <button
-                onClick={() => router.push('/texHelp')}
-                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 px-6 rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all gentle-scale shadow-lg shadow-blue-500/25"
+            {/* 광고/혜택 배너 슬라이더 (수정됨) */}
+            <div className="relative w-full overflow-hidden rounded-2xl shadow-lg shadow-stone-200/50 mt-6">
+              <div 
+                className="flex transition-transform duration-500 ease-out"
+                style={{ transform: `translateX(-${bannerIndex * 100}%)` }}
               >
-                <div className="flex items-center justify-center space-x-3">
-                  <span className="text-2xl"></span>
-                  <div className="text-left">
-                    <h4 className="font-bold text-lg">귀농귀촌 혜택 알아보기</h4>
-                    <p className="text-blue-100 text-sm">다양한 세제혜택과 지원사업을 한번에 모아보세요</p>
-                  </div>
+                {/* 슬라이드 1: 귀농귀촌 혜택 */}
+                <div className="w-full flex-shrink-0">
+                  <button
+                    onClick={() => router.push('/texHelp')}
+                    className="relative w-full text-white py-3 px-6 h-full flex items-center justify-center hover:brightness-105 transition-all overflow-hidden bg-cover bg-center"
+                    style={{ backgroundImage: 'url(/banner.png)' }}
+                  >
+                    {/* 오버레이 */}
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <div className="relative text-center z-10">
+                      <h4 className="font-bold text-lg mb-1">귀농귀촌 혜택 알아보기</h4>
+                      <p className="text-white/90 text-xs">다양한 세제혜택과 지원사업을<br/>한번에 모아보세요</p>
+                    </div>
+                  </button>
                 </div>
-              </button>
-            </div>
 
-           
+                {/* 슬라이드 2: Travelight */}
+                <div className="w-full flex-shrink-0">
+                  <button
+                    onClick={() => window.open('https://travelight.co.kr', '_blank')}
+                    className="w-full text-white py-3 px-6 h-full flex items-center justify-center hover:brightness-110 transition-all"
+                    style={{ backgroundColor: '#2e7df1' }}
+                  >
+                    <div className="text-center">
+                      <div className="flex items-center justify-center space-x-2 mb-1">
+                        <span className="font-bold text-xl">Travelight</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </div>
+                      <p className="text-white/90 text-xs">소상공인과 상생하는 공간 공유 플랫폼</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* 슬라이더 인디케이터 (점) */}
+              <div className="absolute bottom-3 right-4 flex space-x-1.5 z-10">
+                {[0, 1].map((idx) => (
+                  <div
+                    key={idx}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
+                      bannerIndex === idx ? "bg-white" : "bg-white/40"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+            {/* 슬라이더 끝 */}
+
           </div>
 
           {/* 메인 액션: AI 추천 */}
@@ -235,22 +285,6 @@ export default function Home() {
                 보금자리를 추천해드려요
               </p>
             </div>
-
-            {/* 아이콘 3개 */}
-            {/* <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-white rounded-xl p-3 text-center border border-stone-100 shadow-sm">
-                <div className="text-xl mb-1">🏔️</div>
-                <span className="text-xs text-stone-500 font-medium">자연환경</span>
-              </div>
-              <div className="bg-white rounded-xl p-3 text-center border border-stone-100 shadow-sm">
-                <div className="text-xl mb-1">🏠</div>
-                <span className="text-xs text-stone-500 font-medium">주거조건</span>
-              </div>
-              <div className="bg-white rounded-xl p-3 text-center border border-stone-100 shadow-sm">
-                <div className="text-xl mb-1">🧘</div>
-                <span className="text-xs text-stone-500 font-medium">라이프</span>
-              </div>
-            </div> */}
 
             {apiError && (
               <div className="mb-4 p-3 bg-red-50 text-red-500 text-xs rounded-lg text-center">
@@ -435,7 +469,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 게시글 상세보기 모달 (스타일 리뉴얼) */}
+        {/* 게시글 상세보기 모달 */}
         {showPostModal && selectedPost && (
           <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
             <div className="bg-white rounded-2xl max-w-md w-full max-h-[85vh] overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">

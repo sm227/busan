@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { transformApiResponse } from '@/lib/apiTransformer';
 
 const SERVICE_KEY = process.env.MAFRA_API_KEY!;
 const API_BASE_URL = 'https://apis.data.go.kr/B552149/raiseRuralVill/infoVill';
@@ -37,15 +38,25 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+    // Transform the API response to match our app format
+    const properties = transformApiResponse(data);
+
+    return NextResponse.json(
+      {
+        success: true,
+        properties,
+        raw: data, // 원본 데이터도 포함 (디버깅용)
       },
-    });
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (error) {
     console.error('Rural village API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch rural village data' },
+      { success: false, error: 'Failed to fetch rural village data' },
       { status: 500 }
     );
   }

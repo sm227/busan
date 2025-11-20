@@ -72,17 +72,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
             console.error('설문 결과 불러오기 실패:', error);
           }
 
-          // 사용자의 관심목록 불러오기 (DB의 recommendations 테이블에서)
+          // 관심목록 불러오기 recommendations
           try {
             const recommendationsResponse = await fetch(`/api/recommendations?userId=${user.id}`);
             const recommendationsData = await recommendationsResponse.json();
 
             if (recommendationsData.success && recommendationsData.data) {
               setLikedProperties(recommendationsData.data);
-              console.log('✅ DB에서 관심목록 로드:', recommendationsData.data.length, '개');
+              // console.log('DB에서 관심목록 로드:', recommendationsData.data.length, '개');
             }
           } catch (error) {
-            console.error('❌ 관심목록 불러오기 실패:', error);
+            // console.error('관심목록 불러오기 실패:', error);
           }
         }
       } catch (error) {

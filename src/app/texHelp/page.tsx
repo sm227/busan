@@ -25,7 +25,7 @@ export default function TexHelpPage() {
   const [selectedType, setSelectedType] = useState<ProgramType | "all">("all");
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
 
-  const regionOrder = useMemo(() => ({
+  const regionOrder: Record<string, number> = useMemo(() => ({
     CHUNGBUK: 1, CHUNGNAM: 2, JEONBUK: 3, JEONNAM: 4, GYEONGBUK: 5, GYEONGNAM: 6,
   }), []);
 

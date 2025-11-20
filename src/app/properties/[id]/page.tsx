@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, MapPin, Phone, Home as HomeIcon, ChevronDown, Sparkles, Coins, Calendar, CheckCircle2 } from "lucide-react";
 import { RuralProperty } from "@/types";
-import { SupportProgram } from "@/types/support";
-import helpData from "/help.json";
+import { SupportProgram, SupportData } from "@/types/support";
+import helpDataRaw from "../../../../help.json";
+
+const helpData = helpDataRaw as SupportData;
 
 export default function PropertyDetailPage() {
   const router = useRouter();

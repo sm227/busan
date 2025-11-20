@@ -1,0 +1,763 @@
+{
+  "programInfo": {
+    "programName": "귀농주택 구입자금 지원사업",
+    "programType": "귀농귀촌 지원",
+    "administrationAgency": "농림축산식품부",
+    "guidelineDocument": "2025년 상반기 귀농 농업창업 및 주택구입 지원사업 시행지침",
+    "inquiryPlatform": {
+      "name": "그린대로",
+      "website": "https://www.greendaero.go.kr",
+      "phone": "1899-9097"
+    },
+    "legalBasis": [
+      "귀농어·귀촌 활성화 및 지원에 관한 법률 제15조제2항",
+      "농업·농촌 및 식품산업 기본법 제29조의2"
+    ]
+  },
+  "housingPurchaseSupport": {
+    "eligibility": {
+      "ageLimit": {
+        "maxAge": 65,
+        "birthDateAfter": "1959-01-01",
+        "referenceYear": "사업 신청연도 기준"
+      },
+      "residencyRequirements": {
+        "migrationPeriod": {
+          "maxYears": 5,
+          "description": "농촌지역 전입일부터 만 5년이 지나지 않은 세대주"
+        },
+        "priorResidency": {
+          "minMonths": 12,
+          "location": "농촌 외의 지역",
+          "requirement": "농촌지역 전입일 기준 직전 1년 이상 지속적 거주"
+        },
+        "currentStatus": "농촌에 실제 거주하면서 농업에 종사하고 있거나 하고자 하는 사람"
+      },
+      "educationRequirement": {
+        "minHours": 8,
+        "optimalHours": 100,
+        "warningBelowHours": 100,
+        "gradeIfBelow100Hours": "D등급",
+        "approvedInstitutions": [
+          "농림축산식품부",
+          "농림수산식품교육문화정보원",
+          "농촌진흥청",
+          "산림청",
+          "지방자치단체 주관 또는 위탁 교육"
+        ],
+        "educationTypes": [
+          "농업교육",
+          "귀농귀촌교육",
+          "임업교육",
+          "귀산촌교육"
+        ]
+      },
+      "previousOccupation": "농촌 외의 지역에서 농업 외의 산업분야에 종사 중이거나 종사한 사람",
+      "registrationRequired": "주민등록법에 따른 전입신고"
+    },
+    "supportDetails": {
+      "maxLoanAmount": 75000000,
+      "currency": "KRW",
+      "unit": "세대당",
+      "supportedPurposes": [
+        {
+          "type": "주택구입",
+          "includes": ["단독주택", "대지 포함"],
+          "maxArea": 150,
+          "areaUnit": "㎡",
+          "areaType": "연면적"
+        },
+        {
+          "type": "주택신축",
+          "includes": ["단독주택", "대지 포함"],
+          "maxArea": 150,
+          "areaUnit": "㎡",
+          "areaType": "연면적"
+        },
+        {
+          "type": "자기소유주택증개축",
+          "description": "자기 소유 노후 농가주택의 증·개축(리모델링 포함)",
+          "maxArea": 150,
+          "areaUnit": "㎡",
+          "areaType": "연면적"
+        }
+      ],
+      "specialNotes": [
+        "농지 위에 주택 신축 시 농지전용허가 필요",
+        "농지 매입 자금과 주택자금 동시 신청 시 주택부지 활용 면적은 지원 불가"
+      ]
+    },
+    "applicationProcess": {
+      "submissionLocation": "주소지 관할 시·군",
+      "requiredDocuments": [
+        {
+          "documentName": "귀농 농업창업 및 주택구입지원사업 신청서",
+          "quantity": 1,
+          "unit": "부"
+        },
+        {
+          "documentName": "귀농 농업창업계획서",
+          "quantity": 1,
+          "unit": "부"
+        },
+        {
+          "documentName": "가족관계증명서",
+          "detail": "배우자의 직계존비속",
+          "quantity": 1,
+          "unit": "부"
+        },
+        {
+          "documentName": "신용조사서",
+          "detail": "대출가능금액 미기재",
+          "quantity": 1,
+          "unit": "부"
+        },
+        {
+          "documentName": "사업자등록사실여부 증명서",
+          "quantity": 1,
+          "unit": "부"
+        },
+        {
+          "documentName": "교육이수실적 증빙자료",
+          "quantity": 1,
+          "unit": "부"
+        },
+        {
+          "documentName": "기타 증빙자료",
+          "detail": "견적서 등",
+          "quantity": 1,
+          "unit": "부"
+        }
+      ],
+      "applicationPeriod": "시·군별 접수기간 확인 필요"
+    }
+  },
+  "taxBenefits": {
+    "acquisitionTaxReduction": {
+      "programName": "농촌주택 개량 취득세 감면",
+      "legalBasis": "지방세특례제한법 제16조제1항",
+      "validUntil": "2027-12-31",
+      "eligibility": {
+        "targetPerson": "농어촌정비법 제2조제10호에 따른 생활환경정비사업의 주택개량대상자로 선정된 사람",
+        "residencyRequirement": "해당 지역에서 거주하는 사람 및 그 가족",
+        "purpose": "상시 거주 목적",
+        "purposeDetail": "본인이 전입신고를 하고 계속하여 거주하는 것",
+        "propertyRequirement": {
+          "maxArea": 150,
+          "areaUnit": "㎡",
+          "areaType": "연면적",
+          "propertyType": "주거용 건축물",
+          "expansionNote": "증축 시 기존 소유 주거용 건축물 연면적과 합산하여 150㎡ 이하"
+        }
+      },
+      "reductionAmount": [
+        {
+          "condition": "취득세액 ≤ 2,800,000원",
+          "reduction": "전액 면제",
+          "reductionType": "full"
+        },
+        {
+          "condition": "취득세액 > 2,800,000원",
+          "reduction": "2,800,000원 공제",
+          "reductionType": "deduction",
+          "deductionAmount": 2800000
+        }
+      ],
+      "recollectionConditions": [
+        {
+          "condition": "취득일부터 3개월 이내 상시 거주 미시작",
+          "gracePeriod": 3,
+          "gracePeriodUnit": "개월"
+        },
+        {
+          "condition": "상시 거주 시작일부터 2년 이내 상시 거주 중단",
+          "minResidencyYears": 2
+        },
+        {
+          "condition": "상시 거주 2년 미만 상태에서 매각·증여·임대 등 다른 용도 사용",
+          "minResidencyYears": 2,
+          "prohibitedActions": ["매각", "증여", "임대", "다른 용도 사용"]
+        }
+      ]
+    },
+    "capitalGainsTaxExemption": {
+      "programName": "귀농주택 소유자 일반주택 양도소득세 면제",
+      "legalBasis": "소득세법 시행령 제155조제7항제3호",
+      "benefitDescription": "귀농주택과 일반주택을 각 1개씩 소유 시 일반주택 양도 시 1세대1주택으로 간주",
+      "eligibility": {
+        "housingRequirement": "귀농주택 1개 + 일반주택 1개 소유",
+        "generalHousingTransfer": "일반주택 양도 시"
+      },
+      "returnFarmingHousingRequirements": {
+        "purpose": "영농 목적 취득",
+        "location": {
+          "excluded": "수도권정비계획법 제2조제1호에 따른 수도권",
+          "allowed": ["읍지역 (도시지역 제외)", "면지역"]
+        },
+        "priceLimit": {
+          "maxPrice": 1200000000,
+          "currency": "KRW",
+          "priceType": "양도 당시 실지거래가액",
+          "includes": ["주택", "이에 딸린 토지"]
+        },
+        "landAreaLimit": {
+          "maxArea": 660,
+          "areaUnit": "㎡",
+          "areaType": "대지면적"
+        },
+        "farmingRequirements": [
+          {
+            "type": "농지소유자 주택취득",
+            "minFarmlandArea": 1000,
+            "farmlandUnit": "㎡",
+            "condition": "농지소재지에 있는 주택 취득"
+          },
+          {
+            "type": "농지취득 전 주택취득",
+            "minFarmlandArea": 1000,
+            "farmlandUnit": "㎡",
+            "timingWindow": "농지 소유 전 1년 이내",
+            "condition": "농지소재지에 있는 주택 취득"
+          }
+        ],
+        "residencyRequirement": {
+          "requirement": "세대 전원 이사하여 거주",
+          "exceptions": [
+            "취학",
+            "근무상 형편",
+            "질병의 요양",
+            "기타 부득이한 사유"
+          ],
+          "exceptionNote": "세대 구성원 중 일부가 이사하지 못하는 경우 포함"
+        }
+      },
+      "applicationProcess": {
+        "submissionDeadline": "양도소득세 과세표준신고기한 내",
+        "submissionLocation": "관할 세무서",
+        "requiredDocuments": [
+          {
+            "documentName": "1세대1주택 특례적용신고서",
+            "formNumber": "소득세법 시행규칙 별지 제83호서식"
+          },
+          {
+            "documentName": "농지원부 사본",
+            "condition": "해당하는 경우만 제출"
+          }
+        ]
+      },
+      "postManagement": {
+        "minFarmingPeriod": 3,
+        "periodUnit": "년",
+        "periodStart": "귀농일",
+        "returnFarmingDateDefinition": "귀농주택에 주민등록을 이전하여 거주를 개시한 날 (주택 취득 후 농지 취득 시에는 농지 취득한 날)",
+        "requirements": [
+          "3년 이상 영농 종사",
+          "3년 이상 해당 주택 거주"
+        ],
+        "violationConsequence": {
+          "description": "양도한 일반주택은 1세대1주택으로 보지 않음",
+          "reportDeadline": "2개월",
+          "reportDeadlineUnit": "사유 발생 날이 속하는 달의 말일부터",
+          "taxCalculation": "일반주택 양도 당시 1세대1주택 미적용 세액 - 1세대1주택 적용 납부 세액"
+        },
+        "inheritanceNote": "3년 기간 계산 시 피상속인의 영농기간과 상속인의 영농기간 통산"
+      }
+    },
+    "farmlandPreservationChargeExemption": {
+      "programName": "농업인 주택 농지보전부담금 감면",
+      "legalBasis": [
+        "농지법 제38조제1항제5호",
+        "농지법 제38조제6항제3호",
+        "농지법 시행령 제52조 및 별표2 제3호더목"
+      ],
+      "benefitDescription": "농업인 주택 건축을 위한 농지전용신고 시 농지보전부담금 면제",
+      "farmerHousingDefinition": {
+        "ownerRequirement": {
+          "ownerType": "세대주",
+          "householdType": "농업인 1명 이상으로 구성되는 농업을 영위하는 세대",
+          "householdQualification": [
+            {
+              "type": "수입기준",
+              "condition": "해당 세대의 농업에 따른 수입액이 연간 총수입액의 1/2 초과"
+            },
+            {
+              "type": "노동력기준",
+              "condition": "해당 세대원의 노동력의 1/2 이상으로 농업 영위"
+            }
+          ]
+        },
+        "buildingRequirement": {
+          "structure": "장기간 독립된 주거생활을 영위할 수 있는 구조",
+          "excluded": ["별장", "고급주택"],
+          "includes": ["건축물", "부속 창고", "축사 등 농업 영위에 필요한 시설"]
+        },
+        "landAreaLimit": {
+          "standard": {
+            "maxArea": 660,
+            "areaUnit": "㎡",
+            "unit": "1세대당"
+          },
+          "employeeHousing": {
+            "maxArea": 1000,
+            "areaUnit": "㎡",
+            "condition": "내국인 근로자 또는 취업활동 가능 체류자격 외국인 근로자 거주 목적"
+          }
+        },
+        "areaCalculationNote": "전용허가신청일 또는 협의신청일 이전 5년간 농업인 주택 설치를 위해 전용한 농지면적 합산",
+        "locationRequirement": {
+          "basis": "농업경영의 근거가 되는 농지",
+          "allowedLocations": [
+            "농지 소재지 시·구·읍·면",
+            "농지 소재지와 연접한 시·구·읍·면"
+          ],
+          "locationNote": "구를 두지 않은 시, 도농복합형태의 시는 해당 지역에 한정"
+        }
+      },
+      "inquiryContact": {
+        "organization": "한국농어촌공사",
+        "website": "https://www.ekr.or.kr",
+        "phone": "1899-9097"
+      }
+    },
+    "farmlandAcquisitionTaxReduction": {
+      "programName": "농지취득 취득세 감면",
+      "legalBasis": "지방세특례제한법 제6조제4항",
+      "validUntil": "2027-12-31",
+      "benefitDescription": "귀농인 및 귀촌인이 직접 경작 목적으로 취득하는 농지, 임야, 농업용시설 취득세 감면",
+      "eligibility": {
+        "acquisitionPeriod": {
+          "fromDate": "귀농일",
+          "fromDateDefinition": "새로 이주한 농촌으로 전입신고를 하고 거주를 시작한 날",
+          "withinYears": 3,
+          "description": "귀농일부터 3년 이내 취득"
+        },
+        "returnFarmerRequirements": [
+          {
+            "requirement": "priorResidency",
+            "description": "농촌 외의 지역에서 귀농일 기준 1년 이전부터 전입신고를 하고 계속 실제 거주",
+            "minPriorResidencyYears": 1,
+            "location": "농촌 외의 지역"
+          },
+          {
+            "requirement": "nonFarmingPeriod",
+            "description": "귀농일 전까지 계속하여 1년 이상 농업에 종사하지 않은 사람",
+            "minNonFarmingYears": 1
+          },
+          {
+            "requirement": "currentResidency",
+            "description": "농촌에 전입신고를 하고 실제 거주하는 사람"
+          }
+        ]
+      },
+      "reductionRate": {
+        "rate": 50,
+        "unit": "percent",
+        "description": "취득세 50% 감면"
+      },
+      "coveredAssets": [
+        {
+          "assetType": "농지",
+          "purpose": "직접 경작"
+        },
+        {
+          "assetType": "임야",
+          "purpose": "농지 조성"
+        },
+        {
+          "assetType": "농업용시설",
+          "purpose": "농업 영위"
+        }
+      ],
+      "recollectionConditions": [
+        {
+          "conditionType": "주소지 이전",
+          "description": "귀농일부터 3년 이내 주민등록 주소지를 허용지역 외로 이전",
+          "periodYears": 3,
+          "allowedLocations": [
+            "취득 농지 및 임야 소재지 특별자치시·특별자치도·시·군·구",
+            "해당 지역과 연접한 시·군·구",
+            "농지 및 임야 소재지로부터 30km 이내 지역"
+          ],
+          "distanceLimit": {
+            "maxDistance": 30,
+            "unit": "km"
+          }
+        },
+        {
+          "conditionType": "비농업소득 발생",
+          "description": "취득일이 속하는 과세연도의 다음 과세연도 개시일부터 3년 이내 과세연도별 농업 외 종합소득금액이 기준 이상",
+          "periodYears": 3,
+          "incomeThreshold": 37000000,
+          "currency": "KRW",
+          "excludedIncome": [
+            "농업소득",
+            "임업소득",
+            "부동산임대업 소득",
+            "농가부업소득"
+          ]
+        },
+        {
+          "conditionType": "직접 사용 의무 위반",
+          "description": "취득 후 일정 기간 내 직접 경작 또는 사용하지 않는 경우",
+          "partialRecollection": true,
+          "requirements": [
+            {
+              "assetType": "농지",
+              "periodYears": 2,
+              "requirement": "취득일부터 2년 이내 직접 경작"
+            },
+            {
+              "assetType": "임야",
+              "periodYears": 2,
+              "requirement": "취득일부터 2년 이내 농지 조성 시작"
+            },
+            {
+              "assetType": "농업용시설",
+              "periodYears": 1,
+              "requirement": "취득일부터 1년 이내 해당 용도로 직접 사용"
+            }
+          ]
+        },
+        {
+          "conditionType": "처분 및 용도 변경",
+          "description": "직접 경작 또는 직접 사용 기간 3년 미만 상태에서 매각·증여 또는 다른 용도 사용",
+          "minUsagePeriodYears": 3,
+          "partialRecollection": true,
+          "prohibitedActions": [
+            "매각",
+            "증여",
+            "다른 용도 사용"
+          ]
+        }
+      ],
+      "inquiryContact": {
+        "organization": "관할 시·군 재무담당 부서"
+      }
+    }
+  },
+  "farmMachinerySupport": {
+    "purchaseFundingSupport": {
+      "programName": "농기계 구입자금 지원",
+      "legalBasis": "농업기계화 촉진법 제4조제1항",
+      "provider": [
+        "국가",
+        "지방자치단체"
+      ],
+      "supportType": "농업기계 구입 또는 이용 부대시설 설치 자금",
+      "supportAmount": "필요 자금의 전부 또는 일부",
+      "inquiryContact": {
+        "organization": "관할 지방자치단체"
+      }
+    },
+    "rentalService": {
+      "programName": "농기계 임대사업",
+      "administrationAgency": "농림축산식품부",
+      "guidelineDocument": "2025년 농기계임대 사업시행지침",
+      "serviceProvider": "지방자치단체별 농기계 임대사업소",
+      "purpose": [
+        "농기계 구입 부담 경감",
+        "밭농업 기계화율 제고"
+      ],
+      "targetFarmers": "농기계 구입이 어려운 농가",
+      "inquiryContact": {
+        "organization": "관할 지방자치단체 농기계 임대사업소"
+      }
+    },
+    "taxExemption": {
+      "farmMachineryAcquisitionTax": {
+        "programName": "농업기계 취득세 면제",
+        "legalBasis": "지방세특례제한법 제7조제1항",
+        "validUntil": "2026-12-31",
+        "benefitDescription": "농업용 농업기계 취득세 전액 면제",
+        "coveredMachinery": {
+          "baseCategory": "농업기계화 촉진법에 따른 농업기계",
+          "includedMachinery": [
+            "자동경운기"
+          ],
+          "purpose": "농업용 (영농을 위한 농산물 등의 운반 포함)",
+          "usageRequirement": "직접 사용"
+        },
+        "exemptionRate": {
+          "rate": 100,
+          "unit": "percent",
+          "description": "전액 면제"
+        }
+      },
+      "irrigationFacilityTax": {
+        "programName": "관정시설 취득세 및 재산세 면제",
+        "legalBasis": "지방세특례제한법 제7조제2항",
+        "validUntil": "2026-12-31",
+        "benefitDescription": "농업용수 공급을 위한 관정시설 세금 면제",
+        "coveredFacility": {
+          "facilityType": "관정시설",
+          "purpose": "농업용수 공급"
+        },
+        "exemptedTaxes": [
+          {
+            "taxType": "취득세",
+            "exemptionRate": 100,
+            "unit": "percent"
+          },
+          {
+            "taxType": "재산세",
+            "exemptionRate": 100,
+            "unit": "percent"
+          }
+        ]
+      }
+    }
+  },
+  "insurancePremiumSupport": {
+    "nationalPensionSupport": {
+      "programName": "농업인 국민연금보험료 지원사업",
+      "legalBasis": [
+        "농어업인 삶의 질 향상 및 농어촌지역 개발촉진에 관한 특별법 제16조",
+        "농어촌주민의 보건복지 증진을 위한 특별법 제31조",
+        "농어촌구조개선 특별회계법 제5조제2항제2호가목"
+      ],
+      "purpose": "농산물 수입개방 확대에 따른 농업인의 경제적 부담 경감 및 안정적인 노후생활 도모",
+      "eligibility": {
+        "qualifiedFarmers": [
+          {
+            "type": "농지경영자",
+            "requirement": "1,000㎡ 이상의 농지를 경영하거나 경작",
+            "minFarmlandArea": 1000,
+            "areaUnit": "㎡",
+            "exclusion": "비농업인이 분양받거나 임대받은 농어촌 주택 등에 부속된 농지 제외"
+          },
+          {
+            "type": "농산물판매자",
+            "requirement": "농업경영을 통한 농산물의 연간 판매액이 120만원 이상",
+            "minAnnualSales": 1200000,
+            "currency": "KRW"
+          },
+          {
+            "type": "농업종사자",
+            "requirement": "1년 중 90일 이상 농업에 종사",
+            "minWorkingDays": 90,
+            "period": "1년"
+          },
+          {
+            "type": "영농조합법인고용자",
+            "requirement": "영농조합법인의 농산물 출하·유통·가공·수출활동에 1년 이상 계속 고용",
+            "minEmploymentYears": 1,
+            "legalBasis": "농어업경영체 육성 및 지원에 관한 법률 제16조제1항"
+          },
+          {
+            "type": "농업회사법인고용자",
+            "requirement": "농업회사법인의 농산물 유통·가공·판매활동에 1년 이상 계속 고용",
+            "minEmploymentYears": 1,
+            "legalBasis": "농어업경영체 육성 및 지원에 관한 법률 제19조제1항"
+          }
+        ],
+        "exclusionCriteria": [
+          {
+            "type": "소득기준",
+            "description": "종합소득금액에서 특정 소득 공제 후 금액이 기준 이상",
+            "incomeThreshold": 60000000,
+            "currency": "KRW",
+            "period": "연간",
+            "calculation": "소득세법 제14조제2항 종합소득금액 - 소득세법 제14조제3항 각 호 소득금액"
+          },
+          {
+            "type": "재산기준",
+            "description": "재산세 과세표준 합계액이 기준 이상",
+            "propertyThreshold": 1200000000,
+            "currency": "KRW",
+            "includes": [
+              "토지",
+              "건축물",
+              "주택",
+              "항공기",
+              "선박"
+            ]
+          }
+        ]
+      },
+      "supportDetails": {
+        "maxMonthlySupport": 46350,
+        "currency": "KRW",
+        "unit": "월",
+        "supportRate": {
+          "rate": 50,
+          "unit": "percent",
+          "description": "본인 부담 연금보험료의 1/2 초과하지 않는 범위"
+        },
+        "baseIncomeAmount": 1030000,
+        "incomeAmountDescription": "기준소득월액"
+      },
+      "inquiryContact": {
+        "organization": "국민연금공단",
+        "website": "https://www.nps.or.kr",
+        "phone": "1355",
+        "phoneDescription": "국번없이"
+      },
+      "guidelineDocument": "2025년 농업인 건강·연금보험료 지원 사업지침"
+    },
+    "nationalHealthInsuranceSupport": {
+      "programName": "농업인 국민건강보험료 지원사업",
+      "legalBasis": [
+        "농어업인 삶의 질 향상 및 농어촌지역 개발촉진에 관한 특별법 제13조",
+        "농어촌주민의 보건복지 증진을 위한 특별법 제27조",
+        "농어촌구조개선 특별회계법 제5조제2항제2호가목"
+      ],
+      "purpose": "의료이용의 접근성이 낮은 농어촌 거주 농업인의 생활안정과 복지증진",
+      "eligibility": {
+        "insuranceType": "국민건강보험 지역가입자(세대)",
+        "locationRequirement": "주소지가 농촌지역에 해당",
+        "occupationRequirement": "농업에 종사하는 사람",
+        "foreignerIncluded": true,
+        "legalBasis": [
+          "국민건강보험법 제75조제1항제1호",
+          "국민건강보험법 시행령 제45조제2호",
+          "국민건강보험법 시행규칙 제46조제2호"
+        ]
+      },
+      "supportDetails": {
+        "reductionRate": 22,
+        "unit": "percent",
+        "description": "본인이 부담할 세대별 국민건강보험료액의 22% 경감",
+        "calculationBase": "세대별 국민건강보험료액"
+      },
+      "inquiryContact": {
+        "organization": "국민건강보험공단",
+        "website": "https://www.nhis.or.kr",
+        "phone": "1577-1000"
+      },
+      "guidelineDocument": "2025년 농업인 건강·연금보험료 지원 사업지침"
+    },
+    "farmerSafetyInsuranceSupport": {
+      "programName": "농업인 안전재해보험료 지원사업",
+      "legalBasis": [
+        "농어업인 삶의 질 향상 및 농어촌지역 개발촉진에 관한 특별법 제15조제1항·제2항",
+        "농어업인의 안전보험 및 안전재해예방에 관한 법률 제4조"
+      ],
+      "purpose": "농작업 중 발생하는 농작업 관련 재해 및 농기계 사고 피해 보장",
+      "insuranceTypes": {
+        "farmerSafetyInsurance": {
+          "insuranceName": "농업인안전보험",
+          "eligibility": {
+            "standard": {
+              "requirement": "농업경영체에 등록된 사람을 피보험자로 보험계약 체결",
+              "insuredPersons": [
+                "경영주인 농업인",
+                "경영주 외의 농업인"
+              ]
+            }
+          },
+          "supportDetails": {
+            "standard": {
+              "supportRate": 50,
+              "unit": "percent",
+              "description": "피보험자당 주계약 보험료의 50% 지원"
+            },
+            "lowIncomeFarmers": {
+              "supportRate": 70,
+              "unit": "percent",
+              "description": "영세농업인(기초수급자 및 차상위계층) 주계약 보험료의 70% 지원",
+              "targetGroup": [
+                "기초수급자",
+                "차상위계층"
+              ]
+            }
+          }
+        },
+        "farmWorkerSafetyInsurance": {
+          "insuranceName": "농작업근로자안전보험",
+          "eligibility": {
+            "contractHolder": "농업경영체에 등록된 농업경영주",
+            "insuredPersons": [
+              {
+                "type": "단기근로자",
+                "requirement": "90일 미만의 근로자",
+                "ageRange": {
+                  "minAge": 15,
+                  "maxAge": 87
+                },
+                "employmentPeriod": {
+                  "maxDays": 90,
+                  "operator": "<"
+                }
+              },
+              {
+                "type": "외국인계절근로자",
+                "visaType": "E-8"
+              }
+            ]
+          }
+        },
+        "farmMachineryInsurance": {
+          "insuranceName": "농기계종합보험",
+          "eligibility": {
+            "requirement": "보험대상 농기계를 소유 또는 관리하며 농업경영체에 등록된 농업인",
+            "minAge": 19,
+            "specialCase": {
+              "description": "농업경영체 미등록 시",
+              "allowedCase": "농기계임대사업 참여 지역 농·축협",
+              "supportAvailable": true
+            }
+          },
+          "supportDetails": {
+            "standard": {
+              "supportRate": 50,
+              "unit": "percent",
+              "coverageItems": [
+                {
+                  "item": "대인배상",
+                  "supportRate": 50
+                },
+                {
+                  "item": "대물배상",
+                  "supportRate": 50
+                },
+                {
+                  "item": "자기신체사고",
+                  "supportRate": 50
+                },
+                {
+                  "item": "적재농산물",
+                  "supportRate": 50
+                },
+                {
+                  "item": "농기계손해",
+                  "supportRate": 50,
+                  "maxCoverageAmount": 100000000,
+                  "currency": "KRW",
+                  "additionalNote": "가입금액 1억원 이하 보험료의 50% 지원",
+                  "surchargeRateLimit": {
+                    "maxRate": 120,
+                    "unit": "percent"
+                  }
+                }
+              ]
+            },
+            "lowIncomeFarmers": {
+              "supportRate": 70,
+              "unit": "percent",
+              "description": "영세농업인(기초수급자 및 차상위계층) 보험계약자당 담보 보험료의 70% 지원",
+              "targetGroup": [
+                "기초수급자",
+                "차상위계층"
+              ],
+              "supportUnit": "보험계약자당"
+            }
+          }
+        }
+      },
+      "inquiryContact": {
+        "organization": "가까운 지역농협"
+      },
+      "guidelineDocument": "2025년 농업인안전재해보험 사업시행지침"
+    }
+  },
+  "metadata": {
+    "dataSource": "귀농귀촌 지원사업 관련 법령 및 시행지침",
+    "lastUpdated": "2025",
+    "applicableYear": "2025년 상반기 기준",
+    "version": "1.0",
+    "notes": [
+      "실제 신청 시 관할 시·군 또는 세무서에 최신 정보 확인 필요",
+      "법령 및 시행지침 개정에 따라 내용이 변경될 수 있음"
+    ]
+  }
+}

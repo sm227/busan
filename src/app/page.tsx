@@ -208,6 +208,22 @@ export default function Home() {
             {/* 인기 게시글 슬라이더 */}
             <PopularPostsSlider onPostClick={handlePostClick} />
 
+            {/* 세제혜택 안내 */}
+            <div className="card p-6">
+              <button
+                onClick={() => router.push('/texHelp')}
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 px-6 rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all gentle-scale shadow-lg shadow-blue-500/25"
+              >
+                <div className="flex items-center justify-center space-x-3">
+                  <span className="text-2xl"></span>
+                  <div className="text-left">
+                    <h4 className="font-bold text-lg">귀농귀촌 혜택 알아보기</h4>
+                    <p className="text-blue-100 text-sm">다양한 세제혜택과 지원사업을 한번에 모아보세요</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+
             {/* 추천 시작 카드 */}
             <div className="card p-8">
               <div className="text-center">

@@ -287,7 +287,7 @@ export function transformVillageToProperty(item: RuralVillageItem, index: number
   if (features.length === 0) features.push('농촌 주택');
 
   return {
-    id: item.villId || `api-village-${index}`,
+    id: String(item.villId || `api-village-${index}`),
     title: item.villNm || '농촌 마을',
     location: {
       district: item.sidoNm || '',

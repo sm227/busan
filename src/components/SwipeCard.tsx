@@ -90,19 +90,17 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ property, story, o
               </span>
             </div>
           </div>
-          <motion.div 
+          <motion.div
             className="absolute inset-0 bg-stone-900/60 backdrop-blur-[2px] flex items-center justify-center z-10"
-            style={{ opacity: nopeOpacity }}
-            pointerEvents="none"
+            style={{ opacity: nopeOpacity, pointerEvents: 'none' }}
           >
             <div className="border-4 border-white text-white px-6 py-2 rounded-xl transform -rotate-12">
               <span className="text-4xl font-bold tracking-wider">NOPE</span>
             </div>
           </motion.div>
-          <motion.div 
+          <motion.div
             className="absolute inset-0 bg-orange-500/60 backdrop-blur-[2px] flex items-center justify-center z-10"
-            style={{ opacity: likeOpacity }}
-            pointerEvents="none"
+            style={{ opacity: likeOpacity, pointerEvents: 'none' }}
           >
              <div className="border-4 border-white text-white px-6 py-2 rounded-xl transform rotate-12">
               <span className="text-4xl font-bold tracking-wider">LIKE</span>

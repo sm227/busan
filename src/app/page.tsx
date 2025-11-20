@@ -439,11 +439,11 @@ export default function Home() {
               <span className="text-[10px] font-medium">홈</span>
             </button>
             <button
-              onClick={startMatching}
+              onClick={() => router.push("/maps")}
               className="flex flex-col items-center py-3 text-stone-400 hover:text-stone-800 transition-colors"
             >
-              <Search className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">매칭</span>
+              <Map className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">지도</span>
             </button>
             <button
               onClick={() => router.push("/ai-consultation")}

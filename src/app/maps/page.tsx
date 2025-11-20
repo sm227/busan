@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { RuralProperty } from '@/types';
 import { useApp } from '@/contexts/AppContext';
+import { ListFilter, X, Heart, MapPin, Home, Trees, Users, Loader, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 
 declare global {
   interface Window {
@@ -20,46 +22,36 @@ export default function MapsPage() {
   const [selectedVillage, setSelectedVillage] = useState<RuralProperty | null>(null);
   const { currentUser, likedProperties, setLikedProperties } = useApp();
 
-  // 마을 데이터 불러오기 초기 한번만 api 사용
+  // 1. 데이터 로드
   useEffect(() => {
     const fetchAllVillages = async () => {
       setLoading(true);
-      setLoadingStatus('마을 데이터 불러오는 중...');
+      setLoadingStatus('전국 빈집 데이터 수집 중...');
 
       try {
         const response = await fetch('/api/villages');
         const data = await response.json();
 
         if (data.success && data.properties) {
-          // 지역별 통계
-          const regionStats = data.properties.reduce((acc: any, village: any) => {
-            const region = village.location.district;
-            acc[region] = (acc[region] || 0) + 1;
-            return acc;
-          }, {});
-
-          Object.entries(regionStats).forEach(([region, count]) => {
-            console.log(`   - ${region}: ${count}개`);
-          });
-
           setVillages(data.properties);
-        } else {
-          // console.error('마을 데이터 로드 실패');
         }
       } catch (error) {
-        // console.error('API 호출 오류:', error);
+        console.error(error);
       } finally {
-        setLoading(false);
-        setLoadingStatus('');
+        setTimeout(() => {
+          setLoading(false);
+          setLoadingStatus('');
+        }, 1500);
       }
     };
 
     fetchAllVillages();
   }, []);
 
-  // 카카오맵 초기화 및 마커 표시
+  // 2. 카카오맵 초기화
   useEffect(() => {
-    // 카카오맵 API 스크립트 로드
+    if (loading) return;
+
     const script = document.createElement('script');
     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY}&autoload=false`;
     script.async = true;
@@ -69,18 +61,13 @@ export default function MapsPage() {
       window.kakao.maps.load(() => {
         if (!mapContainer.current) return;
 
-        // 지도 옵션
         const options = {
-          center: new window.kakao.maps.LatLng(36.5, 127.5), // 대한민국 중심
-          level: 13, // 전국 뷰
+          center: new window.kakao.maps.LatLng(36.5, 127.5),
+          level: 13,
         };
 
-        // 지도 생성
         const map = new window.kakao.maps.Map(mapContainer.current, options);
 
-        // console.log('카카오맵 로드 완료');
-
-        // 마을 데이터가 로드되면 마커 표시
         if (villages.length > 0) {
           displayRegionalMarkers(map);
         }
@@ -90,12 +77,10 @@ export default function MapsPage() {
     return () => {
       script.remove();
     };
-  }, [villages]);
+  }, [villages, loading]);
 
-  // 지역별 마커 표시 함수
+  // 3. 마커 표시
   const displayRegionalMarkers = (map: any) => {
-    // console.log('=== 지역별 마커 생성 시작 ===');
-
     const regionCenters: { [key: string]: { lat: number; lng: number } } = {
       '서울특별시': { lat: 37.5665, lng: 126.9780 },
       '부산광역시': { lat: 35.1796, lng: 129.0756 },
@@ -116,7 +101,6 @@ export default function MapsPage() {
       '제주특별자치도': { lat: 33.4890, lng: 126.4983 },
     };
 
-    // 지역별로 마을 그룹화
     const byRegion = villages.reduce((acc: any, village) => {
       const region = village.location.district;
       if (!acc[region]) acc[region] = [];
@@ -124,62 +108,39 @@ export default function MapsPage() {
       return acc;
     }, {});
 
-    // console.log('지역별 마을 분포:');
-
-    // 각 지역마다 마커 생성
     Object.entries(byRegion).forEach(([region, villageList]: [string, any]) => {
       const count = villageList.length;
       const center = regionCenters[region];
 
-      if (!center) {
-        // console.log(`${region}: 좌표 정보 없음 (${count}개)`);
-        return;
-      }
+      if (!center) return;
 
-      // console.log(`${region}: ${count}개 마을`);
-
-      // 마커 위치
       const position = new window.kakao.maps.LatLng(center.lat, center.lng);
+      const shortName = region.substring(0, 2);
 
-      // 지역 이름 줄이기
-      const shortName = region
-        .replace('특별자치도', '')
-        .replace('특별자치시', '')
-        .replace('특별시', '')
-        .replace('광역시', '')
-        .replace('청남도', '남')
-        .replace('청북도', '북')
-        .replace('상남도', '남')
-        .replace('상북도', '북')
-        .replace('라남도', '남')
-        .replace('라북도', '북')
-        .replace('원도', '원')
-        .replace('기도', '기')
-        .replace('제주', '제주');
-
-      // 커스텀 오버레이 HTML (마을 개수 표시)
       const markerElement = document.createElement('div');
       markerElement.innerHTML = `
         <div style="
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          color: white;
-          padding: 8px 14px;
+          background-color: white;
+          color: #292524;
+          padding: 6px 12px;
           border-radius: 20px;
-          font-weight: bold;
-          font-size: 14px;
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-          border: 2px solid white;
-          white-space: nowrap;
+          font-family: sans-serif;
+          font-weight: 700;
+          font-size: 13px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+          border: 1px solid #e7e5e4;
+          display: flex;
+          align-items: center;
+          gap: 4px;
           cursor: pointer;
           transition: transform 0.2s;
         " class="region-marker">
-          ${shortName} +${count}
+          <span>${shortName}</span>
+          <span style="color: #f97316; font-weight: 800;">${count}</span>
         </div>
       `;
 
-      // 마커 클릭 이벤트
       markerElement.addEventListener('click', () => {
-        // console.log(`${region} 클릭 - ${count}개 마을`);
         setSelectedRegion(region);
         setSelectedVillages(villageList);
       });
@@ -194,7 +155,6 @@ export default function MapsPage() {
         if (div) div.style.transform = 'scale(1)';
       });
 
-      // 커스텀 오버레이 생성
       const overlay = new window.kakao.maps.CustomOverlay({
         position: position,
         content: markerElement,
@@ -204,234 +164,201 @@ export default function MapsPage() {
 
       overlay.setMap(map);
     });
-
-    // console.log('마커 생성 완료');
   };
 
-  // 하트 버튼 클릭 핸들러
   const handleLike = async (village: RuralProperty) => {
     if (!currentUser) {
       alert('로그인이 필요합니다.');
       return;
     }
 
-    // 이미 좋아요 했는지 확인
     const isAlreadyLiked = likedProperties.some(p => p.id === village.id);
 
-    if (isAlreadyLiked) {
-      // 관심목록에서 제거
-      try {
+    try {
+      if (isAlreadyLiked) {
         const response = await fetch('/api/recommendations', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: currentUser.id,
-            villageId: village.id,
-          }),
+          body: JSON.stringify({ userId: currentUser.id, villageId: village.id }),
         });
-
-        const data = await response.json();
-
-        if (data.success) {
+        if ((await response.json()).success) {
           setLikedProperties(likedProperties.filter(p => p.id !== village.id));
-          alert('관심목록에서 제거되었습니다.');
-        } else {
-          alert('제거에 실패했습니다.');
         }
-      } catch (error) {
-        console.error('관심목록 제거 오류:', error);
-        alert('오류가 발생했습니다.');
-      }
-      return;
-    }
-
-    // 관심목록에 추가
-    try {
-      const response = await fetch('/api/recommendations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUser.id,
-          property: village,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setLikedProperties([...likedProperties, village]);
-        alert('관심목록에 추가되었습니다!');
       } else {
-        alert('저장에 실패했습니다.');
+        const response = await fetch('/api/recommendations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, property: village }),
+        });
+        if ((await response.json()).success) {
+          setLikedProperties([...likedProperties, village]);
+        }
       }
     } catch (error) {
-      console.error('관심목록 추가 오류:', error);
-      alert('오류가 발생했습니다.');
+      console.error(error);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      {/* 모바일 컨테이너 */}
-      <div className="mx-auto max-w-md min-h-screen bg-white shadow-xl flex flex-col">
-        {/* 헤더 */}
-        <div className="bg-white border-b border-gray-200 p-4">
-          <h1 className="text-xl font-bold text-gray-800">농촌 지도</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            {loading ? loadingStatus : `전국 ${villages.length}개 마을`}
-          </p>
-        </div>
-
-        {/* 지도 컨테이너 */}
-        <div className="flex-1 relative">
-          {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 z-10">
-              <div className="text-center">
-                {/* 로고 애니메이션 */}
-                <div className="relative w-32 h-32 mx-auto mb-6">
-                  <style jsx>{`
-                    @keyframes float {
-                      0%, 100% { transform: translateY(0px) translateX(0px); }
-                      25% { transform: translateY(-20px) translateX(10px); }
-                      50% { transform: translateY(-10px) translateX(-10px); }
-                      75% { transform: translateY(-15px) translateX(5px); }
-                    }
-                    .animate-float {
-                      animation: float 3s ease-in-out infinite;
-                    }
-                  `}</style>
-                  <img
-                    src="/logo.png"
-                    alt="로고"
-                    className="w-full h-full object-contain animate-float"
-                  />
-                </div>
-
-                <p className="text-xl font-bold text-green-700 mb-2">빈집을 찾고 있어요!</p>
-                <p className="text-sm text-gray-600">{loadingStatus}</p>
-
-                {/* 로딩 바 */}
-                <div className="w-64 h-2 bg-gray-200 rounded-full mx-auto mt-4 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-pulse"></div>
-                </div>
+    <div className="min-h-screen bg-[#F5F5F0] font-sans text-stone-800">
+      <div className="mx-auto max-w-md min-h-screen bg-white shadow-xl flex flex-col relative">
+        
+        {/* Header */}
+        <div className="absolute top-0 left-0 right-0 z-20 px-4 py-4">
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-stone-100 px-5 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => window.history.back()}
+                className="p-1 rounded-full hover:bg-stone-100 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-stone-800" />
+              </button>
+              <div>
+                <h1 className="font-serif font-bold text-stone-800 leading-none">대동여지도</h1>
+                <p className="text-[10px] text-stone-400 mt-0.5">
+                   {loading ? "데이터 수신 중..." : `전국 ${villages.length}곳의 빈집`}
+                </p>
               </div>
             </div>
+            <div className="bg-stone-100 p-2 rounded-full text-stone-400 hover:text-stone-800 cursor-pointer">
+               <ListFilter className="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+
+        {/* Map Area */}
+        <div className="flex-1 relative bg-stone-100">
+          
+          {/* 로딩 애니메이션 */}
+          {loading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#F5F5F0] z-30">
+              <style jsx>{`
+                @keyframes float {
+                  0%, 100% { transform: translateY(0px); }
+                  50% { transform: translateY(-15px); }
+                }
+                .animate-float {
+                  animation: float 3s ease-in-out infinite;
+                }
+              `}</style>
+              <div className="relative w-28 h-28 mb-6 animate-float">
+                <Image
+                  src="/logo.png"
+                  alt="로딩중"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <p className="text-lg font-serif font-bold text-stone-800 mb-1">빈집을 찾고 있어요</p>
+              <p className="text-xs text-stone-500">{loadingStatus}</p>
+            </div>
           )}
+
           <div ref={mapContainer} className="absolute inset-0" />
 
-          {/* 마을 상세 정보 패널 */}
+          {/* 1. 상세 정보 패널 (기존 내용 복구 + 디자인 적용) */}
           {selectedVillage && (
-            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl max-h-[80%] flex flex-col z-30">
-              {/* 패널 헤더 */}
-              <div className="p-4 border-b border-gray-200 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => setSelectedVillage(null)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <h2 className="text-lg font-bold text-gray-800 flex-1 text-center">{selectedVillage.title}</h2>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLike(selectedVillage);
-                    }}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                  >
-                    {likedProperties.some(p => p.id === selectedVillage.id) ? (
-                      <svg className="w-6 h-6 text-red-500 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                      </svg>
-                    ) : (
-                      <svg className="w-6 h-6 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                    )}
-                  </button>
+            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[85%] flex flex-col z-40 animate-in slide-in-from-bottom duration-300">
+              
+              {/* Handle Bar */}
+              <div className="w-full flex justify-center pt-3 pb-1">
+                 <div className="w-12 h-1 bg-stone-200 rounded-full" />
+              </div>
+
+              {/* Header */}
+              <div className="px-6 py-3 flex items-start justify-between border-b border-stone-50">
+                <div className="flex-1">
+                   <h2 className="text-xl font-serif font-bold text-stone-800 mb-1">{selectedVillage.title}</h2>
+                   <p className="text-xs text-stone-500 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> 
+                      {selectedVillage.location.district} {selectedVillage.location.city}
+                   </p>
+                </div>
+                <div className="flex gap-2">
+                   <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLike(selectedVillage);
+                      }}
+                      className="p-2.5 rounded-full bg-stone-50 hover:bg-orange-50 transition-colors group"
+                    >
+                      <Heart 
+                        className={`w-5 h-5 transition-colors ${
+                          likedProperties.some(p => p.id === selectedVillage.id) 
+                            ? 'text-orange-500 fill-orange-500' 
+                            : 'text-stone-400 group-hover:text-orange-400'
+                        }`} 
+                      />
+                    </button>
+                    <button
+                      onClick={() => setSelectedVillage(null)}
+                      className="p-2.5 rounded-full bg-stone-50 hover:bg-stone-100 text-stone-400 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                 </div>
               </div>
 
-              {/* 상세 정보 내용 */}
-              <div className="flex-1 overflow-y-auto p-4">
+              {/* Content Scroll (기존 데이터 항목 모두 복구) */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+                
                 {/* 이미지 */}
-                {selectedVillage.images && selectedVillage.images.length > 0 && (
-                  <div className="mb-4 rounded-lg overflow-hidden">
-                    <img
-                      src={selectedVillage.images[0]}
-                      alt={selectedVillage.title}
-                      className="w-full h-48 object-cover"
-                    />
+                {selectedVillage.images && selectedVillage.images.length > 0 ? (
+                  <div className="relative w-full aspect-video bg-stone-100 rounded-2xl overflow-hidden border border-stone-100">
+                    <img src={selectedVillage.images[0]} alt={selectedVillage.title} className="w-full h-full object-cover" />
                   </div>
-                )}
+                ) : null}
 
-                {/* 위치 정보 */}
-                <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">위치</h3>
-                  <p className="text-gray-600">
-                    {selectedVillage.location.district} {selectedVillage.location.city} {selectedVillage.location.region}
-                  </p>
+                {/* 위치 정보 (텍스트) */}
+                <div>
+                   <h3 className="text-xs font-bold text-stone-400 mb-2 uppercase tracking-wider">LOCATION</h3>
+                   <p className="text-sm font-bold text-stone-700 bg-stone-50 p-3 rounded-xl border border-stone-100">
+                      {selectedVillage.location.district} {selectedVillage.location.city} {selectedVillage.location.region}
+                   </p>
                 </div>
 
                 {/* 가격 정보 */}
-                <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">가격</h3>
+                <div>
+                  <h3 className="text-xs font-bold text-stone-400 mb-2 uppercase tracking-wider">PRICE</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedVillage.price.rent && (
-                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                      <span className="bg-stone-800 text-white px-3 py-1.5 rounded-lg text-sm font-bold">
                         월세 {selectedVillage.price.rent.toLocaleString()}원
                       </span>
                     )}
                     {selectedVillage.price.sale && (
-                      <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                      <span className="bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg text-sm font-bold border border-orange-200">
                         매매 {(selectedVillage.price.sale / 10000).toLocaleString()}만원
                       </span>
                     )}
                     {selectedVillage.price.deposit && (
-                      <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                      <span className="bg-white border border-stone-200 text-stone-600 px-3 py-1.5 rounded-lg text-sm font-medium">
                         보증금 {(selectedVillage.price.deposit / 10000).toLocaleString()}만원
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* 주택 정보 */}
-                <div className="mb-4">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">주택 정보</h3>
+                {/* 주택 정보 (그리드) */}
+                <div>
+                  <h3 className="text-xs font-bold text-stone-400 mb-2 uppercase tracking-wider">DETAILS</h3>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="bg-gray-50 p-2 rounded">
-                      <span className="text-gray-500">방</span>
-                      <span className="ml-2 font-semibold text-gray-900">{selectedVillage.details.rooms}개</span>
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded">
-                      <span className="text-gray-500">평수</span>
-                      <span className="ml-2 font-semibold text-gray-900">{selectedVillage.details.size}평</span>
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded">
-                      <span className="text-gray-500">유형</span>
-                      <span className="ml-2 font-semibold text-gray-900">
-                        {selectedVillage.details.type === 'hanok' ? '한옥' :
-                         selectedVillage.details.type === 'modern' ? '현대주택' :
-                         selectedVillage.details.type === 'farm' ? '농가주택' :
-                         selectedVillage.details.type === 'apartment' ? '아파트' :
-                         selectedVillage.details.type}
-                      </span>
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded">
-                      <span className="text-gray-500">상태</span>
-                      <span className="ml-2 font-semibold text-gray-900">
-                        {selectedVillage.details.condition === 'excellent' ? '최상' :
-                         selectedVillage.details.condition === 'good' ? '양호' :
-                         selectedVillage.details.condition === 'needs-repair' ? '수리필요' :
-                         selectedVillage.details.condition}
-                      </span>
-                    </div>
+                    {[
+                      { label: '방 개수', value: `${selectedVillage.details.rooms}개` },
+                      { label: '면적', value: `${selectedVillage.details.size}평` },
+                      { label: '유형', value: selectedVillage.details.type === 'hanok' ? '한옥' : selectedVillage.details.type },
+                      { label: '상태', value: selectedVillage.details.condition },
+                    ].map((item, idx) => (
+                      <div key={idx} className="bg-stone-50 p-3 rounded-xl border border-stone-100">
+                        <span className="text-[10px] text-stone-400 block mb-0.5">{item.label}</span>
+                        <span className="text-sm font-bold text-stone-700">{item.value}</span>
+                      </div>
+                    ))}
                     {selectedVillage.details.yearBuilt && (
-                      <div className="bg-gray-50 p-2 rounded col-span-2">
-                        <span className="text-gray-500">건축년도</span>
-                        <span className="ml-2 font-semibold text-gray-900">{selectedVillage.details.yearBuilt}년</span>
+                      <div className="bg-stone-50 p-3 rounded-xl border border-stone-100 col-span-2">
+                        <span className="text-[10px] text-stone-400 block mb-0.5">건축년도</span>
+                        <span className="text-sm font-bold text-stone-700">{selectedVillage.details.yearBuilt}년</span>
                       </div>
                     )}
                   </div>
@@ -439,136 +366,114 @@ export default function MapsPage() {
 
                 {/* 특징 */}
                 {selectedVillage.features && selectedVillage.features.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-2">특징</h3>
+                  <div>
+                    <h3 className="text-xs font-bold text-stone-400 mb-2 uppercase tracking-wider">FEATURES</h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedVillage.features.map((feature, idx) => (
-                        <span key={idx} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-                          {feature}
+                        <span key={idx} className="bg-white border border-stone-200 text-stone-600 px-3 py-1 rounded-full text-xs font-medium">
+                          #{feature}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* 주변 환경 */}
+                {/* 주변 환경 (기존 정보 복구) */}
                 {selectedVillage.surroundings && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-2">주변 환경</h3>
-                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600 space-y-1">
+                  <div>
+                    <h3 className="text-xs font-bold text-stone-400 mb-2 uppercase tracking-wider flex items-center gap-1">
+                       <Trees className="w-3 h-3" /> SURROUNDINGS
+                    </h3>
+                    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-sm text-stone-600 space-y-2">
                       {selectedVillage.surroundings.naturalFeatures && selectedVillage.surroundings.naturalFeatures.length > 0 && (
-                        <p>자연: {selectedVillage.surroundings.naturalFeatures.join(', ')}</p>
+                        <p><span className="font-bold text-stone-400 text-xs mr-2">자연</span> {selectedVillage.surroundings.naturalFeatures.join(', ')}</p>
                       )}
                       {selectedVillage.surroundings.nearbyFacilities && selectedVillage.surroundings.nearbyFacilities.length > 0 && (
-                        <p>편의시설: {selectedVillage.surroundings.nearbyFacilities.join(', ')}</p>
+                        <p><span className="font-bold text-stone-400 text-xs mr-2">시설</span> {selectedVillage.surroundings.nearbyFacilities.join(', ')}</p>
                       )}
                       {selectedVillage.surroundings.transportation && selectedVillage.surroundings.transportation.length > 0 && (
-                        <p>교통: {selectedVillage.surroundings.transportation.join(', ')}</p>
+                        <p><span className="font-bold text-stone-400 text-xs mr-2">교통</span> {selectedVillage.surroundings.transportation.join(', ')}</p>
                       )}
                     </div>
                   </div>
                 )}
 
-                {/* 마을 정보 */}
+                {/* 마을 정보 (기존 정보 복구) */}
                 {selectedVillage.communityInfo && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-2">마을 정보</h3>
-                    <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600 space-y-1">
+                  <div>
+                    <h3 className="text-xs font-bold text-stone-400 mb-2 uppercase tracking-wider flex items-center gap-1">
+                       <Users className="w-3 h-3" /> COMMUNITY
+                    </h3>
+                    <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 text-sm text-stone-600 space-y-2">
                       {selectedVillage.communityInfo.population && (
-                        <p>인구: {selectedVillage.communityInfo.population}명</p>
+                        <p><span className="font-bold text-stone-400 text-xs mr-2">인구</span> {selectedVillage.communityInfo.population}명</p>
                       )}
                       {selectedVillage.communityInfo.averageAge && (
-                        <p>평균 연령: {selectedVillage.communityInfo.averageAge}세</p>
+                        <p><span className="font-bold text-stone-400 text-xs mr-2">연령</span> {selectedVillage.communityInfo.averageAge}세</p>
                       )}
                       {selectedVillage.communityInfo.mainIndustries && selectedVillage.communityInfo.mainIndustries.length > 0 && (
-                        <p>주요 산업: {selectedVillage.communityInfo.mainIndustries.join(', ')}</p>
+                        <p><span className="font-bold text-stone-400 text-xs mr-2">산업</span> {selectedVillage.communityInfo.mainIndustries.join(', ')}</p>
                       )}
                       {selectedVillage.communityInfo.culturalActivities && selectedVillage.communityInfo.culturalActivities.length > 0 && (
-                        <p>문화 활동: {selectedVillage.communityInfo.culturalActivities.join(', ')}</p>
+                        <p><span className="font-bold text-stone-400 text-xs mr-2">활동</span> {selectedVillage.communityInfo.culturalActivities.join(', ')}</p>
                       )}
                     </div>
                   </div>
                 )}
+
               </div>
             </div>
           )}
 
-          {/* 지역별 마을 목록 패널 */}
+          {/* 2. 지역별 목록 패널 (기존 유지) */}
           {selectedRegion && selectedVillages.length > 0 && !selectedVillage && (
-            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl max-h-[80%] flex flex-col z-20">
-              {/* 패널 헤더 */}
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-800">{selectedRegion}</h2>
-                    <p className="text-sm text-gray-600">{selectedVillages.length}개 마을</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedRegion(null);
-                      setSelectedVillages([]);
-                    }}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[60%] flex flex-col z-30 animate-in slide-in-from-bottom duration-300">
+              <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center">
+                <div>
+                   <h2 className="text-lg font-serif font-bold text-stone-800">{selectedRegion}</h2>
+                   <p className="text-xs text-stone-500">{selectedVillages.length}개의 마을을 찾았어요</p>
                 </div>
+                <button onClick={() => setSelectedRegion(null)} className="p-2 bg-stone-50 rounded-full hover:bg-stone-100 transition-colors">
+                   <X className="w-4 h-4 text-stone-500" />
+                </button>
               </div>
-
-              {/* 마을 목록 */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FDFBF7]">
                 {selectedVillages.map((village, index) => {
                   const isLiked = likedProperties.some(p => p.id === village.id);
-
                   return (
                     <div
                       key={village.id || index}
-                      className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors relative"
+                      onClick={() => setSelectedVillage(village)}
+                      className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm active:scale-[0.99] transition-transform flex gap-4 cursor-pointer"
                     >
-                      {/* 하트 버튼 */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLike(village);
-                        }}
-                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-white transition-colors"
-                      >
-                        {isLiked ? (
-                          <svg className="w-6 h-6 text-red-500 fill-current" viewBox="0 0 24 24">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                          </svg>
-                        ) : (
-                          <svg className="w-6 h-6 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                          </svg>
-                        )}
-                      </button>
+                       <div className="w-20 h-20 bg-stone-100 rounded-xl shrink-0 overflow-hidden">
+                          {village.images?.[0] ? (
+                            <img src={village.images[0]} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-stone-300"><Home className="w-6 h-6" /></div>
+                          )}
+                       </div>
+                       
+                       <div className="flex-1 min-w-0 relative">
+                          <h3 className="font-bold text-stone-800 text-sm mb-1 truncate pr-6">{village.title}</h3>
+                          <p className="text-xs text-stone-500 mb-3">{village.location.city} {village.location.region}</p>
+                          
+                          <div className="flex items-center gap-2">
+                             {village.price.rent && <span className="text-xs font-bold text-orange-600">월 {village.price.rent.toLocaleString()}</span>}
+                             {village.price.sale && <span className="text-xs font-bold text-stone-800">매매 {(village.price.sale / 10000).toLocaleString()}만</span>}
+                          </div>
 
-                      <div
-                        onClick={() => {
-                          setSelectedVillage(village);
-                        }}
-                        className="cursor-pointer pr-12"
-                      >
-                        <h3 className="font-bold text-gray-800 mb-1">{village.title}</h3>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {village.location.city} {village.location.region}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          {village.price.rent && (
-                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
-                              월세 {village.price.rent.toLocaleString()}원
-                            </span>
-                          )}
-                          {village.price.sale && (
-                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                              매매 {(village.price.sale / 10000).toLocaleString()}만원
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLike(village);
+                            }}
+                            className="absolute top-0 right-0"
+                          >
+                             <Heart className={`w-4 h-4 ${isLiked ? 'text-orange-500 fill-orange-500' : 'text-stone-300'}`} />
+                          </button>
+                       </div>
                     </div>
                   );
                 })}

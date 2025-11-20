@@ -69,7 +69,7 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ property, story, o
         {/* ... 기존 내부 디자인 코드 (이미지, 정보 등) 그대로 유지 ... */}
         {/* 아래 내용은 아까 드린 코드와 동일하므로 생략하지 않고 그대로 두시면 됩니다 */}
         
-        <div className="relative h-[48%] shrink-0 bg-stone-100">
+        <div className="relative h-[35%] shrink-0 bg-stone-100">
           <img 
             src={property.images[0]} 
             alt={property.title}

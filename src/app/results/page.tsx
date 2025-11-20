@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
-import { ArrowLeft, MapPin, Eye, Phone, X } from "lucide-react";
+import { ArrowLeft, MapPin, Eye, Phone, X, Sparkles, Home, Search } from "lucide-react";
 import { MatchingAlgorithm } from "@/lib/matching";
 import { sampleProperties } from "@/data/properties";
 import { UserPreferences, RuralProperty } from "@/types";
@@ -43,14 +43,11 @@ export default function ResultsPage() {
       title: property.title
     });
 
-    // DB에서 먼저 삭제
     if (currentUser) {
       try {
         const response = await fetch('/api/recommendations', {
           method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: currentUser.id,
             villageId: String(property.id)
@@ -58,122 +55,144 @@ export default function ResultsPage() {
         });
 
         const result = await response.json();
-        console.log('🗑️ DB 삭제 응답:', result);
-
         if (result.success) {
-          // DB 삭제 성공 시에만 로컬 상태에서 제거
           setLikedProperties(likedProperties.filter(p => p.id !== property.id));
-          console.log('✅ 로컬 상태에서도 제거 완료');
-        } else {
-          console.error('❌ DB 삭제 실패:', result);
         }
       } catch (error) {
         console.error('❌ 삭제 요청 실패:', error);
       }
     } else {
-      // 로그인 안 한 경우 로컬 상태에서만 제거
       setLikedProperties(likedProperties.filter(p => p.id !== property.id));
-      console.log('⚠️ 비로그인 상태 - 로컬에서만 제거');
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 overflow-x-hidden">
-      <div className="max-w-md mx-auto bg-white min-h-screen relative">
-        <div className="min-h-screen bg-emerald-50/30">
-          <div className="px-6 pb-6">
-            <div className="flex items-center py-6 mb-6">
-              <button
-                onClick={() => router.push("/")}
-                className="back-button"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>홈으로</span>
-              </button>
-            </div>
+    <div className="min-h-screen bg-[#F5F5F0] overflow-x-hidden font-sans text-stone-800">
+      <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-xl flex flex-col">
+        
+        {/* 헤더 */}
+        <div className="px-6 py-4 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-20 border-b border-stone-100">
+          <button
+            onClick={() => router.push("/")}
+            className="p-2 -ml-2 text-stone-500 hover:bg-stone-100 rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <span className="font-serif font-bold text-lg text-stone-800">내가 찜한 집</span>
+          <div className="w-10" /> {/* 레이아웃 밸런스용 */}
+        </div>
 
-            <h2 className="text-2xl font-bold text-slate-800 mb-8 text-center">
-              매칭 결과
-            </h2>
+        <div className="flex-1 px-6 py-6 pb-24">
+          
+          {/* 상단 요약 */}
+          <div className="mb-6">
+             <h2 className="text-2xl font-serif font-bold text-stone-800 mb-2">
+               마음에 드는 곳을<br/>
+               모아봤어요 🏡
+             </h2>
+             <p className="text-stone-500 text-sm">
+               총 <span className="font-bold text-orange-600">{likedProperties.length}개</span>의 보금자리가 기다려요
+             </p>
+          </div>
 
-            {likedProperties.length > 0 ? (
-              <div className="space-y-6 mb-8">
-                <div className="text-center bg-emerald-100/50 rounded-2xl p-4">
-                  <p className="text-slate-700 font-semibold">
-                    관심 표시한 곳 {likedProperties.length}개
-                  </p>
-                </div>
-
-                {likedProperties.map((property) => (
-                  <div
-                    key={property.id}
-                    className="card p-6 relative"
+          {likedProperties.length > 0 ? (
+            <div className="space-y-4">
+              {likedProperties.map((property) => (
+                <div
+                  key={property.id}
+                  className="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm hover:shadow-md transition-shadow relative group"
+                >
+                  {/* 삭제 버튼 (우측 상단) */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveProperty(property);
+                    }}
+                    className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-stone-50 text-stone-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                    aria-label="삭제"
                   >
-                    {/* X 버튼 - 우측 상단 */}
-                    <button
-                      onClick={() => handleRemoveProperty(property)}
-                      className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 transition-colors"
-                      aria-label="관심 표시 삭제"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    <X className="w-4 h-4" />
+                  </button>
 
-                    <h4 className="font-bold text-slate-900 mb-2 text-lg pr-8">
+                  {/* 매칭 점수 뱃지 */}
+                  <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-stone-900 rounded-full text-[10px] text-white font-bold mb-3">
+                    <Sparkles className="w-3 h-3 text-orange-400" />
+                    {property.matchScore}% 일치
+                  </div>
+
+                  {/* 정보 영역 */}
+                  <div className="pr-8 mb-4">
+                    <h4 className="font-serif font-bold text-stone-800 text-lg mb-1 truncate">
                       {property.title}
                     </h4>
-                    <div className="flex items-center text-slate-600 mb-3">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      <span>
+                    <div className="flex items-center text-stone-500 text-sm mb-2">
+                      <MapPin className="w-3.5 h-3.5 mr-1" />
+                      <span className="truncate">
                         {property.location.district}, {property.location.city}
                       </span>
                     </div>
-                    <div className="text-emerald-600 font-bold mb-4 text-lg">
-                      {property.matchScore}% 매칭 · 월{" "}
-                      {property.price.rent?.toLocaleString()}원
-                    </div>
-
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={() => handlePropertyDetail(property)}
-                        className="btn-secondary flex-1 flex items-center justify-center space-x-2 py-3"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>상세보기</span>
-                      </button>
-                      <button
-                        onClick={() => handleContact(property)}
-                        className="btn-primary flex-1 flex items-center justify-center space-x-2 py-3"
-                      >
-                        <Phone className="w-4 h-4" />
-                        <span>연락하기</span>
-                      </button>
+                    <div className="text-lg font-bold text-orange-600">
+                      월 {property.price.rent?.toLocaleString()}원
+                      {property.price.deposit && (
+                         <span className="text-xs font-medium text-stone-400 ml-1.5 font-sans">
+                           (보증금 {(property.price.deposit / 10000).toFixed(0)}만)
+                         </span>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center bg-white rounded-3xl p-8 mx-4">
-                <div className="text-4xl mb-4">🤔</div>
-                <p className="text-slate-700 font-medium mb-2">아직 마음에 드는 곳을 찾지 못하셨네요</p>
-                <p className="text-sm mb-4">다시 한번 시도해보시겠어요?</p>
+
+                  {/* 버튼 그룹 */}
+                  <div className="grid grid-cols-2 gap-3 pt-3 border-t border-stone-100">
+                    <button
+                      onClick={() => handlePropertyDetail(property)}
+                      className="flex items-center justify-center gap-2 py-3 rounded-xl border border-stone-200 text-stone-600 font-medium text-sm hover:bg-stone-50 transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                      상세보기
+                    </button>
+                    <button
+                      onClick={() => handleContact(property)}
+                      className="flex items-center justify-center gap-2 py-3 rounded-xl bg-stone-800 text-white font-medium text-sm hover:bg-stone-700 transition-colors"
+                    >
+                      <Phone className="w-4 h-4" />
+                      연락하기
+                    </button>
+                  </div>
+                </div>
+              ))}
+              
+              {/* 하단 여백 및 추가 버튼 */}
+              <div className="pt-4">
                 <button
-                  onClick={startMatching}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-medium transition-colors"
+                  onClick={() => router.push("/")}
+                  className="w-full py-4 bg-stone-100 text-stone-500 rounded-xl font-medium hover:bg-stone-200 transition-colors text-sm"
                 >
-                  다시 매칭하기
+                  홈으로 돌아가기
                 </button>
               </div>
-            )}
-
-            <div className="space-y-3 pb-8">
+            </div>
+          ) : (
+            /* 빈 상태 화면 */
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-6 bg-white rounded-3xl border border-stone-100 p-8 shadow-sm">
+              <div className="w-20 h-20 bg-stone-50 rounded-full flex items-center justify-center">
+                <Search className="w-8 h-8 text-stone-400" />
+              </div>
+              <div className="space-y-2">
+                 <h3 className="text-xl font-serif font-bold text-stone-800">
+                   아직 찜한 집이 없어요
+                 </h3>
+                 <p className="text-stone-500 text-sm">
+                   당신의 취향에 딱 맞는 집을<br/>다시 찾아볼까요?
+                 </p>
+              </div>
               <button
-                onClick={() => router.push("/")}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-lg font-medium transition-colors"
+                onClick={startMatching}
+                className="w-full bg-stone-800 hover:bg-stone-700 text-white py-4 rounded-xl font-bold transition-colors shadow-lg shadow-stone-200"
               >
-                홈으로 가기
+                매칭 다시 시작하기
               </button>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

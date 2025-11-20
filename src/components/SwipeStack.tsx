@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import SwipeCard from './SwipeCard';
-import { RuralProperty, VillageStory, UserPreferences } from '@/types';
+import SwipeCard, { SwipeCardRef } from './SwipeCard';
+import { RuralProperty, VillageStory } from '@/types';
+import { Sparkles } from 'lucide-react';
+
+export interface SwipeStackRef {
+  triggerSwipe: (direction: 'left' | 'right') => void;
+}
 
 interface SwipeStackProps {
   properties: RuralProperty[];
@@ -12,16 +17,26 @@ interface SwipeStackProps {
   onComplete: () => void;
 }
 
-export default function SwipeStack({ 
+const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({ 
   properties, 
   stories, 
   onSwipe, 
   onComplete 
-}: SwipeStackProps) {
+}, ref) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [visibleCards] = useState(3); // 동시에 보여줄 카드 수
+  const [visibleCards] = useState(3);
   const [removingCard, setRemovingCard] = useState<string | null>(null);
   const [stackRenderKey, setStackRenderKey] = useState(0);
+
+  const currentCardRef = useRef<SwipeCardRef>(null);
+
+  useImperativeHandle(ref, () => ({
+    triggerSwipe: (direction) => {
+      if (currentCardRef.current) {
+        currentCardRef.current.triggerSwipe(direction);
+      }
+    }
+  }));
 
   useEffect(() => {
     if (currentIndex >= properties.length) {
@@ -30,7 +45,6 @@ export default function SwipeStack({
   }, [currentIndex, properties.length, onComplete]);
 
   useEffect(() => {
-    // properties 배열이 변경되면 stackRenderKey 리셋
     setStackRenderKey(0);
     setCurrentIndex(0);
     setRemovingCard(null);
@@ -47,7 +61,7 @@ export default function SwipeStack({
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
         setRemovingCard(null);
-        setStackRenderKey(prev => prev + 1); // 렌더 키 업데이트
+        setStackRenderKey(prev => prev + 1);
       }, 100);
     }
   };
@@ -66,25 +80,35 @@ export default function SwipeStack({
 
   if (currentIndex >= properties.length) {
     return (
-      <div className="h-[600px] flex items-center justify-center">
+      <div className="h-[600px] flex items-center justify-center px-4">
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center bg-emerald-100 border border-emerald-200 rounded-xl p-8 shadow-lg"
+          className="text-center bg-white border border-stone-100 rounded-3xl p-10 shadow-xl max-w-sm w-full"
         >
-          <h3 className="text-2xl font-bold text-emerald-900 mb-4">
-            모든 추천을 확인했습니다!
+          <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Sparkles className="w-8 h-8 text-orange-400" />
+          </div>
+          <h3 className="text-2xl font-serif font-bold text-stone-800 mb-3">
+            모든 추천을 확인했어요!
           </h3>
-          <p className="text-emerald-700">
-            마음에 드는 곳이 있으셨나요?
+          <p className="text-stone-500 text-sm leading-relaxed mb-8">
+            마음에 드는 집이 있으셨나요?<br/>
+            결과 페이지에서 모아볼 수 있어요.
           </p>
+          <button 
+            onClick={onComplete}
+            className="w-full py-3 bg-stone-800 text-white rounded-xl font-bold hover:bg-stone-700 transition-colors"
+          >
+            결과 확인하기
+          </button>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="relative h-[600px] w-full max-w-md mx-auto">
+    <div className="relative h-[600px] w-full max-w-md mx-auto perspective-1000">
       <AnimatePresence mode="wait">
         {properties.slice(currentIndex, currentIndex + visibleCards)
           .filter(property => removingCard !== property.id)
@@ -92,42 +116,48 @@ export default function SwipeStack({
           const actualIndex = currentIndex + index;
           const story = getStoryForProperty(property.id);
           
+          // ✨ 중요: key 값을 ID + Index 조합으로 변경하여 중복 에러 방지
+          const uniqueKey = `${property.id}-${actualIndex}-${stackRenderKey}`;
+
           return (
             <motion.div
-              key={`${property.id}-${actualIndex}-${stackRenderKey}`}
+              key={uniqueKey}
               className="absolute inset-0"
               initial={{ 
                 scale: 1 - index * 0.05,
-                y: index * 8,
+                y: index * 12,
                 zIndex: visibleCards - index
               }}
               animate={{ 
                 scale: 1 - index * 0.05,
-                y: index * 8,
+                y: index * 12,
                 zIndex: visibleCards - index
               }}
               style={{
-                zIndex: visibleCards - index
+                zIndex: visibleCards - index,
+                transformStyle: 'preserve-3d'
               }}
             >
               {index === 0 ? (
                 <SwipeCard
+                  ref={currentCardRef}
                   property={property}
                   story={story}
                   onSwipe={handleSwipe}
                   onRemove={handleRemove}
                 />
               ) : (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-3xl shadow-xl h-full opacity-80">
-                  <div className="h-64 bg-emerald-300 rounded-t-3xl" />
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-emerald-900 mb-2">
-                      {property.title}
-                    </h3>
-                    <p className="text-emerald-700 text-sm">
-                      {property.location.district}, {property.location.city}
-                    </p>
+                <div className="bg-white border border-stone-200 rounded-3xl shadow-xl h-full overflow-hidden relative">
+                  <div className="h-[55%] bg-stone-200 animate-pulse" />
+                  <div className="p-6 space-y-3 opacity-40 filter blur-[1px]">
+                    <div className="h-6 bg-stone-200 rounded w-3/4" />
+                    <div className="h-4 bg-stone-100 rounded w-1/2" />
+                    <div className="pt-4 space-y-2">
+                        <div className="h-3 bg-stone-100 rounded w-full" />
+                        <div className="h-3 bg-stone-100 rounded w-5/6" />
+                    </div>
                   </div>
+                  <div className="absolute inset-0 bg-white/40" />
                 </div>
               )}
             </motion.div>
@@ -135,10 +165,14 @@ export default function SwipeStack({
         })}
       </AnimatePresence>
       
-      {/* Cards Counter */}
-      <div className="absolute top-4 left-4 bg-emerald-800 bg-opacity-90 text-emerald-50 px-3 py-1 rounded-full text-sm z-50 border border-emerald-600">
-        {currentIndex + 1} / {properties.length}
+      <div className="absolute top-6 left-6 z-50">
+        <div className="bg-stone-900/80 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide border border-white/10 shadow-lg">
+          {currentIndex + 1} <span className="text-stone-400 font-normal">/</span> {properties.length}
+        </div>
       </div>
     </div>
   );
-}
+});
+
+SwipeStack.displayName = 'SwipeStack';
+export default SwipeStack;

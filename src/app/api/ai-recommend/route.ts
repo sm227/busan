@@ -11,17 +11,20 @@ export async function POST(request: NextRequest) {
     const { userPreferences } = await request.json();
     // console.log('받은 설문 응답:', userPreferences);
 
-    // 1. 농촌 지역 코드 (대도시 제외)
-    const ruralSidoCodes = ['42', '43', '44', '45', '46', '47', '48'];
+    // 1. 전국 지역 코드 (17개 전체)
+    const allSidoCodes = [
+      '11', '26', '27', '28', '29', '30', '31', '36',  // 특별시/광역시
+      '41', '42', '43', '44', '45', '46', '47', '48', '50'  // 도 지역
+    ];
 
     // 2. Gemini AI에게 설문 분석 요청
     const preferencesText = formatPreferencesToText(userPreferences);
 
-    const analysisPrompt = `사용자 선호도에 맞는 한국 농촌 지역 코드 5개를 추천하세요.
+    const analysisPrompt = `사용자 선호도에 맞는 한국 지역 코드 7개를 추천하세요.
 
 선호도: ${preferencesText}
 
-지역: 42=강원도(산/자연), 43=충북(내륙), 44=충남(서해), 45=전북(전통), 46=전남(남해/섬), 47=경북(동해/산), 48=경남(남해)
+지역: 11=서울, 26=부산, 27=대구, 28=인천, 29=광주, 30=대전, 31=울산, 36=세종, 41=경기(수도권), 42=강원(산/자연), 43=충북(내륙), 44=충남(서해), 45=전북(전통), 46=전남(남해/섬), 47=경북(동해/산), 48=경남(남해), 50=제주(섬)
 
 JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"]}`;
 
@@ -77,7 +80,7 @@ JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"
     }
 
     const aiAnalysis = JSON.parse(aiResponseText);
-    const recommendedRegions = aiAnalysis.recommendedRegions || ruralSidoCodes;
+    const recommendedRegions = aiAnalysis.recommendedRegions || allSidoCodes;
 
     console.log('AI 추천 지역:', recommendedRegions);
 
@@ -123,38 +126,40 @@ JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"
       throw new Error('추천 지역에서 마을을 찾을 수 없습니다');
     }
 
-    // 4. 지역별로 그룹핑 (충남, 충북, 경북, 경남, 전남, 전북)
-    const targetRegions = ['충청남도', '충청북도', '경상북도', '경상남도', '전라남도', '전라북도'];
+    // 4. 지역별로 그룹핑 (전국 모든 지역)
     const byRegion = allProperties.reduce((acc: any, prop: any) => {
       const region = prop.location.district;
-      if (targetRegions.includes(region)) {
-        if (!acc[region]) acc[region] = [];
-        acc[region].push(prop);
-      }
+      if (!acc[region]) acc[region] = [];
+      acc[region].push(prop);
       return acc;
     }, {});
 
-    console.log('지역별 마을 수:', Object.keys(byRegion).map(r => `${r}: ${byRegion[r].length}`).join(', '));
+    const availableRegions = Object.keys(byRegion);
+    console.log('지역별 마을 수:', availableRegions.map(r => `${r}: ${byRegion[r].length}`).join(', '));
 
-    // 5. 각 지역에서 최소 1개씩 먼저 선택 (다양성 보장)
+    // 5. 각 지역에서 최소 2개씩 먼저 선택 (다양성 보장)
     const finalRecommendations: any[] = [];
     const selectedIds = new Set<string>();
 
-    // 5-1. 각 지역에서 1개씩 필수 선택
-    targetRegions.forEach(region => {
+    // 5-1. 각 지역에서 2개씩 필수 선택
+    availableRegions.forEach(region => {
       if (byRegion[region] && byRegion[region].length > 0) {
         const shuffled = [...byRegion[region]].sort(() => Math.random() - 0.5);
-        const selected = shuffled[0];
-        finalRecommendations.push(selected);
-        selectedIds.add(selected.id);
+        const toSelect = Math.min(2, byRegion[region].length); // 최대 2개 또는 지역에 있는 만큼
+
+        for (let i = 0; i < toSelect; i++) {
+          const selected = shuffled[i];
+          finalRecommendations.push(selected);
+          selectedIds.add(selected.id);
+        }
       }
     });
 
-    // 5-2. 10개가 될 때까지 남은 마을에서 추가 선택
-    const needed = 10 - finalRecommendations.length;
+    // 5-2. 20개가 될 때까지 남은 마을에서 추가 선택
+    const needed = 20 - finalRecommendations.length;
     if (needed > 0) {
       const remainingProperties = allProperties.filter(p =>
-        !selectedIds.has(p.id) && targetRegions.includes(p.location.district)
+        !selectedIds.has(p.id)
       );
 
       const shuffled = [...remainingProperties].sort(() => Math.random() - 0.5);

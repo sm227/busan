@@ -36,6 +36,7 @@ export interface SupportProgram {
   loan_interest_type?: string;
   loan_term?: string;
   purpose?: string;
+  contact?: string;
   program_type: ProgramType;
 }
 

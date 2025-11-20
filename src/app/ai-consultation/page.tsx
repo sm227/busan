@@ -31,7 +31,7 @@ export default function AIConsultationPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
-      content: '안녕하세요! 빈집다방 AI 상담사입니다.\n시골 생활에 대해 무엇이든 물어보세요 🌱',
+      content: '안녕하세요! 제 이름은 보리에요.\n시골 생활에 대해 무엇이든 물어보세요 🌱',
       isUser: false,
       timestamp: new Date()
     }
@@ -122,18 +122,14 @@ export default function AIConsultationPage() {
       <div className="max-w-md mx-auto w-full bg-white h-full relative shadow-xl flex flex-col">
         
         {/* 헤더 (고정) */}
-        <div className="shrink-0 bg-white/90 backdrop-blur-md border-b border-stone-100 px-4 py-3 flex items-center justify-between z-10">
+        <div className="shrink-0 bg-white/90 backdrop-blur-md border-b border-stone-100 px-4 py-3 flex items-center gap-3 z-10">
           <button
             onClick={() => router.push("/")}
             className="p-2 -ml-2 text-stone-500 hover:bg-stone-100 rounded-full transition-colors"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <div className="text-center">
-             <span className="font-serif font-bold text-lg text-stone-800 block leading-none">AI 이주 상담소</span>
-             <span className="text-[10px] text-stone-400 font-medium">빈집다방</span>
-          </div>
-          <div className="w-10" />
+          <span className="font-sans font-bold text-lg text-stone-800">AI 상담</span>
         </div>
 
         {/* 채팅 영역 (스크롤 가능) */}
@@ -244,7 +240,7 @@ export default function AIConsultationPage() {
 
         {/* 입력 영역 (하단 고정) */}
         <div className="shrink-0 p-4 bg-white border-t border-stone-100 pb-safe">
-          <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+          <form onSubmit={handleSubmit} className="flex gap-2 items-center">
             <div className="flex-1 relative">
               <textarea
                 value={inputValue}
@@ -264,9 +260,9 @@ export default function AIConsultationPage() {
             <button
               type="submit"
               disabled={!inputValue.trim() || isLoading}
-              className="w-12 h-[48px] bg-stone-800 text-white rounded-2xl flex items-center justify-center hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+              className="p-2 text-stone-800 hover:text-stone-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-6 h-6" />
             </button>
           </form>
         </div>

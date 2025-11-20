@@ -22,13 +22,11 @@ export default function WelcomePage() {
 
         {/* 중앙 로고 & 메시지 영역 */}
         <div className="flex-1 flex flex-col items-center justify-center -mt-8 gap-10">
-          {/* 메시지 카드 */}
-          <div className="bg-stone-50 px-8 py-5 rounded-2xl border border-stone-100">
-            <p className="text-stone-600 text-center leading-relaxed font-medium">
-              당신에게 딱 맞는<br />
-              <span className="text-stone-800 font-bold">시골 라이프</span>를 찾아보세요 🌱
-            </p>
-          </div>
+          {/* 메시지 */}
+          <p className="text-stone-600 text-center leading-relaxed font-medium">
+            당신에게 딱 맞는<br />
+            <span className="text-stone-800 font-bold">시골 라이프</span>를 찾아보세요
+          </p>
 
           {/* 로고 이미지 (배경 원 없음) */}
           <div className="w-48 h-48 flex items-center justify-center">

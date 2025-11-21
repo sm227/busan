@@ -385,8 +385,18 @@ export default function Home() {
                     onClick={() => handlePropertyDetail(property.id)}
                     className="flex items-center space-x-4 p-4 bg-white rounded-2xl border border-stone-100 cursor-pointer hover:border-stone-300 transition-colors"
                   >
-                    <div className="w-14 h-14 bg-stone-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <HomeIcon className="w-6 h-6 text-stone-500" />
+                    <div className="w-14 h-14 bg-stone-100 rounded-xl overflow-hidden flex-shrink-0">
+                      {property.images && property.images.length > 0 ? (
+                        <img
+                          src={property.images[0]}
+                          alt={property.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <HomeIcon className="w-6 h-6 text-stone-500" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-stone-800 truncate">

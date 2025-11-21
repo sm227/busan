@@ -26,18 +26,18 @@ export async function POST(request: NextRequest) {
     }
 
     // 관심목록에 추가
-    const result = saveUserLike(userId, {
-      id: property.id,
-      title: property.title,
-      location: property.location,
-      price: property.price,
+    const result = await saveUserLike(userId, {
+      propertyId: property.id,
+      propertyTitle: property.title,
+      propertyLocation: property.location,
+      propertyPrice: property.price,
       matchScore: property.matchScore
     });
 
     if (result.success) {
       return NextResponse.json({
         success: true,
-        likeId: result.likeId,
+        
         message: '관심목록에 추가되었습니다.'
       });
     } else {
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
     // 특정 속성 좋아요 여부 확인
     if (propertyId) {
-      const isLiked = checkUserLike(parseInt(userId), propertyId);
+      const isLiked = await checkUserLike(parseInt(userId), propertyId);
       return NextResponse.json({
         success: true,
         isLiked
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 모든 관심목록 조회
-    const likes = getUserLikes(parseInt(userId));
+    const likes = await getUserLikes(parseInt(userId));
     return NextResponse.json({
       success: true,
       data: likes
@@ -105,12 +105,12 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const result = removeUserLike(userId, propertyId);
+    const result = await removeUserLike(userId, propertyId);
 
     if (result.success) {
       return NextResponse.json({
         success: true,
-        changes: result.changes,
+        
         message: '관심목록에서 제거되었습니다.'
       });
     } else {

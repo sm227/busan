@@ -2,6 +2,9 @@
   "name": "busan",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +15,6 @@
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.1",
     "@prisma/client": "^6.19.0",
-    "better-sqlite3": "^12.2.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.12",
@@ -22,17 +24,16 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",
-    "sqlite3": "^5.1.7",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.0.14"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
+    "tsx": "^4.7.0",
     "typescript": "^5"
   }
 }

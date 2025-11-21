@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -59,6 +60,7 @@ interface CommunityProps {
 }
 
 export default function Community({ onBack, currentUser }: CommunityProps) {
+  const router = useRouter();
   const [entries, setEntries] = useState<CommunityEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'experience' | 'review' | 'tip' | 'question'>('all');
@@ -140,47 +142,65 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
 
   // 좋아요 처리
   const handleLike = async (entryId: number) => {
+    console.log('🔵 handleLike 호출됨:', { entryId, currentUser });
+
     if (!currentUser) {
       alert('로그인이 필요합니다.');
       return;
     }
 
     try {
+      console.log('📤 좋아요 API 요청 보냄:', { userId: currentUser.id, entryId });
       const response = await fetch('/api/community/likes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: currentUser.id,
-          entryId 
+          entryId
         }),
       });
 
+      console.log('📥 API 응답 받음:', response.status);
       const data = await response.json();
+      console.log('📦 응답 데이터:', data);
 
       if (data.success) {
+        console.log('✅ 성공 응답, action:', data.action);
         // 좋아요 상태 업데이트
         const newLikedEntries = new Set(likedEntries);
         if (data.action === 'added') {
+          console.log('➕ 좋아요 추가 처리');
           newLikedEntries.add(entryId);
           // 좋아요 수 증가
-          setEntries(prev => prev.map(entry => 
-            entry.id === entryId 
-              ? { ...entry, likes_count: entry.likes_count + 1 }
-              : entry
-          ));
+          setEntries(prev => {
+            const updated = prev.map(entry =>
+              entry.id === entryId
+                ? { ...entry, likes_count: entry.likes_count + 1 }
+                : entry
+            );
+            console.log('📊 업데이트된 entries:', updated.find(e => e.id === entryId)?.likes_count);
+            return updated;
+          });
         } else {
+          console.log('➖ 좋아요 취소 처리');
           newLikedEntries.delete(entryId);
           // 좋아요 수 감소
-          setEntries(prev => prev.map(entry => 
-            entry.id === entryId 
-              ? { ...entry, likes_count: Math.max(0, entry.likes_count - 1) }
-              : entry
-          ));
+          setEntries(prev => {
+            const updated = prev.map(entry =>
+              entry.id === entryId
+                ? { ...entry, likes_count: Math.max(0, entry.likes_count - 1) }
+                : entry
+            );
+            console.log('📊 업데이트된 entries:', updated.find(e => e.id === entryId)?.likes_count);
+            return updated;
+          });
         }
+        console.log('🔄 setLikedEntries 호출');
         setLikedEntries(newLikedEntries);
       } else {
+        console.log('❌ 실패 응답:', data.error);
         alert(data.error || '좋아요 처리에 실패했습니다.');
       }
     } catch (error) {
@@ -527,7 +547,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                     ease: [0.4, 0, 0.2, 1]
                   }}
                   className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 cursor-pointer card-hover"
-                  onClick={() => setSelectedEntry(entry)}
+                  onClick={() => router.push(`/community/${entry.id}`)}
                 >
                   {/* 헤더 */}
                   <div className="flex items-start justify-between mb-3">

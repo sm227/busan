@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('toggleCommentLike 함수 호출 전');
-    const result = toggleCommentLike(userId, commentId);
+    const result = await toggleCommentLike(userId, commentId);
     console.log('toggleCommentLike 함수 호출 후, 결과:', result);
 
     if (result.success) {
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const isLiked = checkCommentLike(parseInt(userId), parseInt(commentId));
+    const isLiked = await checkCommentLike(parseInt(userId), parseInt(commentId));
 
     return NextResponse.json({
       success: true,

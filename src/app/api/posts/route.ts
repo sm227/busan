@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
 
     // 특정 게시글 조회
     if (postId) {
-      const post = getPopularPost(parseInt(postId));
+      const post = await getPopularPost(parseInt(postId));
       if (post) {
         // 조회수 증가
-        incrementPostViews(parseInt(postId));
+        await incrementPostViews(parseInt(postId));
         return NextResponse.json({
           success: true,
           data: post
@@ -48,8 +48,8 @@ export async function GET(request: NextRequest) {
       options.orderBy = orderBy;
     }
 
-    const posts = getPopularPosts(options);
-    
+    const posts = await getPopularPosts(options);
+
     return NextResponse.json({
       success: true,
       data: posts
@@ -75,7 +75,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const result = incrementPostViews(postId);
+    const result = await incrementPostViews(postId);
 
     if (result.success) {
       return NextResponse.json({
@@ -84,7 +84,7 @@ export async function PATCH(request: NextRequest) {
       });
     } else {
       return NextResponse.json(
-        { success: false, error: result.error },
+        { success: false, error: "조회수 증가에 실패했습니다." },
         { status: 500 }
       );
     }

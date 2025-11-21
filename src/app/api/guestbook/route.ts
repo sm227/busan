@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = createGuestbookEntry(userId, {
+    const result = await createGuestbookEntry(userId, {
       title,
       content,
       location,
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
 
     // 특정 글 조회
     if (entryId) {
-      const entry = getGuestbookEntry(parseInt(entryId));
+      const entry = await getGuestbookEntry(parseInt(entryId));
       if (entry) {
         return NextResponse.json({
           success: true,
@@ -122,8 +122,8 @@ export async function GET(request: NextRequest) {
     if (limit) filters.limit = parseInt(limit);
     if (offset) filters.offset = parseInt(offset);
 
-    const entries = getGuestbookEntries(filters);
-    
+    const entries = await getGuestbookEntries(filters);
+
     return NextResponse.json({
       success: true,
       data: entries
@@ -156,12 +156,12 @@ export async function PUT(request: NextRequest) {
     if (rating !== undefined) updates.rating = rating;
     if (tags !== undefined) updates.tags = tags;
 
-    const result = updateGuestbookEntry(entryId, userId, updates);
+    const result = await updateGuestbookEntry(entryId, userId, updates);
 
     if (result.success) {
       return NextResponse.json({
         success: true,
-        changes: result.changes,
+        
         message: '방명록이 성공적으로 수정되었습니다.'
       });
     } else {
@@ -194,12 +194,12 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const result = deleteGuestbookEntry(parseInt(entryId), parseInt(userId));
+    const result = await deleteGuestbookEntry(parseInt(entryId), parseInt(userId));
 
     if (result.success) {
       return NextResponse.json({
         success: true,
-        changes: result.changes,
+        
         message: '방명록이 성공적으로 삭제되었습니다.'
       });
     } else {

@@ -13,6 +13,7 @@ interface MyPageProps {
   onBack: () => void;
   currentUser?: { id: number; nickname: string } | null;
   onLogout?: () => void;
+  onNavigateToResults?: () => void;
 }
 
 interface UserProfile {
@@ -33,7 +34,7 @@ interface UserProfile {
 
 type TabType = 'missions' | 'regions' | 'badges' | null;
 
-export default function MyPage({ onBack, currentUser, onLogout }: MyPageProps) {
+export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResults }: MyPageProps) {
   // 기본적으로 '미션' 탭을 열어둠
   const [activeTab, setActiveTab] = useState<TabType>('missions');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -228,7 +229,7 @@ export default function MyPage({ onBack, currentUser, onLogout }: MyPageProps) {
              <div className="grid grid-cols-4 gap-2 text-center">
                 {[
                   { label: '내정보', icon: User, isLogout: false },
-                  { label: '찜목록', icon: Heart, isLogout: false },
+                  { label: '찜목록', icon: Heart, isLogout: false, action: onNavigateToResults },
                   { label: '후기관리', icon: PenTool, isLogout: false },
                   { label: '로그아웃', icon: LogOut, action: handleLogout, isLogout: true }
                 ].map((item, idx) => (

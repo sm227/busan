@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { RuralProperty } from '@/types';
 import { useApp } from '@/contexts/AppContext';
-import { ListFilter, X, Heart, MapPin, Home, Trees, Users, Loader, ArrowLeft } from 'lucide-react';
+import { ListFilter, X, Heart, MapPin, Home, Trees, Users, Loader, ArrowLeft, Search } from 'lucide-react';
 import Image from 'next/image';
 
 declare global {
@@ -20,6 +20,8 @@ export default function MapsPage() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedVillages, setSelectedVillages] = useState<RuralProperty[]>([]);
   const [selectedVillage, setSelectedVillage] = useState<RuralProperty | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<RuralProperty[]>([]);
   const { currentUser, likedProperties, setLikedProperties } = useApp();
 
   // 1. 데이터 로드
@@ -166,6 +168,28 @@ export default function MapsPage() {
     });
   };
 
+  // 검색 기능
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+
+    if (query.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+
+    const results = villages.filter(village => {
+      const searchLower = query.toLowerCase();
+      return (
+        village.location.district.toLowerCase().includes(searchLower) ||
+        village.location.city.toLowerCase().includes(searchLower) ||
+        village.location.region.toLowerCase().includes(searchLower) ||
+        village.title.toLowerCase().includes(searchLower)
+      );
+    });
+
+    setSearchResults(results);
+  };
+
   const handleLike = async (village: RuralProperty) => {
     if (!currentUser) {
       alert('로그인이 필요합니다.');
@@ -200,11 +224,11 @@ export default function MapsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] font-sans text-stone-800">
+    <div className="min-h-screen bg-[#F5F5F0] text-stone-800" style={{ fontFamily: 'Pretendard Variable, sans-serif' }}>
       <div className="mx-auto max-w-md min-h-screen bg-white shadow-xl flex flex-col relative">
         
         {/* Header */}
-        <div className="absolute top-0 left-0 right-0 z-20 px-4 py-4">
+        <div className="absolute top-0 left-0 right-0 z-20 px-4 py-4 space-y-3">
           <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-stone-100 px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <button
@@ -214,7 +238,7 @@ export default function MapsPage() {
                 <ArrowLeft className="w-5 h-5 text-stone-800" />
               </button>
               <div>
-                <h1 className="font-serif font-bold text-stone-800 leading-none">대동여지도</h1>
+                <h1 className="font-bold text-stone-800 leading-none">대동여지도</h1>
                 <p className="text-[10px] text-stone-400 mt-0.5">
                    {loading ? "데이터 수신 중..." : `전국 ${villages.length}곳의 빈집`}
                 </p>
@@ -222,6 +246,28 @@ export default function MapsPage() {
             </div>
             <div className="bg-stone-100 p-2 rounded-full text-stone-400 hover:text-stone-800 cursor-pointer">
                <ListFilter className="w-4 h-4" />
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-stone-100 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Search className="w-5 h-5 text-stone-400" />
+              <input
+                type="text"
+                placeholder="지명, 지역명으로 검색하세요"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-sm text-stone-800 placeholder:text-stone-400"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearch('')}
+                  className="p-1 rounded-full hover:bg-stone-100 transition-colors"
+                >
+                  <X className="w-4 h-4 text-stone-400" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -250,7 +296,7 @@ export default function MapsPage() {
                   priority
                 />
               </div>
-              <p className="text-lg font-serif font-bold text-stone-800 mb-1">빈집을 찾고 있어요</p>
+              <p className="text-lg font-bold text-stone-800 mb-1">빈집을 찾고 있어요</p>
               <p className="text-xs text-stone-500">{loadingStatus}</p>
             </div>
           )}
@@ -269,7 +315,7 @@ export default function MapsPage() {
               {/* Header */}
               <div className="px-6 py-3 flex items-start justify-between border-b border-stone-50">
                 <div className="flex-1">
-                   <h2 className="text-xl font-serif font-bold text-stone-800 mb-1">{selectedVillage.title}</h2>
+                   <h2 className="text-xl font-bold text-stone-800 mb-1">{selectedVillage.title}</h2>
                    <p className="text-xs text-stone-500 flex items-center gap-1">
                       <MapPin className="w-3 h-3" /> 
                       {selectedVillage.location.district} {selectedVillage.location.city}
@@ -425,12 +471,87 @@ export default function MapsPage() {
             </div>
           )}
 
-          {/* 2. 지역별 목록 패널 (기존 유지) */}
-          {selectedRegion && selectedVillages.length > 0 && !selectedVillage && (
+          {/* 2. 검색 결과 패널 */}
+          {searchQuery && searchResults.length > 0 && !selectedVillage && (
             <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[60%] flex flex-col z-30 animate-in slide-in-from-bottom duration-300">
               <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center">
                 <div>
-                   <h2 className="text-lg font-serif font-bold text-stone-800">{selectedRegion}</h2>
+                   <h2 className="text-lg font-bold text-stone-800">검색 결과</h2>
+                   <p className="text-xs text-stone-500">{searchResults.length}개의 빈집을 찾았어요</p>
+                </div>
+                <button onClick={() => handleSearch('')} className="p-2 bg-stone-50 rounded-full hover:bg-stone-100 transition-colors">
+                   <X className="w-4 h-4 text-stone-500" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FDFBF7]">
+                {searchResults.map((village, index) => {
+                  const isLiked = likedProperties.some(p => p.id === village.id);
+                  return (
+                    <div
+                      key={village.id || index}
+                      onClick={() => setSelectedVillage(village)}
+                      className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm active:scale-[0.99] transition-transform flex gap-4 cursor-pointer"
+                    >
+                       <div className="w-20 h-20 bg-stone-100 rounded-xl shrink-0 overflow-hidden">
+                          {village.images?.[0] ? (
+                            <img src={village.images[0]} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-stone-300"><Home className="w-6 h-6" /></div>
+                          )}
+                       </div>
+
+                       <div className="flex-1 min-w-0 relative">
+                          <h3 className="font-bold text-stone-800 text-sm mb-1 truncate pr-6">{village.title}</h3>
+                          <p className="text-xs text-stone-500 mb-3">{village.location.district} {village.location.city} {village.location.region}</p>
+
+                          <div className="flex items-center gap-2">
+                             {village.price.rent && <span className="text-xs font-bold text-orange-600">월 {village.price.rent.toLocaleString()}</span>}
+                             {village.price.sale && <span className="text-xs font-bold text-stone-800">매매 {(village.price.sale / 10000).toLocaleString()}만</span>}
+                          </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLike(village);
+                            }}
+                            className="absolute top-0 right-0"
+                          >
+                             <Heart className={`w-4 h-4 ${isLiked ? 'text-orange-500 fill-orange-500' : 'text-stone-300'}`} />
+                          </button>
+                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 검색어가 있지만 결과가 없는 경우 */}
+          {searchQuery && searchResults.length === 0 && !selectedVillage && (
+            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] flex flex-col z-30 animate-in slide-in-from-bottom duration-300 p-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-stone-300" />
+                </div>
+                <h3 className="text-lg font-bold text-stone-800 mb-2">검색 결과가 없어요</h3>
+                <p className="text-sm text-stone-500 mb-4">다른 지역명으로 검색해보세요</p>
+                <button
+                  onClick={() => handleSearch('')}
+                  className="px-6 py-2 bg-stone-800 text-white rounded-full text-sm font-medium hover:bg-stone-700 transition-colors"
+                >
+                  검색 초기화
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 3. 지역별 목록 패널 (기존 유지) */}
+          {selectedRegion && selectedVillages.length > 0 && !selectedVillage && !searchQuery && (
+            <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[60%] flex flex-col z-30 animate-in slide-in-from-bottom duration-300">
+              <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center">
+                <div>
+                   <h2 className="text-lg font-bold text-stone-800">{selectedRegion}</h2>
                    <p className="text-xs text-stone-500">{selectedVillages.length}개의 마을을 찾았어요</p>
                 </div>
                 <button onClick={() => setSelectedRegion(null)} className="p-2 bg-stone-50 rounded-full hover:bg-stone-100 transition-colors">

@@ -105,7 +105,7 @@ export default function PropertyDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] font-sans text-stone-800 overflow-x-hidden">
+    <div className="min-h-screen bg-[#F5F5F0] text-stone-800 overflow-x-hidden" style={{ fontFamily: 'Pretendard Variable, sans-serif' }}>
       <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-xl flex flex-col">
         
         {/* 헤더 */}
@@ -116,7 +116,7 @@ export default function PropertyDetailPage() {
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <span className="font-serif font-bold text-lg text-stone-800 truncate max-w-[200px]">
+          <span className="font-bold text-lg text-stone-800 truncate max-w-[200px]">
             {property.title}
           </span>
           <div className="w-10" />
@@ -124,30 +124,41 @@ export default function PropertyDetailPage() {
 
         {/* 메인 콘텐츠 */}
         <div className="flex-1 pb-28">
-          
-          {/* 1. 이미지 영역 (임시) */}
+
+          {/* 1. 이미지 영역 */}
           <div className="relative h-64 bg-stone-200">
-             <img 
-               src={property.images?.[0] || "/placeholder.jpg"} 
-               alt={property.title} 
+             <img
+               src={property.images?.[0] || "/placeholder.jpg"}
+               alt={property.title}
                className="w-full h-full object-cover"
              />
-             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-             <div className="absolute bottom-4 left-6 text-white">
-                <div className="flex items-center gap-1 text-sm font-medium mb-1 opacity-90">
-                   <MapPin className="w-4 h-4" />
-                   {property.location.district} {property.location.city}
-                </div>
-                <div className="text-2xl font-bold font-serif">
-                   월 {property.price.rent?.toLocaleString()}원
-                </div>
-             </div>
           </div>
 
-          <div className="px-6 -mt-6 relative z-10 space-y-6">
-            
+          <div className="space-y-6">
+
+            {/* 1.5. 제목 & 가격 정보 */}
+            <div className="px-6 pt-6 pb-5 border-b border-stone-100 bg-white">
+              <h1 className="text-2xl font-bold text-stone-900 mb-3">{property.title}</h1>
+              <div className="flex items-center gap-2 text-stone-500 text-sm mb-4">
+                <MapPin className="w-4 h-4 flex-shrink-0" />
+                <span>{property.location.district} {property.location.city}</span>
+              </div>
+              <div className="space-y-1">
+                <div className="text-3xl font-bold text-orange-600">
+                  월 {property.price.rent?.toLocaleString()}원
+                </div>
+                {property.price.deposit && (
+                  <div className="text-sm text-stone-400">
+                    보증금 {(property.price.deposit / 10000).toFixed(0)}만원
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="px-6 space-y-6">
+
             {/* 2. 기본 스펙 요약 카드 */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-100 grid grid-cols-3 gap-4 text-center">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-200 grid grid-cols-3 gap-4 text-center">
                <div>
                  <span className="block text-xs text-stone-400 mb-1">방 개수</span>
                  <span className="block font-bold text-lg text-stone-800">{property.details.rooms}개</span>
@@ -186,7 +197,7 @@ export default function PropertyDetailPage() {
             <div className="space-y-6">
                {/* 특징 태그 */}
                <div>
-                  <h3 className="font-serif font-bold text-stone-800 mb-3 text-lg">매력 포인트</h3>
+                  <h3 className="font-bold text-stone-800 mb-3 text-lg">매력 포인트</h3>
                   <div className="flex flex-wrap gap-2">
                     {property.features.map((feature, index) => (
                       <span key={index} className="px-3 py-1.5 bg-white border border-stone-200 rounded-full text-stone-600 text-sm font-medium">
@@ -199,7 +210,7 @@ export default function PropertyDetailPage() {
                {/* 주변 환경 */}
                {property.surroundings && (
                  <div>
-                   <h3 className="font-serif font-bold text-stone-800 mb-3 text-lg">주변 환경</h3>
+                   <h3 className="font-bold text-stone-800 mb-3 text-lg">주변 환경</h3>
                    <div className="bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
                       {property.surroundings.naturalFeatures?.length > 0 && (
                         <div className="flex gap-3">
@@ -228,7 +239,7 @@ export default function PropertyDetailPage() {
                {/* 지원 사업 */}
                {regionPrograms.length > 0 && (
                 <div>
-                  <h3 className="font-serif font-bold text-stone-800 mb-3 text-lg flex items-center gap-2">
+                  <h3 className="font-bold text-stone-800 mb-3 text-lg flex items-center gap-2">
                     <Coins className="w-5 h-5 text-orange-500" />
                     지원 혜택 <span className="text-stone-400 text-sm font-sans font-normal">({regionPrograms.length})</span>
                   </h3>
@@ -281,6 +292,7 @@ export default function PropertyDetailPage() {
                   </div>
                 </div>
                )}
+            </div>
             </div>
           </div>
         </div>

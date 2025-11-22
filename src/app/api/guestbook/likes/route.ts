@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = toggleGuestbookLike(userId, entryId);
+    const result = await toggleGuestbookLike(userId, entryId);
 
     if (result.success) {
       const action = (result as any).action;
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const isLiked = checkGuestbookLike(parseInt(userId), parseInt(entryId));
+    const isLiked = await checkGuestbookLike(parseInt(userId), parseInt(entryId));
 
     return NextResponse.json({
       success: true,

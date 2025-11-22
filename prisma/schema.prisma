@@ -10,6 +10,225 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ==================== 사용자 및 인증 ====================
+
+model User {
+  id        Int      @id @default(autoincrement())
+  nickname  String   @unique
+  password  String   // 평문 저장
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  surveyResults   SurveyResult[]
+  userLikes       UserLike[]
+  guestbooks      Guestbook[]
+  guestbookLikes  GuestbookLike[]
+  comments        Comment[]
+  commentLikes    CommentLike[]
+  bookmarks       Bookmark[]
+  userBadges      UserBadge[]
+
+  @@index([nickname])
+  @@map("users")
+}
+
+model SurveyResult {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  livingStyle String   @map("living_style")
+  socialStyle String   @map("social_style")
+  workStyle   String   @map("work_style")
+  hobbyStyle  String   @map("hobby_style")
+  pace        String
+  budget      String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("survey_results")
+}
+
+model UserLike {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  propertyId      String   @map("property_id")
+  propertyTitle   String   @map("property_title")
+  propertyLocation String  @map("property_location")
+  propertyPrice   Int?     @map("property_price")
+  matchScore      Int?     @map("match_score")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, propertyId])
+  @@index([userId])
+  @@index([propertyId])
+  @@map("user_likes")
+}
+
+// ==================== 커뮤니티 ====================
+
+model Guestbook {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  title      String
+  content    String
+  location   String?
+  rating     Int?
+  category   String   // 'experience', 'review', 'tip', 'question'
+  propertyId String?  @map("property_id")
+  tags       String?  // JSON string
+  likesCount Int      @default(0) @map("likes_count")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user           User            @relation(fields: [userId], references: [id])
+  guestbookLikes GuestbookLike[]
+  comments       Comment[]
+  bookmarks      Bookmark[]
+
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("guestbook")
+}
+
+model GuestbookLike {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  guestbookId Int      @map("guestbook_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id])
+  guestbook Guestbook @relation(fields: [guestbookId], references: [id])
+
+  @@unique([userId, guestbookId])
+  @@index([userId])
+  @@index([guestbookId])
+  @@map("guestbook_likes")
+}
+
+model Comment {
+  id          Int      @id @default(autoincrement())
+  guestbookId Int      @map("guestbook_id")
+  userId      Int      @map("user_id")
+  content     String
+  parentId    Int?     @map("parent_id")
+  likesCount  Int      @default(0) @map("likes_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  guestbook    Guestbook     @relation(fields: [guestbookId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
+  parent       Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies      Comment[]     @relation("CommentReplies")
+  commentLikes CommentLike[]
+
+  @@index([guestbookId])
+  @@index([userId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  commentId Int      @map("comment_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id])
+  comment Comment @relation(fields: [commentId], references: [id])
+
+  @@unique([userId, commentId])
+  @@index([userId])
+  @@index([commentId])
+  @@map("comment_likes")
+}
+
+model Bookmark {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  guestbookId Int      @map("guestbook_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id])
+  guestbook Guestbook @relation(fields: [guestbookId], references: [id])
+
+  @@unique([userId, guestbookId])
+  @@map("bookmarks")
+}
+
+// ==================== 뱃지 시스템 ====================
+
+model Badge {
+  id             String   @id
+  name           String
+  description    String
+  icon           String
+  category       String   // 'explorer', 'social', 'contributor', 'achiever'
+  conditionType  String   @map("condition_type") // 'guestbook_count', 'likes_received', 'likes_given', 'visit_count', 'property_liked'
+  conditionValue Int      @map("condition_value")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  userBadges UserBadge[]
+
+  @@index([category])
+  @@index([conditionType])
+  @@map("badges")
+}
+
+model UserBadge {
+  id       Int      @id @default(autoincrement())
+  userId   Int      @map("user_id")
+  badgeId  String   @map("badge_id")
+  earnedAt DateTime @default(now()) @map("earned_at")
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id])
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+  @@map("user_badges")
+}
+
+// ==================== 인기 게시글 ====================
+
+model PopularPost {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  author    String
+  category  String   // 'review', 'tips', 'story', 'news'
+  location  String?
+  imageUrl  String?  @map("image_url")
+  views     Int      @default(0)
+  likes     Int      @default(0)
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([featured])
+  @@index([likes])
+  @@index([views])
+  @@index([createdAt])
+  @@map("popular_posts")
+}
+
+// ==================== 마을 및 추천 (기존) ====================
+
 model Village {
   id        String   @id // 마을 ID (villId)
 

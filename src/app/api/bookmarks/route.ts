@@ -22,14 +22,14 @@ export async function GET(request: NextRequest) {
 
     if (action === 'list') {
       // 사용자의 북마크 목록 조회
-      const bookmarks = getUserBookmarks(parseInt(userId));
+      const bookmarks = await getUserBookmarks(parseInt(userId));
       return NextResponse.json({
         success: true,
         data: bookmarks
       });
     } else if (guestbookId) {
       // 특정 게시글의 북마크 상태 확인
-      const isBookmarked = checkBookmark(parseInt(userId), parseInt(guestbookId));
+      const isBookmarked = await checkBookmark(parseInt(userId), parseInt(guestbookId));
       return NextResponse.json({
         success: true,
         bookmarked: isBookmarked
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = toggleBookmark(userId, guestbookId);
+    const result = await toggleBookmark(userId, guestbookId);
 
     if (result.success) {
       return NextResponse.json({

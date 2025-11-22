@@ -67,7 +67,7 @@ export default function ResultsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] overflow-x-hidden font-sans text-stone-800">
+    <div className="min-h-screen bg-[#F5F5F0] overflow-x-hidden text-stone-800" style={{ fontFamily: 'Pretendard Variable, sans-serif' }}>
       <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-xl flex flex-col">
         
         {/* 헤더 */}
@@ -78,7 +78,7 @@ export default function ResultsPage() {
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <span className="font-serif font-bold text-lg text-stone-800">내가 찜한 집</span>
+          <span className="font-bold text-lg text-stone-800">내가 찜한 집</span>
           <div className="w-10" /> {/* 레이아웃 밸런스용 */}
         </div>
 
@@ -86,7 +86,7 @@ export default function ResultsPage() {
           
           {/* 상단 요약 */}
           <div className="mb-6">
-             <h2 className="text-2xl font-serif font-bold text-stone-800 mb-2">
+             <h2 className="text-2xl font-bold text-stone-800 mb-2">
                마음에 드는 곳을<br/>
                모아봤어요 🏡
              </h2>
@@ -121,22 +121,24 @@ export default function ResultsPage() {
                   </div>
 
                   {/* 정보 영역 */}
-                  <div className="pr-8 mb-4">
-                    <h4 className="font-serif font-bold text-stone-800 text-lg mb-1 truncate">
+                  <div className="pr-10 mb-4">
+                    <h4 className="font-bold text-stone-800 text-lg mb-1 truncate">
                       {property.title}
                     </h4>
-                    <div className="flex items-center text-stone-500 text-sm mb-2">
-                      <MapPin className="w-3.5 h-3.5 mr-1" />
+                    <div className="flex items-center text-stone-500 text-sm mb-3">
+                      <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
                       <span className="truncate">
                         {property.location.district}, {property.location.city}
                       </span>
                     </div>
-                    <div className="text-lg font-bold text-orange-600">
-                      월 {property.price.rent?.toLocaleString()}원
+                    <div className="space-y-1">
+                      <div className="text-lg font-bold text-orange-600">
+                        월 {property.price.rent?.toLocaleString()}원
+                      </div>
                       {property.price.deposit && (
-                         <span className="text-xs font-medium text-stone-400 ml-1.5 font-sans">
-                           (보증금 {(property.price.deposit / 10000).toFixed(0)}만)
-                         </span>
+                        <div className="text-xs font-medium text-stone-400">
+                          보증금 {(property.price.deposit / 10000).toFixed(0)}만원
+                        </div>
                       )}
                     </div>
                   </div>
@@ -178,7 +180,7 @@ export default function ResultsPage() {
                 <Search className="w-8 h-8 text-stone-400" />
               </div>
               <div className="space-y-2">
-                 <h3 className="text-xl font-serif font-bold text-stone-800">
+                 <h3 className="text-xl font-bold text-stone-800">
                    아직 찜한 집이 없어요
                  </h3>
                  <p className="text-stone-500 text-sm">

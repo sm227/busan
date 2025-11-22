@@ -200,7 +200,7 @@ export default function MapsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0] font-sans text-stone-800">
+    <div className="min-h-screen bg-[#F5F5F0] text-stone-800" style={{ fontFamily: 'Pretendard Variable, sans-serif' }}>
       <div className="mx-auto max-w-md min-h-screen bg-white shadow-xl flex flex-col relative">
         
         {/* Header */}
@@ -214,7 +214,7 @@ export default function MapsPage() {
                 <ArrowLeft className="w-5 h-5 text-stone-800" />
               </button>
               <div>
-                <h1 className="font-serif font-bold text-stone-800 leading-none">대동여지도</h1>
+                <h1 className="font-bold text-stone-800 leading-none">대동여지도</h1>
                 <p className="text-[10px] text-stone-400 mt-0.5">
                    {loading ? "데이터 수신 중..." : `전국 ${villages.length}곳의 빈집`}
                 </p>
@@ -250,7 +250,7 @@ export default function MapsPage() {
                   priority
                 />
               </div>
-              <p className="text-lg font-serif font-bold text-stone-800 mb-1">빈집을 찾고 있어요</p>
+              <p className="text-lg font-bold text-stone-800 mb-1">빈집을 찾고 있어요</p>
               <p className="text-xs text-stone-500">{loadingStatus}</p>
             </div>
           )}
@@ -269,7 +269,7 @@ export default function MapsPage() {
               {/* Header */}
               <div className="px-6 py-3 flex items-start justify-between border-b border-stone-50">
                 <div className="flex-1">
-                   <h2 className="text-xl font-serif font-bold text-stone-800 mb-1">{selectedVillage.title}</h2>
+                   <h2 className="text-xl font-bold text-stone-800 mb-1">{selectedVillage.title}</h2>
                    <p className="text-xs text-stone-500 flex items-center gap-1">
                       <MapPin className="w-3 h-3" /> 
                       {selectedVillage.location.district} {selectedVillage.location.city}
@@ -430,7 +430,7 @@ export default function MapsPage() {
             <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[60%] flex flex-col z-30 animate-in slide-in-from-bottom duration-300">
               <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center">
                 <div>
-                   <h2 className="text-lg font-serif font-bold text-stone-800">{selectedRegion}</h2>
+                   <h2 className="text-lg font-bold text-stone-800">{selectedRegion}</h2>
                    <p className="text-xs text-stone-500">{selectedVillages.length}개의 마을을 찾았어요</p>
                 </div>
                 <button onClick={() => setSelectedRegion(null)} className="p-2 bg-stone-50 rounded-full hover:bg-stone-100 transition-colors">

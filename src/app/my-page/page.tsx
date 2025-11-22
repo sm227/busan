@@ -18,6 +18,7 @@ export default function MyPagePage() {
             handleLogout();
             router.push("/welcome");
           }}
+          onNavigateToResults={() => router.push("/results")}
         />
       </div>
     </div>

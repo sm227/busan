@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const entry = getGuestbookEntry(parseInt(guestbookId));
-    
+    const entry = await getGuestbookEntry(parseInt(guestbookId));
+
     if (!entry) {
       return NextResponse.json(
         { success: false, error: '방명록 글을 찾을 수 없습니다.' },

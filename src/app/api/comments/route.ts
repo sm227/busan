@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const comments = getComments(parseInt(guestbookId));
-    
+    const comments = await getComments(parseInt(guestbookId));
+
     return NextResponse.json({
       success: true,
       data: comments
@@ -54,12 +54,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = createComment(guestbookId, userId, content, parentId);
+    const result = await createComment(guestbookId, userId, content, parentId);
 
     if (result.success) {
       return NextResponse.json({
         success: true,
-        commentId: result.id,
+        commentId: result.commentId,
         message: '댓글이 성공적으로 작성되었습니다.'
       });
     } else {
@@ -91,7 +91,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const result = deleteComment(parseInt(commentId), parseInt(userId));
+    const result = await deleteComment(parseInt(commentId), parseInt(userId));
 
     if (result.success) {
       return NextResponse.json({

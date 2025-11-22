@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,15 +13,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const db = getDatabase();
-
     // 사용자 기본 정보 조회
-    const userQuery = `
-      SELECT id, nickname, created_at
-      FROM users 
-      WHERE id = ?
-    `;
-    const user = db.prepare(userQuery).get(userId) as any;
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+      select: {
+        id: true,
+        nickname: true,
+        createdAt: true
+      }
+    });
 
     if (!user) {
       return NextResponse.json(
@@ -31,38 +31,28 @@ export async function GET(request: NextRequest) {
     }
 
     // 사용자 설문 결과 조회
-    const surveyQuery = `
-      SELECT living_style, social_style, work_style, hobby_style, pace, budget
-      FROM survey_results 
-      WHERE user_id = ?
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `;
-    const surveyResult = db.prepare(surveyQuery).get(userId) as any;
+    const surveyResult = await prisma.surveyResult.findFirst({
+      where: { userId: parseInt(userId) },
+      orderBy: { createdAt: 'desc' }
+    });
 
     // 사용자 관심목록 통계
-    const likesStatsQuery = `
-      SELECT COUNT(*) as total_likes
-      FROM user_likes 
-      WHERE user_id = ?
-    `;
-    const likesStats = db.prepare(likesStatsQuery).get(userId) as any;
+    const likesCount = await prisma.userLike.count({
+      where: { userId: parseInt(userId) }
+    });
 
     // 방명록 작성 수
-    const guestbookStatsQuery = `
-      SELECT COUNT(*) as total_posts
-      FROM guestbook 
-      WHERE user_id = ?
-    `;
-    const guestbookStats = db.prepare(guestbookStatsQuery).get(userId) as any;
+    const guestbookCount = await prisma.guestbook.count({
+      where: { userId: parseInt(userId) }
+    });
 
     // 가입일로부터 경과 일수 계산
-    const joinDate = new Date(user.created_at);
+    const joinDate = new Date(user.createdAt);
     const today = new Date();
     const daysSinceJoin = Math.floor((today.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24));
 
     // 레벨 계산 (관심목록 + 방명록 작성 수 기반)
-    const totalActivity = (likesStats?.total_likes || 0) + (guestbookStats?.total_posts || 0) * 3;
+    const totalActivity = likesCount + guestbookCount * 3;
     const explorerLevel = Math.min(Math.floor(totalActivity / 5) + 1, 10);
 
     // 사용자 프로필 데이터 구성
@@ -70,23 +60,23 @@ export async function GET(request: NextRequest) {
       id: user.id,
       nickname: user.nickname,
       name: user.nickname, // nickname을 name으로 사용
-      occupation: getOccupationFromWorkStyle(surveyResult?.work_style),
+      occupation: getOccupationFromWorkStyle(surveyResult?.workStyle || null),
       currentLocation: '서울특별시', // 기본값, 나중에 위치 정보 추가 가능
       explorerLevel,
-      joinDate: user.created_at,
+      joinDate: user.createdAt,
       daysSinceJoin,
-      totalLikes: likesStats?.total_likes || 0,
-      totalPosts: guestbookStats?.total_posts || 0,
-      riskyRegionsHelped: Math.floor((likesStats?.total_likes || 0) / 3), // 관심목록 3개당 1개 도움
+      totalLikes: likesCount,
+      totalPosts: guestbookCount,
+      riskyRegionsHelped: Math.floor(likesCount / 3), // 관심목록 3개당 1개 도움
       preferences: surveyResult ? {
-        livingStyle: surveyResult.living_style,
-        socialStyle: surveyResult.social_style,
-        workStyle: surveyResult.work_style,
-        hobbyStyle: surveyResult.hobby_style,
+        livingStyle: surveyResult.livingStyle,
+        socialStyle: surveyResult.socialStyle,
+        workStyle: surveyResult.workStyle,
+        hobbyStyle: surveyResult.hobbyStyle,
         pace: surveyResult.pace,
         budget: surveyResult.budget
       } : null,
-      badges: generateUserBadges(explorerLevel, likesStats?.total_likes || 0, guestbookStats?.total_posts || 0)
+      badges: generateUserBadges(explorerLevel, likesCount, guestbookCount)
     };
 
     return NextResponse.json({

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 사용자 생성
-    const result = createUser(nickname.trim(), password);
+    const result = await createUser(nickname.trim(), password);
 
     if (result.success) {
       return NextResponse.json({
@@ -63,12 +63,12 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = authenticateUser(nickname.trim(), password);
+    const result = await authenticateUser(nickname.trim(), password);
 
-    if (result.success) {
+    if (result) {
       return NextResponse.json({
         success: true,
-        user: result.user,
+        user: result,
         message: '로그인 성공'
       });
     } else {

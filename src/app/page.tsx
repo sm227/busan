@@ -508,27 +508,34 @@ export default function Home() {
                 <div className="flex items-center space-x-3 text-xs text-stone-500 mb-6 border-b border-stone-50 pb-4">
                    <div className="flex items-center space-x-1">
                       <User className="w-3 h-3" />
-                      <span>{selectedPost.author_nickname}</span>
+                      <span>{selectedPost.author}</span>
                    </div>
                    <div className="w-px h-3 bg-stone-200"></div>
                    <div className="flex items-center space-x-1">
                       <Calendar className="w-3 h-3" />
-                      <span>{new Date(selectedPost.created_at).toLocaleDateString('ko-KR')}</span>
+                      <span>{new Date(selectedPost.createdAt).toLocaleDateString('ko-KR')}</span>
                    </div>
                 </div>
 
-                {selectedPost.tags && (
-                   <div className="flex flex-wrap gap-2 mb-5">
-                      {JSON.parse(selectedPost.tags).map((tag: string, index: number) => (
-                      <span
-                         key={index}
-                         className="px-2 py-1 bg-stone-50 text-stone-600 border border-stone-100 rounded-md text-xs"
-                      >
-                         #{tag}
-                      </span>
-                      ))}
-                   </div>
-                )}
+                {selectedPost.tags && (() => {
+                   try {
+                      const tags = JSON.parse(selectedPost.tags);
+                      return (
+                         <div className="flex flex-wrap gap-2 mb-5">
+                            {tags.map((tag: string, index: number) => (
+                            <span
+                               key={index}
+                               className="px-2 py-1 bg-stone-50 text-stone-600 border border-stone-100 rounded-md text-xs"
+                            >
+                               #{tag}
+                            </span>
+                            ))}
+                         </div>
+                      );
+                   } catch (e) {
+                      return null;
+                   }
+                })()}
 
                 <div className="prose prose-sm max-w-none prose-stone">
                   <p className="text-stone-600 leading-7 whitespace-pre-wrap">

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 설문 결과 저장
-    const result = saveSurveyResult(userId, {
+    const result = await saveSurveyResult(userId, {
       livingStyle: preferences.livingStyle,
       socialStyle: preferences.socialStyle,
       workStyle: preferences.workStyle,
@@ -37,10 +37,9 @@ export async function POST(request: NextRequest) {
     if (result.success) {
       return NextResponse.json({
         success: true,
-        surveyId: result.surveyId,
         message: '설문 결과가 성공적으로 저장되었습니다.'
       });
-    } else {
+    } else{
       return NextResponse.json(
         { success: false, error: result.error },
         { status: 500 }
@@ -68,7 +67,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const surveyResult = getUserSurveyResult(parseInt(userId));
+    const surveyResult = await getUserSurveyResult(parseInt(userId));
 
     if (surveyResult) {
       return NextResponse.json({

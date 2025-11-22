@@ -1,4 +1,40 @@
 import { prisma } from '@/lib/prisma';
+import { badgesData } from '@/data/badgesData';
+import { popularPostsData, PopularPostData } from '@/data/popularPostsData';
+import { sampleUsersData } from '@/data/sampleUsersData';
+
+// 인메모리 저장소
+const postViewsStore = new Map<number, number>(); // postId -> views
+
+// 샘플 사용자 자동 생성 (앱 시작 시)
+let sampleUsersInitialized = false;
+
+async function initializeSampleUsers() {
+  if (sampleUsersInitialized) return;
+
+  try {
+    for (const userData of sampleUsersData) {
+      const existing = await prisma.user.findUnique({
+        where: { nickname: userData.nickname }
+      });
+
+      if (!existing) {
+        await prisma.user.create({
+          data: {
+            nickname: userData.nickname,
+            password: userData.password
+          }
+        });
+      }
+    }
+    sampleUsersInitialized = true;
+  } catch (error) {
+    console.error('샘플 사용자 초기화 실패:', error);
+  }
+}
+
+// 모듈 로드 시 자동 실행
+initializeSampleUsers();
 
 // ==================== 사용자 인증 ====================
 
@@ -482,7 +518,14 @@ export async function getComments(guestbookId: number) {
   });
 
   return comments.map(comment => ({
-    ...comment,
+    id: comment.id,
+    guestbook_id: comment.guestbookId,
+    user_id: comment.userId,
+    content: comment.content,
+    parent_id: comment.parentId,
+    likes_count: comment.likesCount,
+    created_at: comment.createdAt.toISOString(),
+    updated_at: comment.updatedAt.toISOString(),
     author_nickname: comment.user.nickname
   }));
 }
@@ -772,11 +815,8 @@ export async function getUserBadges(userId: number) {
 }
 
 export async function getAllBadges() {
-  const badges = await prisma.badge.findMany({
-    orderBy: { category: 'asc' }
-  });
-
-  return badges;
+  // JSON 데이터에서 뱃지 목록 반환
+  return badgesData.sort((a, b) => a.category.localeCompare(b.category));
 }
 
 export async function hasUserBadge(userId: number, badgeId: string) {
@@ -800,42 +840,37 @@ export async function getPopularPosts(options?: {
   limit?: number;
   sortBy?: 'views' | 'likes' | 'created_at';
 }) {
-  const where: any = {};
+  let posts = [...popularPostsData];
 
+  // 필터링
   if (options?.category) {
-    where.category = options.category;
+    posts = posts.filter(p => p.category === options.category);
   }
 
   if (options?.featured !== undefined) {
-    where.featured = options.featured;
+    posts = posts.filter(p => p.featured === options.featured);
   }
 
-  let orderBy: any = {};
+  // 정렬
   if (options?.sortBy === 'views') {
-    orderBy = { views: 'desc' };
+    posts.sort((a, b) => {
+      const viewsA = postViewsStore.get(a.id) || a.views;
+      const viewsB = postViewsStore.get(b.id) || b.views;
+      return viewsB - viewsA;
+    });
   } else if (options?.sortBy === 'likes') {
-    orderBy = { likes: 'desc' };
+    posts.sort((a, b) => b.likes - a.likes);
   } else {
-    orderBy = { createdAt: 'desc' };
+    posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
-  const posts = await prisma.popularPost.findMany({
-    where,
-    orderBy,
-    take: options?.limit || 10
-  });
-
-  return posts;
+  return posts.slice(0, options?.limit || 10);
 }
 
 export async function incrementPostViews(postId: number) {
   try {
-    await prisma.popularPost.update({
-      where: { id: postId },
-      data: {
-        views: { increment: 1 }
-      }
-    });
+    const currentViews = postViewsStore.get(postId) || 0;
+    postViewsStore.set(postId, currentViews + 1);
     return { success: true };
   } catch (error) {
     return { success: false };
@@ -843,9 +878,15 @@ export async function incrementPostViews(postId: number) {
 }
 
 export async function getPopularPost(postId: number) {
-  const post = await prisma.popularPost.findUnique({
-    where: { id: postId }
-  });
+  const post = popularPostsData.find(p => p.id === postId);
+
+  if (!post) return null;
+
+  // 조회수가 인메모리에 있으면 그것을 사용
+  const currentViews = postViewsStore.get(postId);
+  if (currentViews !== undefined) {
+    return { ...post, views: currentViews };
+  }
 
   return post;
 }

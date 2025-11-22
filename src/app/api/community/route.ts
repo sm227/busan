@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  createGuestbookEntry, 
-  getGuestbookEntries, 
+import {
+  createGuestbookEntry,
+  getGuestbookEntries,
   getGuestbookEntry,
   updateGuestbookEntry,
   deleteGuestbookEntry
 } from '@/lib/database';
 
-// 방명록 글 작성
+// 커뮤니티 글 작성
 export async function POST(request: NextRequest) {
   try {
     const { userId, title, content, location, rating, category, propertyId, tags } = await request.json();
@@ -52,30 +52,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await createGuestbookEntry(userId, {
+    const result = await createGuestbookEntry(parseInt(userId), {
       title,
       content,
       location,
       rating,
       category,
       propertyId,
-      tags
+      tags: Array.isArray(tags) ? tags : tags ? [tags] : []
     });
 
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        entryId: result.entryId,
-        message: '방명록이 성공적으로 작성되었습니다.'
-      });
-    } else {
+    if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error },
-        { status: 500 }
+        { status: 400 }
       );
     }
+
+    return NextResponse.json({
+      success: true,
+      entryId: result.entryId,
+      message: '커뮤니티 글이 성공적으로 작성되었습니다.'
+    });
   } catch (error) {
-    console.error('방명록 작성 API 에러:', error);
+    console.error('커뮤니티 글 작성 API 에러:', error);
     return NextResponse.json(
       { success: false, error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -83,13 +83,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 방명록 목록 조회
+// 커뮤니티 목록 조회
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
-    const limit = searchParams.get('limit');
-    const offset = searchParams.get('offset');
+    const search = searchParams.get('search');
+    const location = searchParams.get('location');
+    const tag = searchParams.get('tag');
+    const minRating = searchParams.get('minRating');
+    const sortBy = searchParams.get('sortBy') || 'created_at';
+    const sortOrder = (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC';
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
     const entryId = searchParams.get('entryId');
 
     // 특정 글 조회
@@ -102,34 +108,31 @@ export async function GET(request: NextRequest) {
         });
       } else {
         return NextResponse.json(
-          { success: false, error: '방명록 글을 찾을 수 없습니다.' },
+          { success: false, error: '커뮤니티 글을 찾을 수 없습니다.' },
           { status: 404 }
         );
       }
     }
 
-    // 목록 조회 (고도화된 필터 지원)
-    const filters: any = {};
-    
-    // 검색/필터 파라미터들
-    if (searchParams.get('search')) filters.search = searchParams.get('search');
-    if (category) filters.category = category;
-    if (searchParams.get('location')) filters.location = searchParams.get('location');
-    if (searchParams.get('tag')) filters.tag = searchParams.get('tag');
-    if (searchParams.get('minRating')) filters.minRating = parseInt(searchParams.get('minRating')!);
-    if (searchParams.get('sortBy')) filters.sortBy = searchParams.get('sortBy');
-    if (searchParams.get('sortOrder')) filters.sortOrder = searchParams.get('sortOrder');
-    if (limit) filters.limit = parseInt(limit);
-    if (offset) filters.offset = parseInt(offset);
-
-    const entries = await getGuestbookEntries(filters);
+    // 필터링 및 정렬 옵션
+    const entries = await getGuestbookEntries({
+      search,
+      category: category && category !== 'all' ? category : undefined,
+      location,
+      tag,
+      minRating: minRating ? parseInt(minRating) : undefined,
+      sortBy: sortBy as any,
+      sortOrder,
+      limit,
+      offset
+    });
 
     return NextResponse.json({
       success: true,
       data: entries
     });
   } catch (error) {
-    console.error('방명록 조회 API 에러:', error);
+    console.error('커뮤니티 조회 API 에러:', error);
     return NextResponse.json(
       { success: false, error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -137,10 +140,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 방명록 글 수정
+// 커뮤니티 글 수정
 export async function PUT(request: NextRequest) {
   try {
-    const { entryId, userId, title, content, location, rating, tags } = await request.json();
+    const { entryId, userId, title, content, location, rating, category, tags } = await request.json();
 
     if (!entryId || !userId) {
       return NextResponse.json(
@@ -150,28 +153,32 @@ export async function PUT(request: NextRequest) {
     }
 
     const updates: any = {};
-    if (title) updates.title = title;
-    if (content) updates.content = content;
+    if (title !== undefined) updates.title = title;
+    if (content !== undefined) updates.content = content;
     if (location !== undefined) updates.location = location;
     if (rating !== undefined) updates.rating = rating;
-    if (tags !== undefined) updates.tags = tags;
+    if (category !== undefined) updates.category = category;
+    if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags : tags ? [tags] : [];
 
-    const result = await updateGuestbookEntry(entryId, userId, updates);
+    const result = await updateGuestbookEntry(
+      parseInt(entryId),
+      parseInt(userId),
+      updates
+    );
 
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        
-        message: '방명록이 성공적으로 수정되었습니다.'
-      });
-    } else {
+    if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error },
-        { status: 500 }
+        { status: result.error?.includes('권한') ? 403 : result.error?.includes('찾을 수 없습니다') ? 404 : 400 }
       );
     }
+
+    return NextResponse.json({
+      success: true,
+      message: '커뮤니티 글이 성공적으로 수정되었습니다.'
+    });
   } catch (error) {
-    console.error('방명록 수정 API 에러:', error);
+    console.error('커뮤니티 글 수정 API 에러:', error);
     return NextResponse.json(
       { success: false, error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -179,10 +186,9 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// 방명록 글 삭제
+// 커뮤니티 글 삭제
 export async function DELETE(request: NextRequest) {
   try {
-    // URL 파라미터에서 데이터 추출
     const { searchParams } = new URL(request.url);
     const entryId = searchParams.get('entryId');
     const userId = searchParams.get('userId');
@@ -194,22 +200,24 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const result = await deleteGuestbookEntry(parseInt(entryId), parseInt(userId));
+    const result = await deleteGuestbookEntry(
+      parseInt(entryId),
+      parseInt(userId)
+    );
 
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        
-        message: '방명록이 성공적으로 삭제되었습니다.'
-      });
-    } else {
+    if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error },
-        { status: 500 }
+        { status: result.error?.includes('권한') ? 403 : result.error?.includes('찾을 수 없습니다') ? 404 : 400 }
       );
     }
+
+    return NextResponse.json({
+      success: true,
+      message: '커뮤니티 글이 성공적으로 삭제되었습니다.'
+    });
   } catch (error) {
-    console.error('방명록 삭제 API 에러:', error);
+    console.error('커뮤니티 글 삭제 API 에러:', error);
     return NextResponse.json(
       { success: false, error: '서버 오류가 발생했습니다.' },
       { status: 500 }

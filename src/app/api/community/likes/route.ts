@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { toggleGuestbookLike, checkGuestbookLike } from '@/lib/database';
 
-// 방명록 좋아요 토글
+// 커뮤니티 좋아요 토글
 export async function POST(request: NextRequest) {
   try {
     const { userId, entryId } = await request.json();
@@ -15,25 +15,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔄 toggleGuestbookLike 호출 중...');
-    const result = await toggleGuestbookLike(userId, entryId);
-    console.log('✅ toggleGuestbookLike 결과:', result);
+    const result = await toggleGuestbookLike(parseInt(userId), parseInt(entryId));
 
-    if (result.success) {
-      const action = (result as any).action;
-      return NextResponse.json({
-        success: true,
-        action: action,
-        message: action === 'added' ? '좋아요가 추가되었습니다.' : '좋아요가 취소되었습니다.'
-      });
-    } else {
+    if (!result.success) {
       return NextResponse.json(
-        { success: false, error: (result as any).error || '좋아요 처리에 실패했습니다.' },
+        { success: false, error: result.error },
         { status: 500 }
       );
     }
+
+    console.log(`${result.action === 'added' ? '➕ 좋아요 추가' : '➖ 좋아요 취소'}:`, { userId, entryId });
+
+    return NextResponse.json({
+      success: true,
+      action: result.action,
+      message: result.action === 'added' ? '좋아요가 추가되었습니다.' : '좋아요가 취소되었습니다.'
+    });
   } catch (error) {
-    console.error('방명록 좋아요 API 에러:', error);
+    console.error('커뮤니티 좋아요 API 에러:', error);
     return NextResponse.json(
       { success: false, error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -41,7 +40,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 방명록 좋아요 상태 확인
+// 커뮤니티 좋아요 상태 확인
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -62,7 +61,7 @@ export async function GET(request: NextRequest) {
       isLiked
     });
   } catch (error) {
-    console.error('방명록 좋아요 상태 확인 API 에러:', error);
+    console.error('커뮤니티 좋아요 상태 확인 API 에러:', error);
     return NextResponse.json(
       { success: false, error: '서버 오류가 발생했습니다.' },
       { status: 500 }

@@ -16,24 +16,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('toggleCommentLike 함수 호출 전');
-    const result = await toggleCommentLike(userId, commentId);
-    console.log('toggleCommentLike 함수 호출 후, 결과:', result);
+    const result = await toggleCommentLike(parseInt(userId), parseInt(commentId));
 
-    if (result.success) {
-      const action = (result as any).action;
-      return NextResponse.json({
-        success: true,
-        action: action,
-        message: action === 'added' ? '댓글에 좋아요를 눌렀습니다.' : '댓글 좋아요를 취소했습니다.'
-      });
-    } else {
-      console.log('toggleCommentLike 실패:', (result as any).error);
+    if (!result.success) {
       return NextResponse.json(
-        { success: false, error: (result as any).error || '좋아요 처리에 실패했습니다.' },
+        { success: false, error: result.error },
         { status: 500 }
       );
     }
+
+    console.log(`${result.action === 'added' ? '➕ 댓글 좋아요 추가' : '➖ 댓글 좋아요 취소'}:`, { userId, commentId });
+
+    return NextResponse.json({
+      success: true,
+      action: result.action,
+      message: result.action === 'added' ? '댓글에 좋아요를 눌렀습니다.' : '댓글 좋아요를 취소했습니다.'
+    });
   } catch (error) {
     console.error('댓글 좋아요 처리 API 에러:', error);
     return NextResponse.json(

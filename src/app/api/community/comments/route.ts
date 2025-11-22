@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  getComments, 
-  createComment, 
-  deleteComment 
-} from '@/lib/database';
+import { getComments, createComment, updateComment, deleteComment } from '@/lib/database';
 
 // 댓글 목록 조회
 export async function GET(request: NextRequest) {
@@ -54,22 +50,73 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await createComment(guestbookId, userId, content, parentId);
+    const result = await createComment(
+      parseInt(guestbookId),
+      parseInt(userId),
+      content,
+      parentId ? parseInt(parentId) : undefined
+    );
 
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        commentId: result.commentId,
-        message: '댓글이 성공적으로 작성되었습니다.'
-      });
-    } else {
+    if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error },
-        { status: 500 }
+        { status: 400 }
       );
     }
+
+    return NextResponse.json({
+      success: true,
+      commentId: result.commentId,
+      message: '댓글이 성공적으로 작성되었습니다.'
+    });
   } catch (error) {
     console.error('댓글 작성 API 에러:', error);
+    return NextResponse.json(
+      { success: false, error: '서버 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
+}
+
+// 댓글 수정
+export async function PUT(request: NextRequest) {
+  try {
+    const { commentId, userId, content } = await request.json();
+
+    if (!commentId || !userId || !content) {
+      return NextResponse.json(
+        { success: false, error: '필수 정보가 누락되었습니다.' },
+        { status: 400 }
+      );
+    }
+
+    // 내용 길이 검증
+    if (content.length > 500) {
+      return NextResponse.json(
+        { success: false, error: '댓글은 500자 이내로 작성해주세요.' },
+        { status: 400 }
+      );
+    }
+
+    const result = await updateComment(
+      parseInt(commentId),
+      parseInt(userId),
+      content
+    );
+
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: result.error },
+        { status: result.error?.includes('권한') ? 403 : 400 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: '댓글이 성공적으로 수정되었습니다.'
+    });
+  } catch (error) {
+    console.error('댓글 수정 API 에러:', error);
     return NextResponse.json(
       { success: false, error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -91,19 +138,22 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const result = await deleteComment(parseInt(commentId), parseInt(userId));
+    const result = await deleteComment(
+      parseInt(commentId),
+      parseInt(userId)
+    );
 
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        message: '댓글이 성공적으로 삭제되었습니다.'
-      });
-    } else {
+    if (!result.success) {
       return NextResponse.json(
-        { success: false, error: (result as any).error || '삭제에 실패했습니다.' },
-        { status: 500 }
+        { success: false, error: result.error },
+        { status: result.error?.includes('권한') ? 403 : result.error?.includes('찾을 수 없습니다') ? 404 : 400 }
       );
     }
+
+    return NextResponse.json({
+      success: true,
+      message: '댓글이 성공적으로 삭제되었습니다.'
+    });
   } catch (error) {
     console.error('댓글 삭제 API 에러:', error);
     return NextResponse.json(

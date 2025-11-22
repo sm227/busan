@@ -82,10 +82,10 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   const loadEntries = async () => {
     try {
       setLoading(true);
-      
+
       // URL 파라미터 구성
       const params = new URLSearchParams();
-      
+
       if (activeTab !== 'all') params.append('category', activeTab);
       if (searchTerm) params.append('search', searchTerm);
       if (locationFilter) params.append('location', locationFilter);
@@ -94,17 +94,20 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
       if (sortBy) params.append('sortBy', sortBy);
       if (sortOrder) params.append('sortOrder', sortOrder);
       params.append('limit', '50');
-      
+
       const url = `/api/community?${params.toString()}`;
       const response = await fetch(url);
       const data = await response.json();
-      
+
       if (data.success) {
         setEntries(data.data || []);
-        
-        // 현재 사용자가 좋아요한 글들 확인
-        if (currentUser && data.data) {
-          loadLikedEntries(data.data);
+
+        // 현재 사용자가 좋아요한 글들 확인 (await 추가)
+        if (currentUser && data.data && data.data.length > 0) {
+          await loadLikedEntries(data.data);
+        } else if (!currentUser) {
+          // 로그인하지 않은 경우 좋아요 상태 초기화
+          setLikedEntries(new Set());
         }
       }
     } catch (error) {
@@ -116,20 +119,38 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
 
   // 사용자가 좋아요한 글들 확인
   const loadLikedEntries = async (entriesData: CommunityEntry[]) => {
-    if (!currentUser) return;
-    
+    if (!currentUser) {
+      setLikedEntries(new Set());
+      return;
+    }
+
     try {
       const likedSet = new Set<number>();
-      
-      for (const entry of entriesData) {
-        const response = await fetch(`/api/community/likes?userId=${currentUser.id}&entryId=${entry.id}`);
-        const data = await response.json();
-        
-        if (data.success && data.isLiked) {
-          likedSet.add(entry.id);
+
+      // 모든 API 호출을 병렬로 실행
+      const promises = entriesData.map(async (entry) => {
+        try {
+          const response = await fetch(`/api/community/likes?userId=${currentUser.id}&entryId=${entry.id}`);
+          const data = await response.json();
+
+          if (data.success && data.isLiked) {
+            return entry.id;
+          }
+          return null;
+        } catch (error) {
+          console.error(`좋아요 상태 확인 실패 (entryId: ${entry.id}):`, error);
+          return null;
         }
-      }
-      
+      });
+
+      const results = await Promise.all(promises);
+
+      results.forEach(entryId => {
+        if (entryId !== null) {
+          likedSet.add(entryId);
+        }
+      });
+
       setLikedEntries(likedSet);
     } catch (error) {
       console.error('좋아요 상태 확인 실패:', error);
@@ -138,7 +159,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
 
   useEffect(() => {
     loadEntries();
-  }, [activeTab, searchTerm, locationFilter, tagFilter, minRatingFilter, sortBy, sortOrder]);
+  }, [activeTab, searchTerm, locationFilter, tagFilter, minRatingFilter, sortBy, sortOrder, currentUser]);
 
   // 좋아요 처리
   const handleLike = async (entryId: number) => {

@@ -116,10 +116,10 @@ export async function GET(request: NextRequest) {
 
     // 필터링 및 정렬 옵션
     const entries = await getGuestbookEntries({
-      search,
+      search: search || undefined,
       category: category && category !== 'all' ? category : undefined,
-      location,
-      tag,
+      location: location || undefined,
+      tag: tag || undefined,
       minRating: minRating ? parseInt(minRating) : undefined,
       sortBy: sortBy as any,
       sortOrder,

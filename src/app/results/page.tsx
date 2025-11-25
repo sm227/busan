@@ -2,14 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
-import { ArrowLeft, MapPin, Eye, Phone, X, Sparkles, Home, Search } from "lucide-react";
+import { ArrowLeft, MapPin, Eye, Phone, X, Sparkles, Search } from "lucide-react";
 import { MatchingAlgorithm } from "@/lib/matching";
 import { sampleProperties } from "@/data/properties";
 import { UserPreferences, RuralProperty } from "@/types";
 
 export default function ResultsPage() {
   const router = useRouter();
-  const { currentUser, likedProperties, userPreferences, setSelectedProperty, setRecommendations, setLikedProperties } = useApp();
+  const { currentUser, likedProperties, userPreferences, setSelectedProperty, setRecommendations, setLikedProperties, isInitialized } = useApp();
 
   const handlePropertyDetail = (property: RuralProperty) => {
     setSelectedProperty(property);
@@ -66,10 +66,24 @@ export default function ResultsPage() {
     }
   };
 
+  // 초기화 대기 중 로딩 표시
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F0] overflow-x-hidden text-stone-800" style={{ fontFamily: 'Pretendard Variable, sans-serif' }}>
+        <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-xl flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-3 border-stone-300 border-t-stone-800 rounded-full animate-spin"></div>
+            <p className="text-sm text-stone-500">찜목록을 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F0] overflow-x-hidden text-stone-800" style={{ fontFamily: 'Pretendard Variable, sans-serif' }}>
       <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-xl flex flex-col">
-        
+
         {/* 헤더 */}
         <div className="px-6 py-4 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-20 border-b border-stone-100">
           <button

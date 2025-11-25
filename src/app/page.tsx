@@ -237,7 +237,23 @@ export default function Home() {
                   </button>
                 </div>
 
-                {/* 슬라이드 2: Travelight */}
+                {/* 슬라이드 2: 지역축제 */}
+                <div className="w-full flex-shrink-0">
+                  <button
+                    onClick={() => router.push('/festival')}
+                    className="relative w-full text-white py-3 px-6 h-full flex items-center justify-center hover:brightness-105 transition-all overflow-hidden bg-cover bg-center"
+                    style={{ backgroundImage: 'url(/banner2.png)' }}
+                  >
+                    {/* 오버레이 */}
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <div className="relative text-center z-10">
+                      <h4 className="font-bold text-lg mb-1">2025 지역축제</h4>
+                      <p className="text-white/90 text-xs">전국 지역축제 정보를<br/>한눈에 확인하세요</p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* 슬라이드 3: Travelight */}
                 <div className="w-full flex-shrink-0">
                   <button
                     onClick={() => window.open('https://travelight.co.kr', '_blank')}
@@ -257,7 +273,7 @@ export default function Home() {
 
               {/* 슬라이더 인디케이터 (점) */}
               <div className="absolute bottom-3 right-4 flex space-x-1.5 z-10">
-                {[0, 1].map((idx) => (
+                {[0, 1, 2].map((idx) => (
                   <div
                     key={idx}
                     className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${

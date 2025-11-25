@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserPreferences } from '@/types';
 import { transformApiResponse } from '@/lib/apiTransformer';
+import { MatchingAlgorithm } from '@/lib/matching';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
@@ -170,19 +171,32 @@ JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"
       });
     }
 
-    // 5-3. 최종 셔플 (순서를 무작위로)
-    const shuffledFinal = [...finalRecommendations].sort(() => Math.random() - 0.5);
+    // 5-3. 각 property에 실제 matchScore 계산
+    const propertiesWithScores = finalRecommendations.map(property => ({
+      ...property,
+      matchScore: MatchingAlgorithm.calculateMatchScore(userPreferences as UserPreferences, property)
+    }));
 
-    const regionCounts = shuffledFinal.reduce((acc: any, prop: any) => {
+    // 5-4. matchScore 기준으로 정렬 (높은 점수 우선)
+    const sortedByScore = propertiesWithScores.sort((a, b) =>
+      (b.matchScore || 0) - (a.matchScore || 0)
+    );
+
+    const regionCounts = sortedByScore.reduce((acc: any, prop: any) => {
       const region = prop.location.district;
       acc[region] = (acc[region] || 0) + 1;
       return acc;
     }, {});
 
+    console.log('매칭 점수 범위:', {
+      highest: sortedByScore[0]?.matchScore,
+      lowest: sortedByScore[sortedByScore.length - 1]?.matchScore,
+      average: Math.round(sortedByScore.reduce((sum, p) => sum + (p.matchScore || 0), 0) / sortedByScore.length)
+    });
 
     return NextResponse.json({
       success: true,
-      recommendations: shuffledFinal,
+      recommendations: sortedByScore,
       aiRegions: recommendedRegions,
       regionDistribution: regionCounts,
     });

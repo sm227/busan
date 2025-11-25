@@ -86,7 +86,7 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ property, story, o
             <div className="flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-orange-400" />
               <span className="text-xs font-bold text-white">
-                {property.matchScore}% 일치
+                {property.matchScore ?? 0}% 일치
               </span>
             </div>
           </div>

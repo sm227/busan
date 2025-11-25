@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserPreferences } from '@/types';
 import { transformApiResponse } from '@/lib/apiTransformer';
 import { MatchingAlgorithm } from '@/lib/matching';
+import { prisma } from '@/lib/prisma';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
@@ -156,10 +157,61 @@ JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"
       }
     });
 
-    // 5-2. 20개가 될 때까지 남은 마을에서 추가 선택
+    // 5-2. 사용자 매물 가져오기
+    const userProperties = await prisma.userProperty.findMany({
+      where: { status: 'active' },
+      include: {
+        user: {
+          select: { id: true, nickname: true }
+        }
+      }
+    });
+
+    // 사용자 매물을 RuralProperty 형식으로 변환
+    const userPropertiesFormatted = userProperties.map(up => ({
+      id: `user_${up.id}`,
+      title: up.title,
+      location: {
+        district: up.district,
+        city: up.city,
+        region: up.region || '',
+        coordinates: [0, 0] as [number, number]
+      },
+      images: Array.isArray(up.images) ? up.images as string[] : [],
+      price: {
+        rent: up.rent || undefined,
+        sale: up.sale || undefined,
+        deposit: up.deposit || undefined
+      },
+      details: {
+        rooms: up.rooms,
+        size: up.size,
+        type: up.type as any,
+        yearBuilt: up.yearBuilt || undefined,
+        condition: up.condition as any
+      },
+      features: Array.isArray(up.features) ? up.features as string[] : [],
+      surroundings: {
+        nearbyFacilities: [],
+        transportation: '',
+        naturalEnvironment: ''
+      },
+      communityInfo: {
+        population: 100,
+        ageGroup: '다양함',
+        mainIndustry: '농업',
+        communityPrograms: []
+      },
+      isUserProperty: true,
+      userNickname: up.user.nickname,
+      contact: up.contact
+    }));
+
+    // 5-3. 20개가 될 때까지 남은 마을에서 추가 선택 (사용자 매물 포함)
+    const allAvailableProperties = [...allProperties, ...userPropertiesFormatted];
     const needed = 20 - finalRecommendations.length;
     if (needed > 0) {
-      const remainingProperties = allProperties.filter(p =>
+      const remainingProperties = allAvailableProperties.filter(p =>
         !selectedIds.has(p.id)
       );
 
@@ -171,7 +223,7 @@ JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"
       });
     }
 
-    // 5-3. 각 property에 실제 matchScore 계산
+    // 5-4. 각 property에 실제 matchScore 계산
     const propertiesWithScores = finalRecommendations.map(property => ({
       ...property,
       matchScore: MatchingAlgorithm.calculateMatchScore(userPreferences as UserPreferences, property)

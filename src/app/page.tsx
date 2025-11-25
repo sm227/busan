@@ -18,7 +18,8 @@ import {
   MessageCircle,
   Calendar,
   ChevronRight,
-  ExternalLink, // 외부 링크 아이콘은 Travelight 배너에 유지하여 링크임을 명확히 합니다.
+  ExternalLink,
+  Handshake,
 } from "lucide-react";
 import Image from "next/image";
 import PopularPostsSlider from "@/components/PopularPostsSlider";
@@ -378,6 +379,28 @@ export default function Home() {
                 </div>
                 <span className="font-bold text-stone-800 text-sm">이주 가이드</span>
                 <span className="text-[10px] text-stone-400 mt-1">필수 정보 모음</span>
+              </button>
+
+              <button
+                onClick={() => router.push("/trade")}
+                className="flex flex-col items-start p-4 bg-white border border-stone-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-stone-300 transition-all group"
+              >
+                <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-stone-100 transition-colors">
+                  <Handshake className="w-5 h-5 text-stone-700" />
+                </div>
+                <span className="font-bold text-stone-800 text-sm">빈집 거래</span>
+                <span className="text-[10px] text-stone-400 mt-1">직접 사고팔기</span>
+              </button>
+
+              <button
+                onClick={() => router.push("/festival")}
+                className="flex flex-col items-start p-4 bg-white border border-stone-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-stone-300 transition-all group"
+              >
+                <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-stone-100 transition-colors">
+                  <Calendar className="w-5 h-5 text-stone-700" />
+                </div>
+                <span className="font-bold text-stone-800 text-sm">지역축제</span>
+                <span className="text-[10px] text-stone-400 mt-1">2025 축제 정보</span>
               </button>
             </div>
           </div>

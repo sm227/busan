@@ -312,6 +312,11 @@ model Recommendation {
   // 매칭 점수 (0-100)
   matchScore Int?    @map("match_score")
 
+  // 사용자 매물 여부
+  isUserProperty Boolean? @default(false) @map("is_user_property")
+  userNickname String? @map("user_nickname")
+  contact String?
+
   // 생성 시간
   createdAt DateTime @default(now())
 

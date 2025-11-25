@@ -20,9 +20,10 @@ export default function MatchingPage() {
     property: RuralProperty
   ) => {
     if (direction === "right") {
-      setLikedProperties(
-        likedProperties.some((p) => p.id === property.id) ? likedProperties : [...likedProperties, property]
-      );
+      // 중복 방지: 이미 존재하는 경우 추가하지 않음
+      if (!likedProperties.some((p) => p.id === property.id)) {
+        setLikedProperties([...likedProperties, property]);
+      }
 
       if (currentUser) {
         try {

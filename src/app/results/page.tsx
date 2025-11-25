@@ -11,6 +11,16 @@ export default function ResultsPage() {
   const router = useRouter();
   const { currentUser, likedProperties, userPreferences, setSelectedProperty, setRecommendations, setLikedProperties, isInitialized } = useApp();
 
+  // 중복 제거: ID 기준으로 unique한 property만 표시
+  const seenIds = new Set<string>();
+  const uniqueLikedProperties = likedProperties.filter(p => {
+    if (seenIds.has(p.id)) {
+      return false;
+    }
+    seenIds.add(p.id);
+    return true;
+  });
+
   const handlePropertyDetail = (property: RuralProperty) => {
     setSelectedProperty(property);
     router.push(`/properties/${property.id}`);
@@ -105,13 +115,13 @@ export default function ResultsPage() {
                모아봤어요 🏡
              </h2>
              <p className="text-stone-500 text-sm">
-               총 <span className="font-bold text-orange-600">{likedProperties.length}개</span>의 보금자리가 기다려요
+               총 <span className="font-bold text-orange-600">{uniqueLikedProperties.length}개</span>의 보금자리가 기다려요
              </p>
           </div>
 
-          {likedProperties.length > 0 ? (
+          {uniqueLikedProperties.length > 0 ? (
             <div className="space-y-4">
-              {likedProperties.map((property) => (
+              {uniqueLikedProperties.map((property) => (
                 <div
                   key={property.id}
                   className="bg-white rounded-2xl p-5 border border-stone-200 shadow-sm hover:shadow-md transition-shadow relative group"
@@ -131,7 +141,7 @@ export default function ResultsPage() {
                   {/* 매칭 점수 뱃지 */}
                   <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-stone-900 rounded-full text-[10px] text-white font-bold mb-3">
                     <Sparkles className="w-3 h-3 text-orange-400" />
-                    {property.matchScore}% 일치
+                    {property.matchScore ?? 0}% 일치
                   </div>
 
                   {/* 정보 영역 */}

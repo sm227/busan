@@ -8,12 +8,14 @@ import {
   ChevronRight, Settings, Bell, ChevronDown, ArrowLeft
 } from 'lucide-react';
 import { dummyUser } from '@/data/userData';
+import { useApp } from '@/contexts/AppContext';
 
 interface MyPageProps {
   onBack: () => void;
   currentUser?: { id: number; nickname: string } | null;
   onLogout?: () => void;
   onNavigateToResults?: () => void;
+  onNavigateToGuestbook?: () => void;
 }
 
 interface UserProfile {
@@ -34,7 +36,10 @@ interface UserProfile {
 
 type TabType = 'missions' | 'regions' | 'badges' | null;
 
-export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResults }: MyPageProps) {
+export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResults, onNavigateToGuestbook }: MyPageProps) {
+  // AppContext에서 실제 찜한 매물 가져오기
+  const { likedProperties } = useApp();
+
   // 기본적으로 '미션' 탭을 열어둠
   const [activeTab, setActiveTab] = useState<TabType>('missions');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -83,20 +88,29 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
         setUserBadges(badgesData.data.userBadges || []);
         setAllBadges(badgesData.data.badges || []);
         setUserStats(statsData.data);
-        
+
+        console.log('📊 Stats Data:', statsData.data);
+        console.log('찜한 시골집 (API):', statsData.data.propertyLikedCount);
+        console.log('찜한 시골집 (Context):', likedProperties.length);
+        console.log('작성한 방명록:', statsData.data.guestbookCount);
+        console.log('User ID:', userId);
+
+        // API 데이터 우선 사용, 없으면 Context fallback
+        const actualLikesCount = statsData.data.propertyLikedCount || likedProperties.length;
+
         const joinDate = new Date();
         joinDate.setDate(joinDate.getDate() - (statsData.data.guestbookCount * 7));
-        
+
         setUserProfile({
           id: userId,
           nickname: currentUser?.nickname || '',
           name: currentUser?.nickname || '사용자',
           occupation: '시골 생활 탐험가',
           currentLocation: '대한민국',
-          explorerLevel: Math.floor(statsData.data.propertyLiked / 10) + 1,
+          explorerLevel: Math.floor(actualLikesCount / 10) + 1,
           joinDate: joinDate.toISOString(),
           daysSinceJoin: Math.max(1, statsData.data.guestbookCount * 7),
-          totalLikes: statsData.data.propertyLiked,
+          totalLikes: actualLikesCount,
           totalPosts: statsData.data.guestbookCount,
           riskyRegionsHelped: 0,
           preferences: null,
@@ -228,9 +242,9 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
           <div className="px-6 mb-4">
              <div className="grid grid-cols-4 gap-2 text-center">
                 {[
-                  { label: '내정보', icon: User, isLogout: false },
+                  { label: '내정보', icon: User, isLogout: false, action: () => alert('프로필 정보는 설문조사에서 설정됩니다') },
                   { label: '찜목록', icon: Heart, isLogout: false, action: onNavigateToResults },
-                  { label: '후기관리', icon: PenTool, isLogout: false },
+                  { label: '후기관리', icon: PenTool, isLogout: false, action: onNavigateToGuestbook },
                   { label: '로그아웃', icon: LogOut, action: handleLogout, isLogout: true }
                 ].map((item, idx) => (
                   <button
@@ -274,7 +288,7 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
                         { label: "관심목록 10개 수집", current: user.profile.totalLikes, max: 10, icon: Heart, color: "text-orange-500" },
                         { label: "방명록 5개 작성", current: user.profile.totalPosts, max: 5, icon: PenTool, color: "text-blue-500" },
                         ...(userStats ? [
-                          { label: "좋아요 10개 받기", current: userStats.likesReceived, max: 10, icon: Trophy, color: "text-yellow-500" },
+                          { label: "좋아요 10개 받기", current: userStats.totalLikesReceived, max: 10, icon: Trophy, color: "text-yellow-500" },
                           { label: "좋아요 20개 누르기", current: userStats.likesGiven, max: 20, icon: Target, color: "text-stone-600" }
                         ] : [])
                       ].map((mission, idx) => (
@@ -300,19 +314,20 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
                </AnimatePresence>
             </div>
 
-            {/* B. 방문 내역 */}
+            {/* B. 방문 내역 - 임시로 숨김 (추후 구현 예정) */}
+            {false && (
             <div className="border-t border-stone-100 pt-4">
-               <button 
-                 className="w-full flex items-center justify-between mb-4 py-2" 
+               <button
+                 className="w-full flex items-center justify-between mb-4 py-2"
                  onClick={() => toggleTab('regions')}
                >
                   <h3 className="text-lg font-bold text-stone-900">방문 내역</h3>
                   <ChevronDown className={`w-5 h-5 text-stone-400 transition-transform duration-300 ${activeTab === 'regions' ? 'rotate-180' : ''}`} />
                </button>
-               
+
                <AnimatePresence>
                {activeTab === 'regions' && (
-                 <motion.div 
+                 <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
@@ -344,6 +359,7 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
                )}
                </AnimatePresence>
             </div>
+            )}
 
             {/* C. 배지 컬렉션 (획득 & 미획득 부활!) */}
             <div className="border-t border-stone-100 pt-4">

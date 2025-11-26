@@ -783,7 +783,7 @@ export async function checkAndAwardBadges(userId: number) {
 export async function getUserStats(userId: number) {
   const [guestbookCount, propertyLikedCount, likesGiven, guestbookLikesReceived] = await Promise.all([
     prisma.guestbook.count({ where: { userId } }),
-    prisma.userLike.count({ where: { userId } }),
+    prisma.recommendation.count({ where: { userId } }), // Recommendation 테이블 사용
     prisma.guestbookLike.count({ where: { userId } }),
     prisma.guestbookLike.count({
       where: {

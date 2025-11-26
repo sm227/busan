@@ -1,12 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
 import GuestbookEnhanced from "@/components/GuestbookEnhanced";
 
 export default function GuestbookPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { currentUser } = useApp();
+
+  const initialTab = searchParams.get('tab') as 'list' | 'write' | 'bookmarks' | 'myActivity' | null;
 
   return (
     <div className="min-h-screen bg-slate-50 overflow-x-hidden">
@@ -14,6 +17,7 @@ export default function GuestbookPage() {
         <GuestbookEnhanced
           onBack={() => router.push("/")}
           currentUser={currentUser}
+          initialTab={initialTab || undefined}
         />
       </div>
     </div>

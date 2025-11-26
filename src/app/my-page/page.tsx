@@ -19,7 +19,7 @@ export default function MyPagePage() {
             router.push("/welcome");
           }}
           onNavigateToResults={() => router.push("/results")}
-          onNavigateToGuestbook={() => router.push("/guestbook")}
+          onNavigateToGuestbook={() => router.push("/guestbook?tab=myActivity")}
         />
       </div>
     </div>

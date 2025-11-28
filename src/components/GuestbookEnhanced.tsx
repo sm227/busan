@@ -55,11 +55,12 @@ interface Comment {
 interface GuestbookProps {
   onBack: () => void;
   currentUser?: { id: number; nickname: string } | null;
+  initialTab?: 'list' | 'write' | 'bookmarks' | 'myActivity';
 }
 
-export default function GuestbookEnhanced({ onBack, currentUser }: GuestbookProps) {
+export default function GuestbookEnhanced({ onBack, currentUser, initialTab }: GuestbookProps) {
   // 메인 상태
-  const [activeTab, setActiveTab] = useState<'list' | 'write' | 'bookmarks'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'write' | 'bookmarks' | 'myActivity'>(initialTab || 'list');
   const [entries, setEntries] = useState<GuestbookEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEntry, setSelectedEntry] = useState<GuestbookEntry | null>(null);
@@ -174,16 +175,40 @@ export default function GuestbookEnhanced({ onBack, currentUser }: GuestbookProp
 
   const loadBookmarks = async () => {
     if (!currentUser) return;
-    
+
     try {
       const response = await fetch(`/api/bookmarks?userId=${currentUser.id}&action=list`);
       const data = await response.json();
-      
+
       if (data.success) {
         setEntries(data.data || []);
       }
     } catch (error) {
       console.error('북마크 로딩 실패:', error);
+    }
+  };
+
+  const loadMyActivity = async () => {
+    if (!currentUser) return;
+
+    try {
+      setLoading(true);
+      console.log('🔍 내 활동 로딩 시작:', currentUser.id);
+      const response = await fetch(`/api/guestbook/my-activity?userId=${currentUser.id}`);
+      const data = await response.json();
+
+      console.log('📦 내 활동 API 응답:', data);
+
+      if (data.success) {
+        console.log('✅ 내 활동 데이터:', data.data.length, '개');
+        setEntries(data.data || []);
+      } else {
+        console.error('❌ 내 활동 로딩 실패:', data.message);
+      }
+    } catch (error) {
+      console.error('내 활동 로딩 실패:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -319,6 +344,8 @@ export default function GuestbookEnhanced({ onBack, currentUser }: GuestbookProp
       loadEntries();
     } else if (activeTab === 'bookmarks') {
       loadBookmarks();
+    } else if (activeTab === 'myActivity') {
+      loadMyActivity();
     }
   }, [activeTab, searchTerm, selectedCategory, selectedLocation, selectedTag, minRating, sortBy, sortOrder]);
 
@@ -414,10 +441,20 @@ export default function GuestbookEnhanced({ onBack, currentUser }: GuestbookProp
                   작성
                 </button>
                 <button
+                  onClick={() => setActiveTab('myActivity')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'myActivity'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  내 활동
+                </button>
+                <button
                   onClick={() => setActiveTab('bookmarks')}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'bookmarks' 
-                      ? 'bg-white text-gray-900 shadow-sm' 
+                    activeTab === 'bookmarks'
+                      ? 'bg-white text-gray-900 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -431,9 +468,10 @@ export default function GuestbookEnhanced({ onBack, currentUser }: GuestbookProp
 
       {/* 메인 콘텐츠 */}
       <div className="max-w-4xl mx-auto p-4">
-        {activeTab === 'list' && (
+        {(activeTab === 'list' || activeTab === 'bookmarks' || activeTab === 'myActivity') && (
           <>
-            {/* 검색 & 필터 */}
+            {/* 검색 & 필터 - list 탭에서만 표시 */}
+            {activeTab === 'list' && (
             <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
               <div className="flex items-center space-x-4 mb-4">
                 <div className="flex-1 relative">
@@ -551,6 +589,21 @@ export default function GuestbookEnhanced({ onBack, currentUser }: GuestbookProp
                 </motion.div>
               )}
             </div>
+            )}
+
+            {/* 탭별 제목 표시 */}
+            {activeTab === 'myActivity' && (
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">내 활동</h2>
+                <p className="text-sm text-gray-500 mt-1">내가 작성하거나 상호작용한 글들</p>
+              </div>
+            )}
+            {activeTab === 'bookmarks' && (
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">북마크</h2>
+                <p className="text-sm text-gray-500 mt-1">저장한 글 목록</p>
+              </div>
+            )}
 
             {/* 게시글 목록 */}
             {loading ? (
@@ -560,7 +613,16 @@ export default function GuestbookEnhanced({ onBack, currentUser }: GuestbookProp
             ) : entries.length === 0 ? (
               <div className="text-center py-12">
                 <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">아직 작성된 글이 없습니다.</p>
+                <p className="text-gray-500">
+                  {activeTab === 'myActivity' && '아직 활동 내역이 없습니다.'}
+                  {activeTab === 'bookmarks' && '북마크한 글이 없습니다.'}
+                  {activeTab === 'list' && '아직 작성된 글이 없습니다.'}
+                </p>
+                {activeTab === 'myActivity' && (
+                  <p className="text-sm text-gray-400 mt-2">
+                    방명록을 작성하거나 좋아요, 댓글을 남겨보세요!
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-6">

@@ -781,9 +781,9 @@ export async function checkAndAwardBadges(userId: number) {
 }
 
 export async function getUserStats(userId: number) {
-  const [guestbookCount, propertyLikedCount, likesGiven, guestbookLikesReceived] = await Promise.all([
+  const [guestbookCount, propertyLikedCount, likesGiven, guestbookLikesReceived, user] = await Promise.all([
     prisma.guestbook.count({ where: { userId } }),
-    prisma.userLike.count({ where: { userId } }),
+    prisma.recommendation.count({ where: { userId } }), // Recommendation 테이블 사용
     prisma.guestbookLike.count({ where: { userId } }),
     prisma.guestbookLike.count({
       where: {
@@ -791,6 +791,10 @@ export async function getUserStats(userId: number) {
           userId
         }
       }
+    }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { createdAt: true }
     })
   ]);
 
@@ -798,7 +802,8 @@ export async function getUserStats(userId: number) {
     guestbookCount,
     propertyLikedCount,
     likesGiven,
-    totalLikesReceived: guestbookLikesReceived
+    totalLikesReceived: guestbookLikesReceived,
+    userCreatedAt: user?.createdAt || new Date()
   };
 }
 

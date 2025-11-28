@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
 import GuestbookEnhanced from "@/components/GuestbookEnhanced";
 
-export default function GuestbookPage() {
+function GuestbookContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { currentUser } = useApp();
@@ -21,5 +22,13 @@ export default function GuestbookPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function GuestbookPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+      <GuestbookContent />
+    </Suspense>
   );
 }

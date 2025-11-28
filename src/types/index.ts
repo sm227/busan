@@ -59,6 +59,9 @@ export interface RuralProperty {
   };
   matchScore?: number;
   aiReason?: string; // AI가 추천한 이유
+  isUserProperty?: boolean; // 사용자가 등록한 매물 여부
+  userNickname?: string; // 등록한 사용자 닉네임
+  contact?: string; // 연락처
 }
 
 export interface VillageStory {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserPreferences } from '@/types';
 import { transformApiResponse } from '@/lib/apiTransformer';
 import { MatchingAlgorithm } from '@/lib/matching';
+import { prisma } from '@/lib/prisma';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
@@ -138,44 +139,134 @@ JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"
     const availableRegions = Object.keys(byRegion);
     console.log('지역별 마을 수:', availableRegions.map(r => `${r}: ${byRegion[r].length}`).join(', '));
 
-    // 5. 각 지역에서 최소 2개씩 먼저 선택 (다양성 보장)
+    // 5. 추천 로직: 사용자 매물 우선 (최대 10개) + API 매물 (나머지)
     const finalRecommendations: any[] = [];
     const selectedIds = new Set<string>();
 
-    // 5-1. 각 지역에서 2개씩 필수 선택
-    availableRegions.forEach(region => {
-      if (byRegion[region] && byRegion[region].length > 0) {
-        const shuffled = [...byRegion[region]].sort(() => Math.random() - 0.5);
-        const toSelect = Math.min(2, byRegion[region].length); // 최대 2개 또는 지역에 있는 만큼
-
-        for (let i = 0; i < toSelect; i++) {
-          const selected = shuffled[i];
-          finalRecommendations.push(selected);
-          selectedIds.add(selected.id);
+    // 5-1. 사용자 매물 가져오기
+    const userProperties = await prisma.userProperty.findMany({
+      where: { status: 'active' },
+      include: {
+        user: {
+          select: { id: true, nickname: true }
+        },
+        images: {
+          orderBy: {
+            order: 'asc'
+          }
         }
       }
     });
 
-    // 5-2. 20개가 될 때까지 남은 마을에서 추가 선택
-    const needed = 20 - finalRecommendations.length;
-    if (needed > 0) {
-      const remainingProperties = allProperties.filter(p =>
-        !selectedIds.has(p.id)
-      );
+    // 사용자 매물을 RuralProperty 형식으로 변환
+    const userPropertiesFormatted = userProperties.map(up => ({
+      id: `user_${up.id}`,
+      title: up.title,
+      location: {
+        district: up.district,
+        city: up.city,
+        region: up.region || '',
+        coordinates: [0, 0] as [number, number]
+      },
+      images: up.images.map(img => img.url),
+      price: {
+        rent: up.rent || undefined,
+        sale: up.sale || undefined,
+        deposit: up.deposit || undefined
+      },
+      details: {
+        rooms: up.rooms,
+        size: up.size,
+        type: up.type as any,
+        yearBuilt: up.yearBuilt || undefined,
+        condition: up.condition as any
+      },
+      features: Array.isArray(up.features) ? up.features as string[] : [],
+      surroundings: {
+        nearbyFacilities: [],
+        naturalFeatures: [],
+        transportation: [],
+        naturalEnvironment: ''
+      },
+      communityInfo: {
+        population: 100,
+        averageAge: 50,
+        mainIndustries: ['농업'],
+        culturalActivities: []
+      },
+      isUserProperty: true,
+      userNickname: up.user?.nickname || '사용자',
+      contact: up.contact
+    }));
 
-      const shuffled = [...remainingProperties].sort(() => Math.random() - 0.5);
-      const additional = shuffled.slice(0, needed);
-
-      additional.forEach(prop => {
-        finalRecommendations.push(prop);
-      });
-    }
-
-    // 5-3. 각 property에 실제 matchScore 계산
-    const propertiesWithScores = finalRecommendations.map(property => ({
+    // 5-2. 사용자 매물에 매칭 점수 계산
+    const userPropertiesWithScores = userPropertiesFormatted.map(property => ({
       ...property,
       matchScore: MatchingAlgorithm.calculateMatchScore(userPreferences as UserPreferences, property)
     }));
+
+    // 5-3. 사용자 매물을 매칭 점수 순으로 정렬하고 최대 10개 선택
+    // 최소 매칭 점수 50% 이상만 추천
+    const MIN_MATCH_SCORE = 50;
+    const sortedUserProperties = userPropertiesWithScores
+      .filter(prop => (prop.matchScore || 0) >= MIN_MATCH_SCORE)
+      .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+
+    const selectedUserProperties = sortedUserProperties.slice(0, 10);
+    selectedUserProperties.forEach(prop => {
+      finalRecommendations.push(prop);
+      selectedIds.add(prop.id);
+    });
+
+    // 5-4. 나머지를 API 매물로 채우기 (총 20개 달성)
+    const needed = 20 - finalRecommendations.length;
+    if (needed > 0) {
+      // API 매물만 필터링
+      const remainingApiProperties = allProperties.filter(p =>
+        !selectedIds.has(p.id)
+      );
+
+      // 각 지역에서 골고루 선택 (다양성 보장)
+      const apiPropertiesByRegion: { [key: string]: any[] } = {};
+      remainingApiProperties.forEach(p => {
+        const region = p.location.district;
+        if (!apiPropertiesByRegion[region]) {
+          apiPropertiesByRegion[region] = [];
+        }
+        apiPropertiesByRegion[region].push(p);
+      });
+
+      const apiSelections: any[] = [];
+      const regionKeys = Object.keys(apiPropertiesByRegion);
+
+      // 라운드 로빈 방식으로 각 지역에서 순차 선택
+      let regionIndex = 0;
+      while (apiSelections.length < needed && regionKeys.length > 0) {
+        const region = regionKeys[regionIndex % regionKeys.length];
+        if (apiPropertiesByRegion[region] && apiPropertiesByRegion[region].length > 0) {
+          const selected = apiPropertiesByRegion[region].shift();
+          apiSelections.push(selected);
+          selectedIds.add(selected.id);
+        } else {
+          regionKeys.splice(regionKeys.indexOf(region), 1);
+        }
+        regionIndex++;
+      }
+
+      // 매칭 점수 계산 및 필터링
+      const apiPropertiesWithScores = apiSelections
+        .map(property => ({
+          ...property,
+          matchScore: MatchingAlgorithm.calculateMatchScore(userPreferences as UserPreferences, property)
+        }))
+        .filter(prop => (prop.matchScore || 0) >= MIN_MATCH_SCORE);
+
+      finalRecommendations.push(...apiPropertiesWithScores);
+      console.log(`API 매물 ${apiPropertiesWithScores.length}개 추가됨 (필터링 전: ${apiSelections.length}개)`);
+    }
+
+    // 5-5. 최종 추천 목록을 매칭 점수로 정렬
+    const propertiesWithScores = finalRecommendations;
 
     // 5-4. matchScore 기준으로 정렬 (높은 점수 우선)
     const sortedByScore = propertiesWithScores.sort((a, b) =>
@@ -191,8 +282,11 @@ JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"
     console.log('매칭 점수 범위:', {
       highest: sortedByScore[0]?.matchScore,
       lowest: sortedByScore[sortedByScore.length - 1]?.matchScore,
-      average: Math.round(sortedByScore.reduce((sum, p) => sum + (p.matchScore || 0), 0) / sortedByScore.length)
+      average: sortedByScore.length > 0
+        ? Math.round(sortedByScore.reduce((sum, p) => sum + (p.matchScore || 0), 0) / sortedByScore.length)
+        : 0
     });
+    // console.log(`최종 추천 매물 수: ${sortedByScore.length}개 (최소 매칭 점수 ${MIN_MATCH_SCORE}% 이상)`);
 
     return NextResponse.json({
       success: true,

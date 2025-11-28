@@ -118,10 +118,14 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ property, story, o
               <span>{property.location.district}, {property.location.city}</span>
             </div>
             <div className="text-xl font-bold text-orange-600">
-              월 {property.price.rent?.toLocaleString()}원
+              월 {property.isUserProperty
+                ? ((property.price.rent || 0) * 10000).toLocaleString()
+                : property.price.rent?.toLocaleString()}원
               {property.price.deposit && (
                 <span className="text-sm text-stone-400 font-normal ml-2">
-                  (보증금 {(property.price.deposit / 10000).toFixed(0)}만)
+                  (보증금 {property.isUserProperty
+                    ? property.price.deposit.toLocaleString()
+                    : (property.price.deposit / 10000).toFixed(0)}만)
                 </span>
               )}
             </div>

@@ -157,11 +157,15 @@ export default function ResultsPage() {
                     </div>
                     <div className="space-y-1">
                       <div className="text-lg font-bold text-orange-600">
-                        월 {property.price.rent?.toLocaleString()}원
+                        월 {property.isUserProperty
+                          ? ((property.price.rent || 0) * 10000).toLocaleString()
+                          : property.price.rent?.toLocaleString()}원
                       </div>
                       {property.price.deposit && (
                         <div className="text-xs font-medium text-stone-400">
-                          보증금 {(property.price.deposit / 10000).toFixed(0)}만원
+                          보증금 {property.isUserProperty
+                            ? property.price.deposit.toLocaleString()
+                            : (property.price.deposit / 10000).toFixed(0)}만원
                         </div>
                       )}
                     </div>

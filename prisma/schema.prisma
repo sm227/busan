@@ -28,6 +28,7 @@ model User {
   commentLikes    CommentLike[]
   bookmarks       Bookmark[]
   userBadges      UserBadge[]
+  userProperties  UserProperty[]
 
   @@index([nickname])
   @@map("users")
@@ -311,9 +312,81 @@ model Recommendation {
   // 매칭 점수 (0-100)
   matchScore Int?    @map("match_score")
 
+  // 사용자 매물 여부
+  isUserProperty Boolean? @default(false) @map("is_user_property")
+  userNickname String? @map("user_nickname")
+  contact String?
+
   // 생성 시간
   createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([villageId])
+}
+
+// ==================== 사용자 매물 (거래) ====================
+
+model UserProperty {
+  id        String   @id @default(cuid())
+  userId    Int      @map("user_id")
+
+  // 기본 정보
+  title     String
+  description String @db.Text
+  district  String   // 시도명
+  city      String   // 시군구명
+  region    String?  // 읍면동명
+  address   String?  // 상세 주소
+
+  // 가격 정보
+  rent      Int?
+  sale      Int?
+  deposit   Int?
+
+  // 상세 정보
+  rooms     Int
+  size      Int      // 평수
+  type      String   // 단독주택, 전원주택, 한옥 등
+  yearBuilt Int?
+  condition String   // 리모델링 필요, 양호, 최상
+
+  // 특징 (JSON 배열로 저장)
+  features  Json     @default("[]")
+
+  // 연락처
+  contact   String   // 전화번호
+
+  // 판매 상태
+  status    String   @default("active") // active, sold, pending
+
+  // 생성/업데이트 시간
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+  images PropertyImage[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([district])
+  @@index([city])
+  @@index([createdAt])
+  @@map("user_properties")
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String   @map("property_id")
+  url        String   // 이미지 URL
+  order      Int      @default(0) // 순서
+  isPrimary  Boolean  @default(false) @map("is_primary") // 대표 이미지
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  property UserProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([propertyId, order])
+  @@map("property_images")
 }

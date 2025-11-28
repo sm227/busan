@@ -110,7 +110,10 @@ export async function GET(request: NextRequest) {
         surroundings: rec.surroundings as any,
         communityInfo: rec.communityInfo as any,
         aiReason: rec.aiReason || undefined,
-        matchScore: matchScore || undefined
+        matchScore: matchScore || undefined,
+        isUserProperty: rec.isUserProperty || false,
+        userNickname: rec.userNickname || undefined,
+        contact: rec.contact || undefined
       };
     });
 
@@ -175,6 +178,9 @@ export async function POST(request: NextRequest) {
         communityInfo: property.communityInfo,
         aiReason: property.aiReason || null,
         matchScore: property.matchScore || null,
+        isUserProperty: property.isUserProperty || false,
+        userNickname: property.userNickname || null,
+        contact: property.contact || null,
       },
     });
 

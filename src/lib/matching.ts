@@ -91,12 +91,15 @@ export class MatchingAlgorithm {
 
   private static matchWorkStyle(style: string, property: RuralProperty): number {
     const transportationScore = property.surroundings.transportation.length > 1 ? 0.8 : 0.5;
-    const industriesMatch = property.communityInfo.mainIndustries;
+    const industriesMatch = property.communityInfo.mainIndustries || [];
+
+    // mainIndustries가 배열인지 확인
+    const industries = Array.isArray(industriesMatch) ? industriesMatch : [];
 
     const styleScores: { [key: string]: number } = {
-      'remote-worker': transportationScore * 0.7 + (industriesMatch.includes('관광업') ? 0.3 : 0.2),
-      'farmer': industriesMatch.includes('농업') ? 1.0 : 0.3,
-      'entrepreneur': industriesMatch.includes('관광업') ? 0.9 : 0.6,
+      'remote-worker': transportationScore * 0.7 + (industries.includes('관광업') ? 0.3 : 0.2),
+      'farmer': industries.includes('농업') ? 1.0 : 0.3,
+      'entrepreneur': industries.includes('관광업') ? 0.9 : 0.6,
       'retiree': 0.8
     };
 

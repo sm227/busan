@@ -1,4 +1,5 @@
 import { RuralProperty } from '@/types';
+import { HOUSE_IMAGES } from '@/config/constants';
 
 // API 응답 데이터 타입 정의 (/infoVill 엔드포인트)
 export interface RuralVillageApiResponse {
@@ -422,7 +423,7 @@ function getNextImages(count: number = 3): string[] {
 
   // 풀에서 앞에서부터 꺼내기
   const selected = imagePool.splice(0, count);
-  return selected.map(num => `/house/house${num}.jpeg`);
+  return selected.map(num => HOUSE_IMAGES.getUrl(num));
 }
 
 // API 응답 전체를 변환

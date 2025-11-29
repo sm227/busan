@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Heart, MapPin, Clock, Sparkles } from 'lucide-react';
 import Image from 'next/image';
+import { HOUSE_IMAGES } from '@/config/constants';
 
 interface PopularPost {
   id: number;
@@ -88,25 +89,22 @@ export default function PopularPostsSlider({ onPostClick }: PopularPostsSliderPr
 
   // 지역별 이미지 매핑 (기존 로직 유지)
   const getImageForLocation = (location?: string) => {
-    if (!location) return '/house/house1.jpg';
-    if (location.includes('강원도') || location.includes('홍천')) return '/house/house2.jpeg';
-    if (location.includes('제주도') || location.includes('서귀포')) return '/house/house3.jpeg';
-    if (location.includes('전라북도') || location.includes('임실')) return '/house/house4.jpeg';
-    if (location.includes('충청남도') || location.includes('논산')) return '/house/house5.jpeg';
-    if (location.includes('경상남도') || location.includes('하동')) return '/house/house6.jpeg';
-    if (location.includes('부산')) return '/house/house7.jpeg';
-    if (location.includes('경기도')) return '/house/house8.jpg';
-    if (location.includes('인천')) return '/house/house9.jpg';
-    if (location.includes('대구')) return '/house/house10.jpg';
-    if (location.includes('대전')) return '/house/house11.jpg';
-    if (location.includes('광주')) return '/house/house12.jpg';
-    
-    const imageList = [
-      '/house/house13.jpeg', '/house/house14.jpg', '/house/house15.jpg',
-      '/house/house16.jpg', '/house/house17.jpg', '/house/house18.jpg'
-    ];
-    const index = (location?.length || 0) % imageList.length;
-    return imageList[index];
+    if (!location) return HOUSE_IMAGES.getUrl(1);
+    if (location.includes('강원도') || location.includes('홍천')) return HOUSE_IMAGES.getUrl(2);
+    if (location.includes('제주도') || location.includes('서귀포')) return HOUSE_IMAGES.getUrl(3);
+    if (location.includes('전라북도') || location.includes('임실')) return HOUSE_IMAGES.getUrl(4);
+    if (location.includes('충청남도') || location.includes('논산')) return HOUSE_IMAGES.getUrl(5);
+    if (location.includes('경상남도') || location.includes('하동')) return HOUSE_IMAGES.getUrl(6);
+    if (location.includes('부산')) return HOUSE_IMAGES.getUrl(7);
+    if (location.includes('경기도')) return HOUSE_IMAGES.getUrl(8);
+    if (location.includes('인천')) return HOUSE_IMAGES.getUrl(9);
+    if (location.includes('대구')) return HOUSE_IMAGES.getUrl(10);
+    if (location.includes('대전')) return HOUSE_IMAGES.getUrl(11);
+    if (location.includes('광주')) return HOUSE_IMAGES.getUrl(12);
+
+    const imageNumbers = [13, 14, 15, 16, 17, 18];
+    const index = (location?.length || 0) % imageNumbers.length;
+    return HOUSE_IMAGES.getUrl(imageNumbers[index]);
   };
 
   if (loading) {

@@ -1,3 +1,5 @@
+import { HOUSE_IMAGES } from '@/config/constants';
+
 export interface PopularPostData {
   id: number;
   title: string;
@@ -20,7 +22,7 @@ export const popularPostsData: PopularPostData[] = [
     author: "자연인김씨",
     category: "review",
     location: "강원도 홍천군",
-    imageUrl: "/house/house1.jpg",
+    imageUrl: HOUSE_IMAGES.getUrl(1),
     views: 1247,
     likes: 89,
     featured: true,
@@ -33,7 +35,7 @@ export const popularPostsData: PopularPostData[] = [
     author: "카페사장",
     category: "story",
     location: "제주도 서귀포시",
-    imageUrl: "/house/house5.jpeg",
+    imageUrl: HOUSE_IMAGES.getUrl(5),
     views: 892,
     likes: 156,
     featured: true,
@@ -46,7 +48,7 @@ export const popularPostsData: PopularPostData[] = [
     author: "이주전문가",
     category: "tips",
     location: "전라북도 임실군",
-    imageUrl: "/house/house10.jpg",
+    imageUrl: HOUSE_IMAGES.getUrl(10),
     views: 2156,
     likes: 234,
     featured: true,
@@ -59,7 +61,7 @@ export const popularPostsData: PopularPostData[] = [
     author: "리모델링마스터",
     category: "tips",
     location: "경상북도 안동시",
-    imageUrl: "/house/house15.jpg",
+    imageUrl: HOUSE_IMAGES.getUrl(15),
     views: 1789,
     likes: 198,
     featured: false,
@@ -72,7 +74,7 @@ export const popularPostsData: PopularPostData[] = [
     author: "스마트농부",
     category: "story",
     location: "충청남도 논산시",
-    imageUrl: "/house/house20.jpg",
+    imageUrl: HOUSE_IMAGES.getUrl(20),
     views: 1456,
     likes: 167,
     featured: false,
@@ -85,7 +87,7 @@ export const popularPostsData: PopularPostData[] = [
     author: "마을이장",
     category: "news",
     location: "경상남도 하동군",
-    imageUrl: "/house/house8.jpg",
+    imageUrl: HOUSE_IMAGES.getUrl(8),
     views: 987,
     likes: 143,
     featured: true,

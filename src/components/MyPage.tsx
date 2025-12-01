@@ -21,7 +21,6 @@ interface MyPageProps {
   currentUser?: { id: number; nickname: string } | null;
   onLogout?: () => void;
   onNavigateToResults?: () => void;
-  onNavigateToGuestbook?: () => void;
 }
 
 interface UserProfile {
@@ -42,7 +41,7 @@ interface UserProfile {
 
 type TabType = 'missions' | 'regions' | 'badges' | null;
 
-export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResults, onNavigateToGuestbook }: MyPageProps) {
+export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResults }: MyPageProps) {
   // AppContext에서 실제 찜한 매물 가져오기
   const { likedProperties, userPreferences } = useApp();
   const router = useRouter();
@@ -272,7 +271,7 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
                 {[
                   { label: '내정보', icon: User, isLogout: false, action: () => setShowUserInfoModal(true) },
                   { label: '찜목록', icon: Heart, isLogout: false, action: onNavigateToResults },
-                  { label: '후기관리', icon: PenTool, isLogout: false, action: onNavigateToGuestbook },
+                  { label: '내활동', icon: PenTool, isLogout: false, action: () => router.push('/community?tab=myActivity') },
                   { label: '로그아웃', icon: LogOut, action: handleLogout, isLogout: true }
                 ].map((item, idx) => (
                   <button

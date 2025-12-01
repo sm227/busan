@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowLeft, Plus, Heart, Star, MapPin, Calendar, User, 
-  MessageCircle, BookOpen, HelpCircle, Award, Filter, Search, 
-  Edit3, Trash2, X, SortAsc, SortDesc, PenTool
+import {
+  ArrowLeft, Plus, Heart, Star, MapPin, Calendar, User,
+  MessageCircle, BookOpen, HelpCircle, Award, Filter, Search,
+  Edit3, Trash2, X, SortAsc, SortDesc, PenTool, Bookmark, BookmarkCheck, Share, Send
 } from 'lucide-react';
 import Comments from './Comments';
 
@@ -32,6 +32,7 @@ interface CommunityEntry {
   created_at: string;
   author_nickname: string;
   user_id: number;
+  activity_type?: 'written' | 'liked' | 'commented';
 }
 
 interface CommunityProps {
@@ -43,31 +44,34 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   const router = useRouter();
   const [entries, setEntries] = useState<CommunityEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'all' | 'experience' | 'review' | 'tip' | 'question'>('all');
+  const [activeTab, setActiveTab] = useState<'list' | 'write' | 'bookmarks' | 'myActivity'>('list');
+  const [isInitialized, setIsInitialized] = useState(false);
   const [showWriteForm, setShowWriteForm] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<CommunityEntry | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingEntry, setEditingEntry] = useState<CommunityEntry | null>(null);
   const [likedEntries, setLikedEntries] = useState<Set<number>>(new Set());
-  
-  // 고급 필터 상태
+  const [bookmarkedEntries, setBookmarkedEntries] = useState<Set<number>>(new Set());
+
+  // 검색 & 필터 상태
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [locationFilter, setLocationFilter] = useState('');
   const [tagFilter, setTagFilter] = useState('');
   const [minRatingFilter, setMinRatingFilter] = useState<number>(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<'created_at' | 'likes_count' | 'comments_count' | 'latest_comment' | 'rating'>('created_at');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
 
-  // ... (loadEntries, loadLikedEntries 등 기존 로직 그대로 유지) ...
-  // 편의상 로직 부분은 생략하고 UI 렌더링 부분에 집중합니다.
-  // 실제 적용 시에는 기존 로직 함수들을 그대로 복사해서 사용해주세요.
-  
+  // 공유 상태
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareData, setShareData] = useState<any>(null);
+
   const loadEntries = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (activeTab !== 'all') params.append('category', activeTab);
       if (searchTerm) params.append('search', searchTerm);
+      if (selectedCategory) params.append('category', selectedCategory);
       if (locationFilter) params.append('location', locationFilter);
       if (tagFilter) params.append('tag', tagFilter);
       if (minRatingFilter > 0) params.append('minRating', minRatingFilter.toString());
@@ -82,9 +86,10 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
       if (data.success) {
         setEntries(data.data || []);
         if (currentUser && data.data && data.data.length > 0) {
-          // await loadLikedEntries(data.data); // 실제 코드에선 활성화
+          await loadUserInteractions(data.data);
         } else if (!currentUser) {
           setLikedEntries(new Set());
+          setBookmarkedEntries(new Set());
         }
       }
     } catch (error) {
@@ -94,18 +99,206 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
     }
   };
 
-  useEffect(() => {
-    loadEntries();
-  }, [activeTab, searchTerm, locationFilter, tagFilter, minRatingFilter, sortBy, sortOrder, currentUser]);
+  const loadUserInteractions = async (entries: CommunityEntry[]) => {
+    if (!currentUser) return;
 
-  // ... (handleLike, handleEdit, handleDelete 등 기존 핸들러 함수 유지) ...
-  const handleLike = async (entryId: number) => { /* 기존 로직 */ };
-  const handleEdit = (entry: CommunityEntry) => { 
+    try {
+      const likedSet = new Set<number>();
+      const bookmarkedSet = new Set<number>();
+
+      for (const entry of entries) {
+        // 좋아요 확인
+        const likeResponse = await fetch(`/api/community/likes?userId=${currentUser.id}&entryId=${entry.id}`);
+        const likeData = await likeResponse.json();
+        if (likeData.success && likeData.isLiked) {
+          likedSet.add(entry.id);
+        }
+
+        // 북마크 확인
+        const bookmarkResponse = await fetch(`/api/bookmarks?userId=${currentUser.id}&guestbookId=${entry.id}`);
+        const bookmarkData = await bookmarkResponse.json();
+        if (bookmarkData.success && bookmarkData.bookmarked) {
+          bookmarkedSet.add(entry.id);
+        }
+      }
+
+      setLikedEntries(likedSet);
+      setBookmarkedEntries(bookmarkedSet);
+    } catch (error) {
+      console.error('사용자 인터랙션 로딩 실패:', error);
+    }
+  };
+
+  const loadBookmarks = async () => {
+    if (!currentUser) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/bookmarks?userId=${currentUser.id}&action=list`);
+      const data = await response.json();
+
+      if (data.success) {
+        setEntries(data.data || []);
+      }
+    } catch (error) {
+      console.error('북마크 로딩 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMyActivity = async () => {
+    if (!currentUser) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/community/my-activity?userId=${currentUser.id}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setEntries(data.data || []);
+      }
+    } catch (error) {
+      console.error('내 활동 로딩 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLike = async (entryId: number) => {
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch('/api/community/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, entryId })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        const newLikedEntries = new Set(likedEntries);
+        if (data.action === 'added') {
+          newLikedEntries.add(entryId);
+        } else {
+          newLikedEntries.delete(entryId);
+        }
+        setLikedEntries(newLikedEntries);
+
+        // 목록 새로고침
+        if (activeTab === 'list') {
+          await loadEntries();
+        } else if (activeTab === 'bookmarks') {
+          await loadBookmarks();
+        } else if (activeTab === 'myActivity') {
+          await loadMyActivity();
+        }
+      }
+    } catch (error) {
+      console.error('좋아요 처리 실패:', error);
+    }
+  };
+
+  const handleBookmark = async (entryId: number) => {
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch('/api/bookmarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, guestbookId: entryId })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        const newBookmarkedEntries = new Set(bookmarkedEntries);
+        if (data.bookmarked) {
+          newBookmarkedEntries.add(entryId);
+        } else {
+          newBookmarkedEntries.delete(entryId);
+        }
+        setBookmarkedEntries(newBookmarkedEntries);
+
+        // 북마크 탭에서는 목록 새로고침
+        if (activeTab === 'bookmarks') {
+          await loadBookmarks();
+        }
+      }
+    } catch (error) {
+      console.error('북마크 처리 실패:', error);
+    }
+  };
+
+  const handleShare = async (entry: CommunityEntry) => {
+    const url = `${window.location.origin}/community?entryId=${entry.id}`;
+    setShareData({
+      title: entry.title,
+      url: url
+    });
+    setShowShareModal(true);
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('클립보드에 복사되었습니다!');
+    } catch (error) {
+      console.error('복사 실패:', error);
+    }
+  };
+
+  const handleEdit = (entry: CommunityEntry) => {
     setEditingEntry(entry);
     setSelectedEntry(null);
     setShowWriteForm(true);
   };
-  const handleDelete = async (entryId: number) => { /* 기존 로직 */ };
+
+  const handleDelete = async (entryId: number) => {
+    if (!currentUser) return;
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+
+    try {
+      const response = await fetch(`/api/community?entryId=${entryId}&userId=${currentUser.id}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSelectedEntry(null);
+        if (activeTab === 'list') {
+          await loadEntries();
+        } else if (activeTab === 'myActivity') {
+          await loadMyActivity();
+        }
+      }
+    } catch (error) {
+      console.error('삭제 실패:', error);
+    }
+  };
+
+  // URL 쿼리 파라미터에서 초기 탭 설정
+  useEffect(() => {
+    if (!isInitialized && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam && ['list', 'write', 'bookmarks', 'myActivity'].includes(tabParam)) {
+        setActiveTab(tabParam as 'list' | 'write' | 'bookmarks' | 'myActivity');
+      }
+      setIsInitialized(true);
+    }
+  }, [isInitialized]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    if (activeTab === 'list') {
+      loadEntries();
+    } else if (activeTab === 'bookmarks') {
+      loadBookmarks();
+    } else if (activeTab === 'myActivity') {
+      loadMyActivity();
+    }
+  }, [activeTab, searchTerm, selectedCategory, locationFilter, tagFilter, minRatingFilter, sortBy, sortOrder, currentUser, isInitialized]);
 
   // UI 헬퍼 함수
   const getCategoryIcon = (category: string) => {
@@ -139,12 +332,33 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
     ));
   };
 
+  const getActivityBadge = (type?: string) => {
+    switch (type) {
+      case 'written':
+        return <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">작성</span>;
+      case 'liked':
+        return <span className="text-xs px-2 py-0.5 bg-red-50 text-red-600 rounded-full">좋아요</span>;
+      case 'commented':
+        return <span className="text-xs px-2 py-0.5 bg-green-50 text-green-600 rounded-full">댓글</span>;
+      default:
+        return null;
+    }
+  };
+
   // 조건부 렌더링 (글쓰기, 상세보기)
   if (showWriteForm) {
     return (
       <CommunityWriteForm
         onBack={() => { setShowWriteForm(false); setEditingEntry(null); }}
-        onSubmit={() => { setShowWriteForm(false); setEditingEntry(null); loadEntries(); }}
+        onSubmit={() => {
+          setShowWriteForm(false);
+          setEditingEntry(null);
+          if (activeTab === 'list') {
+            loadEntries();
+          } else if (activeTab === 'myActivity') {
+            loadMyActivity();
+          }
+        }}
         editingEntry={editingEntry}
         currentUser={currentUser}
       />
@@ -159,7 +373,11 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
         onLike={handleLike}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onBookmark={handleBookmark}
+        onShare={handleShare}
         currentUser={currentUser}
+        isLiked={likedEntries.has(selectedEntry.id)}
+        isBookmarked={bookmarkedEntries.has(selectedEntry.id)}
       />
     );
   }
@@ -168,7 +386,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   return (
     <div className="min-h-screen bg-white font-sans text-stone-800">
       <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-xl flex flex-col">
-        
+
         {/* 1. Header */}
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md px-6 py-4 border-b border-stone-100">
           <div className="flex items-center justify-between mb-4">
@@ -179,106 +397,187 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
             <div className="w-10" /> {/* 레이아웃 균형용 */}
           </div>
 
-          {/* Search & Filter */}
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-               <input 
-                 type="text" 
-                 placeholder="검색어를 입력하세요" 
-                 value={searchTerm}
-                 onChange={(e) => setSearchTerm(e.target.value)}
-                 className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-stone-400 transition-colors"
-               />
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-            </div>
-            <button 
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`p-2.5 rounded-xl border transition-colors ${
-                showAdvancedFilters ? 'bg-stone-800 text-white border-stone-800' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 bg-stone-100 rounded-lg p-1 mb-4">
+            <button
+              onClick={() => setActiveTab('list')}
+              className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'list'
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-               <Filter className="w-5 h-5" />
+              목록
             </button>
+            {currentUser && (
+              <>
+                <button
+                  onClick={() => setActiveTab('write')}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'write'
+                      ? 'bg-white text-stone-900 shadow-sm'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  작성
+                </button>
+                <button
+                  onClick={() => setActiveTab('bookmarks')}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'bookmarks'
+                      ? 'bg-white text-stone-900 shadow-sm'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  북마크
+                </button>
+                <button
+                  onClick={() => setActiveTab('myActivity')}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'myActivity'
+                      ? 'bg-white text-stone-900 shadow-sm'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  내활동
+                </button>
+              </>
+            )}
           </div>
 
-          {/* Advanced Filters (Accordion) */}
-          <AnimatePresence>
-            {showAdvancedFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-4 pb-2 space-y-3">
-                   <div className="grid grid-cols-2 gap-2">
-                      <input 
-                        type="text" 
-                        placeholder="지역 (예: 강원)" 
-                        value={locationFilter}
-                        onChange={(e) => setLocationFilter(e.target.value)}
-                        className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-xs"
-                      />
-                      <select 
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as any)}
-                        className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-xs"
-                      >
-                         <option value="created_at">최신순</option>
-                         <option value="likes_count">인기순</option>
-                         <option value="comments_count">댓글순</option>
-                      </select>
-                   </div>
-                   <div className="flex justify-end">
-                      <button 
-                        onClick={() => {
-                          setLocationFilter('');
-                          setTagFilter('');
-                          setSortBy('created_at');
-                          setSearchTerm('');
-                        }}
-                        className="text-xs text-stone-400 underline hover:text-stone-600"
-                      >
-                        필터 초기화
-                      </button>
-                   </div>
+          {/* Search & Filter - only in list tab */}
+          {activeTab === 'list' && (
+            <>
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                   <input
+                     type="text"
+                     placeholder="검색어를 입력하세요"
+                     value={searchTerm}
+                     onChange={(e) => setSearchTerm(e.target.value)}
+                     className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-stone-400 transition-colors"
+                   />
+                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                <button
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className={`p-2.5 rounded-xl border transition-colors ${
+                    showAdvancedFilters ? 'bg-stone-800 text-white border-stone-800' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'
+                  }`}
+                >
+                   <Filter className="w-5 h-5" />
+                </button>
+              </div>
 
-        {/* 2. Category Tabs (Scrollable Text Tabs) */}
-        <div className="bg-white border-b border-stone-100 px-6 pt-2">
-           <div className="flex gap-6 overflow-x-auto scrollbar-hide">
-              {['all', 'experience', 'review', 'tip', 'question'].map((cat) => (
-                 <button
-                   key={cat}
-                   onClick={() => setActiveTab(cat as any)}
-                   className={`pb-3 text-sm font-medium whitespace-nowrap transition-colors relative ${
-                     activeTab === cat ? 'text-stone-800 font-bold' : 'text-stone-400'
-                   }`}
-                 >
-                    {getCategoryName(cat)}
-                    {activeTab === cat && (
-                       <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 w-full h-0.5 bg-stone-800" />
-                    )}
-                 </button>
-              ))}
-           </div>
+              {/* Advanced Filters (Accordion) */}
+              <AnimatePresence>
+                {showAdvancedFilters && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4 pb-2 space-y-3">
+                       <div className="grid grid-cols-2 gap-2">
+                          <select
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-xs"
+                          >
+                            <option value="">모든 카테고리</option>
+                            <option value="experience">이주 경험</option>
+                            <option value="review">후기</option>
+                            <option value="tip">팁</option>
+                            <option value="question">질문</option>
+                          </select>
+                          <input
+                            type="text"
+                            placeholder="지역 (예: 강원)"
+                            value={locationFilter}
+                            onChange={(e) => setLocationFilter(e.target.value)}
+                            className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-xs"
+                          />
+                       </div>
+                       <div className="grid grid-cols-2 gap-2">
+                          <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as any)}
+                            className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-xs"
+                          >
+                             <option value="created_at">최신순</option>
+                             <option value="likes_count">인기순</option>
+                             <option value="comments_count">댓글순</option>
+                          </select>
+                          <input
+                            type="text"
+                            placeholder="태그 검색"
+                            value={tagFilter}
+                            onChange={(e) => setTagFilter(e.target.value)}
+                            className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-xs"
+                          />
+                       </div>
+                       <div className="flex justify-end">
+                          <button
+                            onClick={() => {
+                              setLocationFilter('');
+                              setTagFilter('');
+                              setSortBy('created_at');
+                              setSearchTerm('');
+                              setSelectedCategory('');
+                            }}
+                            className="text-xs text-stone-400 underline hover:text-stone-600"
+                          >
+                            필터 초기화
+                          </button>
+                       </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+
+          {/* Tab Headers */}
+          {activeTab === 'bookmarks' && (
+            <div className="mb-2">
+              <h2 className="text-lg font-bold text-stone-800">북마크</h2>
+              <p className="text-xs text-stone-400">저장한 글 목록</p>
+            </div>
+          )}
+          {activeTab === 'myActivity' && (
+            <div className="mb-2">
+              <h2 className="text-lg font-bold text-stone-800">내 활동</h2>
+              <p className="text-xs text-stone-400">내가 작성하거나 상호작용한 글들</p>
+            </div>
+          )}
         </div>
 
         {/* 3. Content List */}
         <div className="flex-1 overflow-y-auto bg-[#FDFBF7] px-6 py-6">
-           {loading ? (
+           {activeTab === 'write' && currentUser ? (
+             <CommunityWriteContent
+               currentUser={currentUser}
+               onSuccess={() => {
+                 setActiveTab('list');
+                 loadEntries();
+               }}
+             />
+           ) : loading ? (
               <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-stone-800 border-t-transparent rounded-full animate-spin"/></div>
            ) : entries.length === 0 ? (
               <div className="text-center py-20 text-stone-400 text-sm">
-                 작성된 글이 없습니다.
+                 {activeTab === 'myActivity' && '아직 활동 내역이 없습니다.'}
+                 {activeTab === 'bookmarks' && '북마크한 글이 없습니다.'}
+                 {activeTab === 'list' && '작성된 글이 없습니다.'}
               </div>
            ) : (
               <div className="space-y-4">
-                 {entries.map((entry, idx) => (
+                 {entries.map((entry, idx) => {
+                    const isLiked = likedEntries.has(entry.id);
+                    const isBookmarked = bookmarkedEntries.has(entry.id);
+
+                    return (
                     <motion.div
                       key={entry.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -289,7 +588,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                     >
                        {/* Card Header */}
                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 items-center">
                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                                 entry.category === 'question' ? 'bg-red-50 text-red-600 border-red-100' :
                                 entry.category === 'tip' ? 'bg-blue-50 text-blue-600 border-blue-100' :
@@ -302,8 +601,26 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                                    <MapPin className="w-3 h-3" /> {entry.location}
                                 </span>
                              )}
+                             {entry.activity_type && getActivityBadge(entry.activity_type)}
                           </div>
-                          <span className="text-[10px] text-stone-400">{formatDate(entry.created_at)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-stone-400">{formatDate(entry.created_at)}</span>
+                            {currentUser && (
+                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleBookmark(entry.id);
+                                  }}
+                                  className={`p-1 rounded transition-colors ${
+                                    isBookmarked ? 'text-yellow-600' : 'text-stone-300 hover:text-yellow-600'
+                                  }`}
+                                >
+                                  {isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                                </button>
+                              </div>
+                            )}
+                          </div>
                        </div>
 
                        {/* Title & Content */}
@@ -320,43 +637,272 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                           </div>
                           <div className="flex gap-3 text-xs text-stone-400">
                              <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> {entry.likes_count}</span>
-                             <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {entry.comments_count}</span>
+                             <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {entry.comments_count || 0}</span>
                           </div>
                        </div>
                     </motion.div>
-                 ))}
+                 )})}
               </div>
            )}
         </div>
-
-        {/* Floating Write Button */}
-        {currentUser && (
-           <motion.button
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.95 }}
-             onClick={() => setShowWriteForm(true)}
-             className="absolute bottom-6 right-6 w-14 h-14 bg-stone-800 text-white rounded-full shadow-lg flex items-center justify-center z-30"
-           >
-              <PenTool className="w-6 h-6" />
-           </motion.button>
-        )}
-
       </div>
+
+      {/* 공유 모달 */}
+      <AnimatePresence>
+        {showShareModal && shareData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowShareModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-lg max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">게시글 공유</h3>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">링크</label>
+                  <div className="flex">
+                    <input
+                      type="text"
+                      value={shareData.url}
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg bg-gray-50"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(shareData.url)}
+                      className="px-4 py-2 bg-stone-800 text-white rounded-r-lg hover:bg-stone-700"
+                    >
+                      복사
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.title)}&url=${encodeURIComponent(shareData.url)}`, '_blank')}
+                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  >
+                    <span>트위터</span>
+                  </button>
+                  <button
+                    onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareData.url)}`, '_blank')}
+                    className="flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <span>페이스북</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 // --- 하위 컴포넌트 (WriteForm & Detail) ---
-// 아래 컴포넌트들도 동일한 테마(Stone & Warm)를 적용하여 작성합니다.
+
+function CommunityWriteContent({ currentUser, onSuccess }: any) {
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    location: '',
+    rating: 0,
+    category: 'experience' as const,
+    tags: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch('/api/community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          ...formData,
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setFormData({
+          title: '',
+          content: '',
+          location: '',
+          rating: 0,
+          category: 'experience',
+          tags: ''
+        });
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('글 작성 실패:', error);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg p-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* 카테고리 선택 */}
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-2">카테고리</label>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { value: 'experience', icon: '📖', name: '이주 경험' },
+              { value: 'review', icon: '⭐', name: '후기' },
+              { value: 'tip', icon: '💡', name: '팁' },
+              { value: 'question', icon: '❓', name: '질문' }
+            ].map((category) => (
+              <button
+                key={category.value}
+                type="button"
+                onClick={() => setFormData({ ...formData, category: category.value as any })}
+                className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                  formData.category === category.value
+                    ? 'border-stone-800 bg-stone-50 text-stone-800'
+                    : 'border-stone-200 hover:border-stone-300'
+                }`}
+              >
+                <div className="text-lg mb-1">{category.icon}</div>
+                <div className="text-sm font-medium">{category.name}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 제목 */}
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-2">제목</label>
+          <input
+            type="text"
+            required
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent"
+            placeholder="제목을 입력하세요"
+          />
+        </div>
+
+        {/* 내용 */}
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-2">내용</label>
+          <textarea
+            required
+            rows={6}
+            value={formData.content}
+            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+            className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent"
+            placeholder="내용을 입력하세요"
+          />
+        </div>
+
+        {/* 지역 및 평점 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">지역 (선택)</label>
+            <input
+              type="text"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent"
+              placeholder="예: 부산광역시 해운대구"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">평점 (선택)</label>
+            <div className="flex items-center space-x-2">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <button
+                  key={rating}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, rating })}
+                  className={`w-8 h-8 ${
+                    formData.rating >= rating ? 'text-yellow-400' : 'text-gray-300'
+                  } hover:text-yellow-400 transition-colors`}
+                >
+                  <Star className="w-full h-full fill-current" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 태그 */}
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-2">태그 (선택)</label>
+          <input
+            type="text"
+            value={formData.tags}
+            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+            className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent"
+            placeholder="쉼표로 구분하여 입력 (예: 이주, 부산, 신혼집)"
+          />
+        </div>
+
+        {/* 제출 버튼 */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="px-6 py-2 bg-stone-800 text-white rounded-lg hover:bg-stone-700 transition-colors"
+          >
+            작성하기
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
 function CommunityWriteForm({ onBack, onSubmit, editingEntry, currentUser }: any) {
-   // (기존 로직 유지, UI만 변경)
    const [formData, setFormData] = useState({
       title: editingEntry?.title || '',
       content: editingEntry?.content || '',
       category: editingEntry?.category || 'experience',
-      // ... 기타 필드
    });
+
+   const handleSubmit = async () => {
+     if (!currentUser) return;
+
+     try {
+       const response = await fetch('/api/community', {
+         method: editingEntry ? 'PUT' : 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           ...(editingEntry ? { entryId: editingEntry.id } : {}),
+           userId: currentUser.id,
+           ...formData
+         })
+       });
+
+       const data = await response.json();
+       if (data.success) {
+         onSubmit();
+       }
+     } catch (error) {
+       console.error('글 작성/수정 실패:', error);
+     }
+   };
 
    return (
       <div className="min-h-screen bg-white font-sans text-stone-800">
@@ -364,22 +910,22 @@ function CommunityWriteForm({ onBack, onSubmit, editingEntry, currentUser }: any
             {/* Header */}
             <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center">
                <button onClick={onBack} className="text-stone-500 hover:text-stone-800">취소</button>
-               <h1 className="font-bold text-lg">글 쓰기</h1>
-               <button onClick={onSubmit} className="text-orange-600 font-bold hover:text-orange-700">등록</button>
+               <h1 className="font-bold text-lg">{editingEntry ? '글 수정' : '글 쓰기'}</h1>
+               <button onClick={handleSubmit} className="text-orange-600 font-bold hover:text-orange-700">등록</button>
             </div>
-            
+
             {/* Form */}
             <div className="p-6 space-y-6">
-               <input 
-                 type="text" 
-                 placeholder="제목을 입력하세요" 
+               <input
+                 type="text"
+                 placeholder="제목을 입력하세요"
                  className="w-full text-lg font-bold placeholder:text-stone-300 outline-none"
                  value={formData.title}
                  onChange={e => setFormData({...formData, title: e.target.value})}
                />
                <div className="flex gap-2 overflow-x-auto scrollbar-hide py-2">
                   {['experience', 'review', 'tip', 'question'].map(cat => (
-                     <button 
+                     <button
                        key={cat}
                        onClick={() => setFormData({...formData, category: cat})}
                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
@@ -390,8 +936,8 @@ function CommunityWriteForm({ onBack, onSubmit, editingEntry, currentUser }: any
                      </button>
                   ))}
                </div>
-               <textarea 
-                 placeholder="내용을 입력하세요..." 
+               <textarea
+                 placeholder="내용을 입력하세요..."
                  className="w-full h-64 resize-none outline-none text-sm leading-relaxed placeholder:text-stone-300"
                  value={formData.content}
                  onChange={e => setFormData({...formData, content: e.target.value})}
@@ -402,8 +948,7 @@ function CommunityWriteForm({ onBack, onSubmit, editingEntry, currentUser }: any
    );
 }
 
-function CommunityDetail({ entry, onBack, onLike, currentUser }: any) {
-   // (상세 보기 UI - 기존 로직 + Stone 테마)
+function CommunityDetail({ entry, onBack, onLike, onEdit, onDelete, onBookmark, onShare, currentUser, isLiked, isBookmarked }: any) {
    return (
       <div className="min-h-screen bg-white font-sans text-stone-800">
          <div className="max-w-md mx-auto min-h-screen flex flex-col relative">
@@ -432,10 +977,48 @@ function CommunityDetail({ entry, onBack, onLike, currentUser }: any) {
                   <p className="text-stone-700 leading-7 whitespace-pre-wrap">{entry.content}</p>
                </div>
 
+               {/* Action buttons */}
+               {currentUser && (
+                 <div className="flex gap-2 mb-6">
+                   <button
+                     onClick={() => onBookmark(entry.id)}
+                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
+                       isBookmarked ? 'bg-yellow-50 text-yellow-600 border-yellow-200' : 'bg-white text-stone-600 border-stone-200'
+                     }`}
+                   >
+                     {isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                     <span className="text-sm">북마크</span>
+                   </button>
+                   <button
+                     onClick={() => onShare(entry)}
+                     className="flex items-center space-x-2 px-4 py-2 rounded-lg border bg-white text-stone-600 border-stone-200 hover:bg-stone-50"
+                   >
+                     <Share className="w-4 h-4" />
+                     <span className="text-sm">공유</span>
+                   </button>
+                   {currentUser.id === entry.user_id && (
+                     <>
+                       <button
+                         onClick={() => onEdit(entry)}
+                         className="flex items-center space-x-2 px-4 py-2 rounded-lg border bg-white text-stone-600 border-stone-200 hover:bg-stone-50"
+                       >
+                         <Edit3 className="w-4 h-4" />
+                       </button>
+                       <button
+                         onClick={() => onDelete(entry.id)}
+                         className="flex items-center space-x-2 px-4 py-2 rounded-lg border bg-white text-red-600 border-red-200 hover:bg-red-50"
+                       >
+                         <Trash2 className="w-4 h-4" />
+                       </button>
+                     </>
+                   )}
+                 </div>
+               )}
+
                {/* Stats */}
                <div className="flex gap-4 py-4 border-t border-stone-100 text-stone-500 text-sm">
                   <span className="flex items-center gap-1"><Heart className="w-4 h-4" /> {entry.likes_count}</span>
-                  <span className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {entry.comments_count}</span>
+                  <span className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {entry.comments_count || 0}</span>
                </div>
 
                {/* Comments Section */}
@@ -445,12 +1028,16 @@ function CommunityDetail({ entry, onBack, onLike, currentUser }: any) {
             </div>
 
             {/* Like FAB */}
-            <button 
-               onClick={() => onLike(entry.id)}
-               className="fixed bottom-6 right-1/2 translate-x-[160px] w-12 h-12 bg-white border border-stone-200 shadow-lg rounded-full flex items-center justify-center text-stone-400 hover:text-red-500 transition-colors z-20"
-            >
-               <Heart className="w-6 h-6" />
-            </button>
+            {currentUser && (
+              <button
+                 onClick={() => onLike(entry.id)}
+                 className={`fixed bottom-6 right-1/2 translate-x-[160px] w-12 h-12 border shadow-lg rounded-full flex items-center justify-center transition-colors z-20 ${
+                   isLiked ? 'bg-red-50 text-red-500 border-red-200' : 'bg-white text-stone-400 border-stone-200 hover:text-red-500'
+                 }`}
+              >
+                 <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
+              </button>
+            )}
          </div>
       </div>
    );

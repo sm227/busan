@@ -169,6 +169,35 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
     if (!currentUser) return;
 
     try {
+      // 즉시 UI 업데이트 (Optimistic Update)
+      const newLikedEntries = new Set(likedEntries);
+      const wasLiked = likedEntries.has(entryId);
+
+      if (wasLiked) {
+        newLikedEntries.delete(entryId);
+      } else {
+        newLikedEntries.add(entryId);
+      }
+      setLikedEntries(newLikedEntries);
+
+      // entries 배열에서 해당 항목의 likes_count 즉시 업데이트
+      setEntries(prevEntries =>
+        prevEntries.map(entry =>
+          entry.id === entryId
+            ? { ...entry, likes_count: entry.likes_count + (wasLiked ? -1 : 1) }
+            : entry
+        )
+      );
+
+      // selectedEntry도 업데이트 (상세 보기에서 좋아요 누를 때)
+      if (selectedEntry && selectedEntry.id === entryId) {
+        setSelectedEntry({
+          ...selectedEntry,
+          likes_count: selectedEntry.likes_count + (wasLiked ? -1 : 1)
+        });
+      }
+
+      // 서버에 요청
       const response = await fetch('/api/community/likes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -176,26 +205,41 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
       });
 
       const data = await response.json();
-      if (data.success) {
-        const newLikedEntries = new Set(likedEntries);
-        if (data.action === 'added') {
-          newLikedEntries.add(entryId);
-        } else {
-          newLikedEntries.delete(entryId);
-        }
-        setLikedEntries(newLikedEntries);
-
-        // 목록 새로고침
-        if (activeTab === 'list') {
-          await loadEntries();
-        } else if (activeTab === 'bookmarks') {
-          await loadBookmarks();
-        } else if (activeTab === 'myActivity') {
-          await loadMyActivity();
+      if (!data.success) {
+        // 실패 시 롤백
+        setLikedEntries(likedEntries);
+        setEntries(prevEntries =>
+          prevEntries.map(entry =>
+            entry.id === entryId
+              ? { ...entry, likes_count: entry.likes_count + (wasLiked ? 1 : -1) }
+              : entry
+          )
+        );
+        if (selectedEntry && selectedEntry.id === entryId) {
+          setSelectedEntry({
+            ...selectedEntry,
+            likes_count: selectedEntry.likes_count + (wasLiked ? 1 : -1)
+          });
         }
       }
     } catch (error) {
       console.error('좋아요 처리 실패:', error);
+      // 에러 시 롤백
+      const wasLiked = !likedEntries.has(entryId);
+      setLikedEntries(likedEntries);
+      setEntries(prevEntries =>
+        prevEntries.map(entry =>
+          entry.id === entryId
+            ? { ...entry, likes_count: entry.likes_count + (wasLiked ? 1 : -1) }
+            : entry
+        )
+      );
+      if (selectedEntry && selectedEntry.id === entryId) {
+        setSelectedEntry({
+          ...selectedEntry,
+          likes_count: selectedEntry.likes_count + (wasLiked ? 1 : -1)
+        });
+      }
     }
   };
 
@@ -636,7 +680,21 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                              <span>{entry.author_nickname}</span>
                           </div>
                           <div className="flex gap-3 text-xs text-stone-400">
-                             <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> {entry.likes_count}</span>
+                             {currentUser ? (
+                               <button
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   handleLike(entry.id);
+                                 }}
+                                 className={`flex items-center gap-1 transition-colors ${
+                                   isLiked ? 'text-red-500' : 'text-stone-400 hover:text-red-500'
+                                 }`}
+                               >
+                                 <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} /> {entry.likes_count}
+                               </button>
+                             ) : (
+                               <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> {entry.likes_count}</span>
+                             )}
                              <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {entry.comments_count || 0}</span>
                           </div>
                        </div>
@@ -1017,7 +1075,18 @@ function CommunityDetail({ entry, onBack, onLike, onEdit, onDelete, onBookmark, 
 
                {/* Stats */}
                <div className="flex gap-4 py-4 border-t border-stone-100 text-stone-500 text-sm">
-                  <span className="flex items-center gap-1"><Heart className="w-4 h-4" /> {entry.likes_count}</span>
+                  {currentUser ? (
+                    <button
+                      onClick={() => onLike(entry.id)}
+                      className={`flex items-center gap-1 transition-colors ${
+                        isLiked ? 'text-red-500' : 'text-stone-500 hover:text-red-500'
+                      }`}
+                    >
+                      <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} /> {entry.likes_count}
+                    </button>
+                  ) : (
+                    <span className="flex items-center gap-1"><Heart className="w-4 h-4" /> {entry.likes_count}</span>
+                  )}
                   <span className="flex items-center gap-1"><MessageCircle className="w-4 h-4" /> {entry.comments_count || 0}</span>
                </div>
 

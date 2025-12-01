@@ -252,7 +252,7 @@ export function transformVillageToProperty(item: RuralVillageItem, index: number
     baseDeposit = 2000000 + Math.floor(Math.random() * 2000000); // 200-400만원
   }
 
-  // 주택 상태에 따른 가격 조정
+  
   if (condition === 'excellent') {
     baseRent = Math.round(baseRent * (1.2 + Math.random() * 0.3)); // 1.2-1.5배
     baseSale = Math.round(baseSale * (1.3 + Math.random() * 0.4)); // 1.3-1.7배

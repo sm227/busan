@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Calendar,
   ChevronRight,
+  ChevronLeft,
   ExternalLink,
   Handshake,
 } from "lucide-react";
@@ -218,7 +219,7 @@ export default function Home() {
 
             {/* 광고/혜택 배너 슬라이더 (수정됨) */}
             <div className="relative w-full overflow-hidden rounded-2xl shadow-lg shadow-stone-200/50 mt-6">
-              <div 
+              <div
                 className="flex transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${bannerIndex * 100}%)` }}
               >
@@ -271,6 +272,26 @@ export default function Home() {
                   </button>
                 </div>
               </div>
+
+              {/* 좌우 화살표 버튼 */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBannerIndex((prev) => (prev === 0 ? 2 : prev - 1));
+                }}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 active:scale-90 transition-transform"
+              >
+                <ChevronLeft className="w-6 h-6 text-white drop-shadow-lg" strokeWidth={3} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBannerIndex((prev) => (prev === 2 ? 0 : prev + 1));
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 active:scale-90 transition-transform"
+              >
+                <ChevronRight className="w-6 h-6 text-white drop-shadow-lg" strokeWidth={3} />
+              </button>
 
               {/* 슬라이더 인디케이터 (점) */}
               <div className="absolute bottom-3 right-4 flex space-x-1.5 z-10">

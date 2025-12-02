@@ -279,18 +279,18 @@ export default function Home() {
                   e.stopPropagation();
                   setBannerIndex((prev) => (prev === 0 ? 2 : prev - 1));
                 }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 active:scale-90 transition-transform"
+                className="absolute left-1 top-1/2 -translate-y-1/2 z-20 p-1 active:scale-90 transition-transform"
               >
-                <ChevronLeft className="w-6 h-6 text-white drop-shadow-lg" strokeWidth={3} />
+                <ChevronLeft className="w-5 h-5 text-white/70 drop-shadow-lg" strokeWidth={2.5} />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setBannerIndex((prev) => (prev === 2 ? 0 : prev + 1));
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 active:scale-90 transition-transform"
+                className="absolute right-1 top-1/2 -translate-y-1/2 z-20 p-1 active:scale-90 transition-transform"
               >
-                <ChevronRight className="w-6 h-6 text-white drop-shadow-lg" strokeWidth={3} />
+                <ChevronRight className="w-5 h-5 text-white/70 drop-shadow-lg" strokeWidth={2.5} />
               </button>
 
               {/* 슬라이더 인디케이터 (점) */}

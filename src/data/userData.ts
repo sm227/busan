@@ -135,6 +135,7 @@ export const dummyUser: User = {
     workStyle: 'remote-worker',
     hobbyStyle: 'nature-lover',
     pace: 'balanced',
+    purchaseType: 'rent',
     budget: 'medium'
   },
   matches: ['hanok-001', 'farm-001'],

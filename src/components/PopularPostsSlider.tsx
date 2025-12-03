@@ -65,12 +65,16 @@ export default function PopularPostsSlider({ onPostClick }: PopularPostsSliderPr
     e?.stopPropagation();
     setCurrentIndex((prev) => (prev - 1 + posts.length) % posts.length);
     setIsAutoPlaying(false);
+    // 5초 후 자동 재생 재개
+    setTimeout(() => setIsAutoPlaying(true), 5000);
   };
 
   const goToNext = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     setCurrentIndex((prev) => (prev + 1) % posts.length);
     setIsAutoPlaying(false);
+    // 5초 후 자동 재생 재개
+    setTimeout(() => setIsAutoPlaying(true), 5000);
   };
 
   const handlePostClick = (postId: number) => {
@@ -190,17 +194,19 @@ export default function PopularPostsSlider({ onPostClick }: PopularPostsSliderPr
         </AnimatePresence>
       </div>
 
-      {/* 컨트롤러 (화살표) - 호버시 등장 */}
-      <div className="absolute top-1/2 -translate-y-1/2 left-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <button onClick={goToPrevious} className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm rounded-full text-white transition-all">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-      </div>
-      <div className="absolute top-1/2 -translate-y-1/2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <button onClick={goToNext} className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm rounded-full text-white transition-all">
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
+      {/* 컨트롤러 (화살표) - 항상 표시 */}
+      <button
+        onClick={goToPrevious}
+        className="absolute top-1/2 -translate-y-1/2 left-1 z-20 p-1 active:scale-90 transition-transform"
+      >
+        <ChevronLeft className="w-5 h-5 text-white/70 drop-shadow-lg" strokeWidth={2.5} />
+      </button>
+      <button
+        onClick={goToNext}
+        className="absolute top-1/2 -translate-y-1/2 right-1 z-20 p-1 active:scale-90 transition-transform"
+      >
+        <ChevronRight className="w-5 h-5 text-white/70 drop-shadow-lg" strokeWidth={2.5} />
+      </button>
 
       {/* 인디케이터 (점) */}
       <div className="absolute top-4 right-4 flex gap-1.5 z-20">

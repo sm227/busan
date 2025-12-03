@@ -145,7 +145,7 @@ export default function Home() {
 
   const handlePostClick = async (postId: number) => {
     try {
-      const response = await fetch(`/api/guestbook?entryId=${postId}`);
+      const response = await fetch(`/api/community?entryId=${postId}`);
       const data = await response.json();
 
       if (data.success) {
@@ -153,7 +153,7 @@ export default function Home() {
         setShowPostModal(true);
       }
     } catch (error) {
-      console.error('방명록 글 로드 실패:', error);
+      console.error('커뮤니티 글 로드 실패:', error);
     }
   };
 
@@ -357,28 +357,6 @@ export default function Home() {
                 </div>
                 <span className="font-bold text-stone-800 text-sm">커뮤니티</span>
                 <span className="text-[10px] text-stone-400 mt-1">이웃과 소통하기</span>
-              </button>
-
-              <button
-                onClick={() => router.push("/guestbook")}
-                className="flex flex-col items-start p-4 bg-white border border-stone-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-stone-300 transition-all group"
-              >
-                <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-stone-100 transition-colors">
-                  <MessageCircle className="w-5 h-5 text-stone-700" />
-                </div>
-                <span className="font-bold text-stone-800 text-sm">방명록</span>
-                <span className="text-[10px] text-stone-400 mt-1">흔적 남기기</span>
-              </button>
-
-              <button
-                onClick={() => router.push("/guide")}
-                className="flex flex-col items-start p-4 bg-white border border-stone-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-stone-300 transition-all group"
-              >
-                <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-stone-100 transition-colors">
-                  <BookOpen className="w-5 h-5 text-stone-700" />
-                </div>
-                <span className="font-bold text-stone-800 text-sm">이주 가이드</span>
-                <span className="text-[10px] text-stone-400 mt-1">필수 정보 모음</span>
               </button>
 
               <button

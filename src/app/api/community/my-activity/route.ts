@@ -4,10 +4,10 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 /**
- * 사용자의 활동 내역 조회
- * - 작성한 방명록
- * - 좋아요를 누른 방명록
- * - 댓글을 작성한 방명록
+ * 사용자의 활동 내역 조회 (커뮤니티)
+ * - 작성한 글
+ * - 좋아요를 누른 글
+ * - 댓글을 작성한 글
  */
 export async function GET(request: NextRequest) {
   try {
@@ -23,13 +23,13 @@ export async function GET(request: NextRequest) {
 
     const userIdNum = parseInt(userId);
 
-    // 1. 내가 작성한 방명록
+    // 1. 내가 작성한 글
     const myPosts = await prisma.guestbook.findMany({
       where: { userId: userIdNum },
       orderBy: { createdAt: 'desc' }
     });
 
-    // 2. 내가 좋아요를 누른 방명록
+    // 2. 내가 좋아요를 누른 글
     const likedPosts = await prisma.guestbookLike.findMany({
       where: { userId: userIdNum },
       include: {
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    // 3. 내가 댓글을 작성한 방명록 (중복 제거)
+    // 3. 내가 댓글을 작성한 글 (중복 제거)
     const commentedPosts = await prisma.comment.findMany({
       where: { userId: userIdNum },
       include: {
@@ -47,10 +47,10 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    // 좋아요 누른 방명록만 추출
+    // 좋아요 누른 글만 추출
     const likedGuestbooks = likedPosts.map(like => like.guestbook);
 
-    // 댓글 작성한 방명록만 추출 (중복 제거)
+    // 댓글 작성한 글만 추출 (중복 제거)
     const commentedGuestbooksMap = new Map();
     commentedPosts.forEach(comment => {
       if (!commentedGuestbooksMap.has(comment.guestbook.id)) {
@@ -100,12 +100,17 @@ export async function GET(request: NextRequest) {
       return new Date(b.activityDate).getTime() - new Date(a.activityDate).getTime();
     });
 
-    // 각 방명록에 작성자 정보 추가
+    // 각 글에 작성자 정보 및 댓글 수 추가
     const enrichedActivities = await Promise.all(
       allActivities.map(async (activity) => {
         const author = await prisma.user.findUnique({
           where: { id: activity.userId },
           select: { nickname: true }
+        });
+
+        // 댓글 수 조회
+        const commentsCount = await prisma.comment.count({
+          where: { guestbookId: activity.id }
         });
 
         // tags를 파싱 (JSON 문자열인 경우)
@@ -128,6 +133,7 @@ export async function GET(request: NextRequest) {
           property_id: activity.propertyId,
           tags: parsedTags,
           likes_count: activity.likesCount,
+          comments_count: commentsCount,
           created_at: activity.createdAt.toISOString(),
           author_nickname: author?.nickname || '알 수 없음',
           user_id: activity.userId,

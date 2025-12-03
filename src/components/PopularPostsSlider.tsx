@@ -33,11 +33,11 @@ export default function PopularPostsSlider({ onPostClick }: PopularPostsSliderPr
   useEffect(() => {
     const loadPopularPosts = async () => {
       try {
-        const response = await fetch('/api/guestbook?limit=5');
+        const response = await fetch('/api/community?limit=5');
         const data = await response.json();
-        
+
         if (data.success) {
-          const sortedPosts = (data.data || []).sort((a: PopularPost, b: PopularPost) => 
+          const sortedPosts = (data.data || []).sort((a: PopularPost, b: PopularPost) =>
             b.likes_count - a.likes_count
           );
           setPosts(sortedPosts);

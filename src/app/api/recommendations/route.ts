@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         workStyle: surveyResult.workStyle as any,
         hobbyStyle: surveyResult.hobbyStyle as any,
         pace: surveyResult.pace as any,
+        purchaseType: surveyResult.purchaseType as any,
         budget: surveyResult.budget as any
       };
     }

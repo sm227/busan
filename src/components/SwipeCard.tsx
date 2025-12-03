@@ -13,12 +13,13 @@ export interface SwipeCardRef {
 interface SwipeCardProps {
   property: RuralProperty;
   story: VillageStory;
+  purchaseType?: 'sale' | 'rent';
   onSwipe: (direction: 'left' | 'right', property: RuralProperty) => void;
   onRemove: () => void;
 }
 
 // forwardRef로 감싸기
-const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ property, story, onSwipe, onRemove }, ref) => {
+const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ property, story, purchaseType, onSwipe, onRemove }, ref) => {
   const [isRemoving, setIsRemoving] = useState(false);
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]); 
@@ -118,15 +119,25 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ property, story, o
               <span>{property.location.district}, {property.location.city}</span>
             </div>
             <div className="text-xl font-bold text-orange-600">
-              월 {property.isUserProperty
-                ? ((property.price.rent || 0) * 10000).toLocaleString()
-                : property.price.rent?.toLocaleString()}원
-              {property.price.deposit && (
-                <span className="text-sm text-stone-400 font-normal ml-2">
-                  (보증금 {property.isUserProperty
-                    ? property.price.deposit.toLocaleString()
-                    : (property.price.deposit / 10000).toFixed(0)}만)
-                </span>
+              {purchaseType === 'sale' ? (
+                <>
+                  {property.price.sale
+                    ? `${(property.price.sale / 10000).toLocaleString()}만원`
+                    : '가격 문의'}
+                </>
+              ) : (
+                <>
+                  월 {property.isUserProperty
+                    ? ((property.price.rent || 0) * 10000).toLocaleString()
+                    : property.price.rent?.toLocaleString()}원
+                  {property.price.deposit && (
+                    <span className="text-sm text-stone-400 font-normal ml-2">
+                      (보증금 {property.isUserProperty
+                        ? property.price.deposit.toLocaleString()
+                        : (property.price.deposit / 10000).toFixed(0)}만)
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>

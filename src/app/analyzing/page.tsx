@@ -20,6 +20,11 @@ export default function AnalyzingPage() {
       // DB에 설문 결과 저장
       if (currentUser) {
         try {
+          console.log('📤 클라이언트: 설문 저장 요청 전송:', {
+            userId: currentUser.id,
+            preferences: userPreferences,
+          });
+
           const response = await fetch('/api/survey', {
             method: 'POST',
             headers: {
@@ -32,7 +37,10 @@ export default function AnalyzingPage() {
           });
 
           if (!response.ok) {
-            console.error('설문 결과 저장 실패');
+            const errorData = await response.json();
+            console.error('❌ 설문 결과 저장 실패:', response.status, errorData);
+          } else {
+            console.log('✅ 설문 결과 저장 성공');
           }
         } catch (error) {
           console.error('설문 결과 저장 오류:', error);
@@ -70,7 +78,14 @@ export default function AnalyzingPage() {
           마을수: aiData.recommendations.length
         });
 
-        setRecommendations(aiData.recommendations);
+        // AI 추천 결과에 랜덤 가격 적용
+        const recsWithRandomPrice = MatchingAlgorithm.getRecommendations(
+          userPreferences as UserPreferences,
+          aiData.recommendations,
+          aiData.recommendations.length
+        );
+
+        setRecommendations(recsWithRandomPrice);
 
         // 2초 후 매칭 페이지로 이동
         setTimeout(() => {

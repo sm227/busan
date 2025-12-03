@@ -170,31 +170,82 @@ export const personalityQuestions: Question[] = [
     ]
   },
   {
+    id: 'purchaseType-1',
+    text: '어떤 형태의 거주를 원하시나요?',
+    category: 'purchaseType',
+    options: [
+      {
+        id: 'purchaseType-1-a',
+        text: '매매',
+        category: 'purchaseType',
+        value: 'sale',
+        description: '집을 구매하여 장기 정착'
+      },
+      {
+        id: 'purchaseType-1-b',
+        text: '한달살기',
+        category: 'purchaseType',
+        value: 'rent',
+        description: '월세로 단기/중기 거주'
+      }
+    ]
+  },
+  {
     id: 'budget-1',
     text: '주거비 예산은 어느 정도인가요?',
     category: 'budget',
     options: [
       {
         id: 'budget-1-a',
-        text: '월 30만원 이하',
+        text: '1천만원 ~ 3천만원',
         category: 'budget',
         value: 'low',
         description: '경제적 부담을 최소화한 저렴한 주거'
       },
       {
         id: 'budget-1-b',
-        text: '월 30-80만원',
-        category: 'budget', 
+        text: '3천만원 ~ 6천만원',
+        category: 'budget',
         value: 'medium',
         description: '적당한 수준의 주거비'
       },
       {
         id: 'budget-1-c',
-        text: '월 80만원 이상',
+        text: '6천만원 이상',
         category: 'budget',
         value: 'high',
         description: '편의시설과 품질을 중시하는 주거'
       }
-    ]
+    ],
+    conditionalOn: { category: 'purchaseType', value: 'sale' }
+  },
+  {
+    id: 'budget-2',
+    text: '월세 예산은 어느 정도인가요?',
+    category: 'budget',
+    options: [
+      {
+        id: 'budget-2-a',
+        text: '월 5만원 이하',
+        category: 'budget',
+        value: 'low',
+        description: '경제적 부담을 최소화한 저렴한 주거'
+      },
+      {
+        id: 'budget-2-b',
+        text: '월 5만원 ~ 10만원',
+        category: 'budget',
+        value: 'medium',
+        description: '적당한 수준의 주거비'
+      },
+      {
+        id: 'budget-2-c',
+        text: '월 10만원 이상',
+        category: 'budget',
+        value: 'high',
+        description: '편의시설과 품질을 중시하는 주거'
+      }
+    ],
+    conditionalOn: { category: 'purchaseType', value: 'rent' }
   }
 ];

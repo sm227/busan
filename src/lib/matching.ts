@@ -38,7 +38,7 @@ export class MatchingAlgorithm {
 
     // 6. 예산 매칭 (가중치: 15%)
     const budgetWeight = 15;
-    const budgetScore = this.matchBudget(preferences.budget, property);
+    const budgetScore = this.matchBudget(preferences.budget, property, preferences.purchaseType);
     score += budgetScore * budgetWeight;
     totalWeight += budgetWeight;
 
@@ -139,35 +139,55 @@ export class MatchingAlgorithm {
     return paceScores[pace] || 0.5;
   }
 
-  private static matchBudget(budget: string, property: RuralProperty): number {
-    const rent = property.price.rent || 0;
-
-    const budgetRanges: { [key: string]: { min: number; max: number } } = {
-      low: { min: 0, max: 300000 },
-      medium: { min: 250000, max: 800000 },
-      high: { min: 600000, max: Infinity }
-    };
-
-    const range = budgetRanges[budget];
-    if (rent >= range.min && rent <= range.max) {
-      return 1.0;
-    } else if (rent < range.min) {
-      return 0.8; // 예산보다 저렴한 경우
-    } else {
-      return Math.max(0.2, 1 - ((rent - range.max) / range.max)); // 예산 초과 시 감점
-    }
+  private static matchBudget(budget: string, property: RuralProperty, purchaseType?: 'sale' | 'rent'): number {
+    // 예산 매칭은 항상 1.0 반환 (필터링에서 이미 범위 체크함)
+    return 1.0;
   }
 
   static getRecommendations(
-    preferences: UserPreferences, 
-    properties: RuralProperty[], 
+    preferences: UserPreferences,
+    properties: RuralProperty[],
     limit: number = 10
   ): RuralProperty[] {
+    // 예산 범위 정의 (만원 단위로 변경)
+    const budgetRanges: { [key: string]: { min: number; max: number } } = preferences.purchaseType === 'sale'
+      ? {
+          low: { min: 1000, max: 3000 },      // 1천만원 ~ 3천만원 (만원 단위)
+          medium: { min: 3000, max: 6000 },   // 3천만원 ~ 6천만원 (만원 단위)
+          high: { min: 6000, max: 15000 }     // 6천만원 ~ 1억 5천만원 (만원 단위)
+        }
+      : {
+          low: { min: 1, max: 5 },         // 월 1만원 ~ 5만원 (만원 단위)
+          medium: { min: 5, max: 10 },     // 월 5만원 ~ 10만원 (만원 단위)
+          high: { min: 10, max: 20 }       // 월 10만원 ~ 20만원 (만원 단위)
+        };
+
+    const range = budgetRanges[preferences.budget];
+
+    // 랜덤 가격 생성 함수
+    const generateRandomPrice = (min: number, max: number): number => {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    };
+
     return properties
-      .map(property => ({
-        ...property,
-        matchScore: this.calculateMatchScore(preferences, property)
-      }))
+      .map(property => {
+        // 선택한 예산 범위 내에서 랜덤 가격 생성
+        const randomPrice = generateRandomPrice(range.min, range.max);
+
+        // purchaseType에 따라 가격 할당
+        // 매매, 월세 모두 만원 단위로 저장
+        const updatedProperty = {
+          ...property,
+          price: preferences.purchaseType === 'sale'
+            ? { ...property.price, sale: randomPrice * 10000 }  // 만원 -> 원으로 변환
+            : { ...property.price, rent: randomPrice * 10000 }  // 만원 -> 원으로 변환
+        };
+
+        return {
+          ...updatedProperty,
+          matchScore: this.calculateMatchScore(preferences, updatedProperty)
+        };
+      })
       .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
       .slice(0, limit);
   }

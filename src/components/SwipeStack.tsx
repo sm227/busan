@@ -13,15 +13,17 @@ export interface SwipeStackRef {
 interface SwipeStackProps {
   properties: RuralProperty[];
   stories: VillageStory[];
+  purchaseType?: 'sale' | 'rent';
   onSwipe: (direction: 'left' | 'right', property: RuralProperty) => void;
   onComplete: () => void;
 }
 
-const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({ 
-  properties, 
-  stories, 
-  onSwipe, 
-  onComplete 
+const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
+  properties,
+  stories,
+  purchaseType,
+  onSwipe,
+  onComplete
 }, ref) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleCards] = useState(3);
@@ -143,6 +145,7 @@ const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
                   ref={currentCardRef}
                   property={property}
                   story={story}
+                  purchaseType={purchaseType}
                   onSwipe={handleSwipe}
                   onRemove={handleRemove}
                 />

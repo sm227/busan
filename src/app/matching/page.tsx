@@ -10,7 +10,7 @@ import { useRef } from "react"; // useRef 추가
 
 export default function MatchingPage() {
   const router = useRouter();
-  const { currentUser, recommendations, likedProperties, rejectedProperties, setLikedProperties, setRejectedProperties } = useApp();
+  const { currentUser, userPreferences, recommendations, likedProperties, rejectedProperties, setLikedProperties, setRejectedProperties } = useApp();
   
   // 1. 스택을 제어할 Ref 생성
   const stackRef = useRef<SwipeStackRef>(null);
@@ -92,6 +92,7 @@ export default function MatchingPage() {
               ref={stackRef} // 2. Ref 연결
               properties={recommendations}
               stories={villageStories}
+              purchaseType={userPreferences.purchaseType}
               onSwipe={handleSwipe}
               onComplete={handleMatchingComplete}
             />

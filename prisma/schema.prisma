@@ -176,27 +176,7 @@ model UserBadge {
   @@map("user_badges")
 }
 
-model PopularPost {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String
-  author    String
-  category  String
-  location  String?
-  imageUrl  String?  @map("image_url")
-  views     Int      @default(0)
-  likes     Int      @default(0)
-  featured  Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-
-  @@index([category])
-  @@index([featured])
-  @@index([likes])
-  @@index([views])
-  @@index([createdAt])
-  @@map("popular_posts")
-}
+// ==================== 마을 및 추천 (기존) ====================
 
 model Village {
   id            String   @id

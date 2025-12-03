@@ -1,10 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { badgesData } from '@/data/badgesData';
-import { popularPostsData, PopularPostData } from '@/data/popularPostsData';
 import { sampleUsersData } from '@/data/sampleUsersData';
-
-// 인메모리 저장소
-const postViewsStore = new Map<number, number>(); // postId -> views
 
 // 샘플 사용자 자동 생성 (앱 시작 시)
 let sampleUsersInitialized = false;
@@ -838,65 +834,6 @@ export async function hasUserBadge(userId: number, badgeId: string) {
   });
 
   return !!userBadge;
-}
-
-// ==================== 인기 게시글 ====================
-
-export async function getPopularPosts(options?: {
-  category?: string;
-  featured?: boolean;
-  limit?: number;
-  sortBy?: 'views' | 'likes' | 'created_at';
-}) {
-  let posts = [...popularPostsData];
-
-  // 필터링
-  if (options?.category) {
-    posts = posts.filter(p => p.category === options.category);
-  }
-
-  if (options?.featured !== undefined) {
-    posts = posts.filter(p => p.featured === options.featured);
-  }
-
-  // 정렬
-  if (options?.sortBy === 'views') {
-    posts.sort((a, b) => {
-      const viewsA = postViewsStore.get(a.id) || a.views;
-      const viewsB = postViewsStore.get(b.id) || b.views;
-      return viewsB - viewsA;
-    });
-  } else if (options?.sortBy === 'likes') {
-    posts.sort((a, b) => b.likes - a.likes);
-  } else {
-    posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  return posts.slice(0, options?.limit || 10);
-}
-
-export async function incrementPostViews(postId: number) {
-  try {
-    const currentViews = postViewsStore.get(postId) || 0;
-    postViewsStore.set(postId, currentViews + 1);
-    return { success: true };
-  } catch (error) {
-    return { success: false };
-  }
-}
-
-export async function getPopularPost(postId: number) {
-  const post = popularPostsData.find(p => p.id === postId);
-
-  if (!post) return null;
-
-  // 조회수가 인메모리에 있으면 그것을 사용
-  const currentViews = postViewsStore.get(postId);
-  if (currentViews !== undefined) {
-    return { ...post, views: currentViews };
-  }
-
-  return post;
 }
 
 // ==================== 유틸리티 ====================

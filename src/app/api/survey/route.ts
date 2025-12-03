@@ -5,8 +5,11 @@ export async function POST(request: NextRequest) {
   try {
     const { userId, preferences } = await request.json();
 
+    console.log('📝 설문 저장 요청:', { userId, preferences });
+
     // 입력 값 검증
     if (!userId || !preferences) {
+      console.error('❌ 필수 데이터 누락:', { userId, preferences });
       return NextResponse.json(
         { success: false, error: '필수 데이터가 누락되었습니다.' },
         { status: 400 }
@@ -14,10 +17,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 설문 응답 검증
-    const requiredFields = ['livingStyle', 'socialStyle', 'workStyle', 'hobbyStyle', 'pace', 'budget'];
+    const requiredFields = ['livingStyle', 'socialStyle', 'workStyle', 'hobbyStyle', 'pace', 'purchaseType', 'budget'];
     const missingFields = requiredFields.filter(field => !preferences[field]);
 
     if (missingFields.length > 0) {
+      console.error('❌ 누락된 설문 항목:', missingFields, '받은 데이터:', preferences);
       return NextResponse.json(
         { success: false, error: `누락된 설문 항목: ${missingFields.join(', ')}` },
         { status: 400 }
@@ -31,6 +35,7 @@ export async function POST(request: NextRequest) {
       workStyle: preferences.workStyle,
       hobbyStyle: preferences.hobbyStyle,
       pace: preferences.pace,
+      purchaseType: preferences.purchaseType,
       budget: preferences.budget
     });
 

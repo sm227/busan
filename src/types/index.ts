@@ -5,6 +5,7 @@ export interface UserPreferences {
   workStyle: 'remote-worker' | 'farmer' | 'entrepreneur' | 'retiree';
   hobbyStyle: 'nature-lover' | 'culture-enthusiast' | 'sports-fan' | 'crafts-person';
   pace: 'slow' | 'balanced' | 'active';
+  purchaseType: 'sale' | 'rent';
   budget: 'low' | 'medium' | 'high';
 }
 
@@ -21,6 +22,10 @@ export interface Question {
   text: string;
   category: keyof UserPreferences;
   options: QuestionOption[];
+  conditionalOn?: {
+    category: keyof UserPreferences;
+    value: string;
+  };
 }
 
 export interface RuralProperty {

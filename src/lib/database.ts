@@ -77,6 +77,7 @@ export async function saveSurveyResult(userId: number, preferences: {
   workStyle: string;
   hobbyStyle: string;
   pace: string;
+  purchaseType: string;
   budget: string;
 }) {
   try {
@@ -88,12 +89,14 @@ export async function saveSurveyResult(userId: number, preferences: {
         workStyle: preferences.workStyle,
         hobbyStyle: preferences.hobbyStyle,
         pace: preferences.pace,
+        purchaseType: preferences.purchaseType,
         budget: preferences.budget
       }
     });
 
     return { success: true };
   } catch (error) {
+    console.error('❌ Database error:', error);
     return { success: false, error: '설문 결과 저장에 실패했습니다.' };
   }
 }

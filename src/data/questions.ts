@@ -2,6 +2,12 @@ import { Question } from '@/types';
 
 export const personalityQuestions: Question[] = [
   {
+    id: 'occupation-1',
+    text: '귀하의 직업은 무엇인가요?',
+    category: 'occupation',
+    options: [] // OccupationInput 컴포넌트가 처리
+  },
+  {
     id: 'living-1',
     text: '새로운 집에서 가장 중요하게 생각하는 것은?',
     category: 'livingStyle',

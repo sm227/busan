@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
 
     // 설문 결과 저장
     const result = await saveSurveyResult(userId, {
+      occupation: preferences.occupation,
       livingStyle: preferences.livingStyle,
       socialStyle: preferences.socialStyle,
       workStyle: preferences.workStyle,

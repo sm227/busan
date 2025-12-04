@@ -1,5 +1,6 @@
 // 사용자 라이프스타일 분석을 위한 타입 정의
 export interface UserPreferences {
+  occupation?: string;
   livingStyle: 'minimalist' | 'cozy' | 'traditional' | 'modern';
   socialStyle: 'community-oriented' | 'independent' | 'family-focused' | 'creative';
   workStyle: 'remote-worker' | 'farmer' | 'entrepreneur' | 'retiree';

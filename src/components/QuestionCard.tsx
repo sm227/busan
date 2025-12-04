@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Question, QuestionOption } from '@/types';
+import OccupationInput from './OccupationInput';
 
 interface QuestionCardProps {
   question: Question;
@@ -10,13 +11,32 @@ interface QuestionCardProps {
   totalQuestions: number;
 }
 
-export default function QuestionCard({ 
-  question, 
-  onAnswer, 
-  currentQuestion, 
-  totalQuestions 
+export default function QuestionCard({
+  question,
+  onAnswer,
+  currentQuestion,
+  totalQuestions
 }: QuestionCardProps) {
   const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+
+  // 직업 질문인 경우 OccupationInput 렌더링
+  if (question.category === 'occupation') {
+    return (
+      <OccupationInput
+        onSelect={(occupation) => {
+          onAnswer({
+            id: 'occupation-selected',
+            text: occupation,
+            category: 'occupation',
+            value: occupation,
+            description: ''
+          });
+        }}
+        currentQuestion={currentQuestion}
+        totalQuestions={totalQuestions}
+      />
+    );
+  }
 
   return (
     <div className="w-full max-w-md mx-auto px-6 py-8">

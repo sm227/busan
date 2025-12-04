@@ -59,6 +59,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
             if (surveyData.success && surveyData.data) {
               const preferences = {
+                occupation: surveyData.data.occupation,
                 livingStyle: surveyData.data.living_style,
                 socialStyle: surveyData.data.social_style,
                 workStyle: surveyData.data.work_style,

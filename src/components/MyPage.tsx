@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, MapPin, Star, Trophy, Target, Heart,
   Map as MapIcon, LogOut, PenTool, CheckCircle,
-  ChevronRight, Settings, Bell, ChevronDown, ArrowLeft, X
+  ChevronRight, Settings, Bell, ChevronDown, ArrowLeft, X, Coins
 } from 'lucide-react';
 import { dummyUser } from '@/data/userData';
 import { useApp } from '@/contexts/AppContext';
@@ -267,11 +267,12 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
 
           {/* 2. Quick Menu */}
           <div className="px-6 mb-4">
-             <div className="grid grid-cols-4 gap-2 text-center">
+             <div className="grid grid-cols-5 gap-2 text-center">
                 {[
                   { label: '내정보', icon: User, isLogout: false, action: () => setShowUserInfoModal(true) },
                   { label: '찜목록', icon: Heart, isLogout: false, action: onNavigateToResults },
                   { label: '내활동', icon: PenTool, isLogout: false, action: () => router.push('/community?tab=myActivity') },
+                  { label: '코인', icon: Coins, isLogout: false, action: () => router.push('/coin') },
                   { label: '로그아웃', icon: LogOut, action: handleLogout, isLogout: true }
                 ].map((item, idx) => (
                   <button

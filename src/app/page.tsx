@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ExternalLink,
   Handshake,
+  Coins,
 } from "lucide-react";
 import Image from "next/image";
 import PopularPostsSlider from "@/components/PopularPostsSlider";
@@ -44,6 +45,7 @@ export default function Home() {
 
   const [isLoadingProperties, setIsLoadingProperties] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [coinBalance, setCoinBalance] = useState(0);
 
   // --- 배너 슬라이더 상태 관리 ---
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -62,6 +64,25 @@ export default function Home() {
       router.push("/welcome");
     }
   }, [isInitialized, currentUser, router]);
+
+  // 코인 잔액 가져오기
+  useEffect(() => {
+    const fetchCoinBalance = async () => {
+      if (currentUser) {
+        try {
+          const response = await fetch(`/api/coins?userId=${currentUser.id}&action=balance`);
+          const data = await response.json();
+          if (data.success) {
+            setCoinBalance(data.data.balance);
+          }
+        } catch (error) {
+          console.error('코인 잔액 조회 실패:', error);
+        }
+      }
+    };
+
+    fetchCoinBalance();
+  }, [currentUser]);
 
   const startMatching = async () => {
     if (Object.keys(userPreferences).length < 6) {
@@ -190,6 +211,13 @@ export default function Home() {
               </h1>
             </div>
             <div className="flex items-center space-x-1">
+              <button
+                onClick={() => router.push("/coin")}
+                className="flex items-center space-x-1 px-3 py-2 text-stone-600 hover:bg-stone-50 rounded-full transition-colors"
+              >
+                <Coins className="w-5 h-5" />
+                <span className="text-sm font-bold">{coinBalance}</span>
+              </button>
               <button
                 onClick={() => router.push("/korea-map")}
                 className="p-2 text-stone-600 hover:bg-stone-50 rounded-full transition-colors"

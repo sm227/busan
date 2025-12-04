@@ -8,20 +8,23 @@ datasource db {
 }
 
 model User {
-  id             Int             @id @default(autoincrement())
-  nickname       String          @unique
-  password       String
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at")
-  bookmarks      Bookmark[]
-  commentLikes   CommentLike[]
-  comments       Comment[]
-  guestbooks     Guestbook[]
-  guestbookLikes GuestbookLike[]
-  surveyResults  SurveyResult[]
-  userBadges     UserBadge[]
-  userLikes      UserLike[]
-  userProperties UserProperty[]
+  id               Int                @id @default(autoincrement())
+  nickname         String             @unique
+  password         String
+  coinBalance      Int                @default(0) @map("coin_balance")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at")
+  bookmarks        Bookmark[]
+  commentLikes     CommentLike[]
+  comments         Comment[]
+  guestbooks       Guestbook[]
+  guestbookLikes   GuestbookLike[]
+  surveyResults    SurveyResult[]
+  userBadges       UserBadge[]
+  userLikes        UserLike[]
+  userProperties   UserProperty[]
+  coinPurchases    CoinPurchase[]
+  coinTransactions CoinTransaction[]
 
   @@index([nickname])
   @@map("users")
@@ -279,4 +282,42 @@ model PropertyImage {
   @@index([propertyId])
   @@index([propertyId, order])
   @@map("property_images")
+}
+
+// ==================== 코인 시스템 ====================
+
+model CoinPurchase {
+  id              String   @id @default(cuid())
+  userId          Int      @map("user_id")
+  amount          Int      // 구매한 코인 개수
+  bonusAmount     Int      @default(0) @map("bonus_amount") // 보너스 코인 개수
+  price           Int      // 결제 금액 (원)
+  paymentMethod   String?  @map("payment_method") // 결제 수단
+  paymentStatus   String   @default("completed") @map("payment_status") // completed, pending, failed
+  transactionId   String?  @unique @map("transaction_id") // 결제 시스템의 거래 ID
+  createdAt       DateTime @default(now()) @map("created_at")
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([paymentStatus])
+  @@map("coin_purchases")
+}
+
+model CoinTransaction {
+  id            String   @id @default(cuid())
+  userId        Int      @map("user_id")
+  amount        Int      // 증가(양수) 또는 감소(음수)
+  type          String   // purchase, ad_reward, usage, bonus, refund
+  description   String   // 거래 설명
+  relatedId     String?  @map("related_id") // 관련된 구매 ID 또는 사용처 ID
+  balanceBefore Int      @map("balance_before") // 거래 전 잔액
+  balanceAfter  Int      @map("balance_after") // 거래 후 잔액
+  createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("coin_transactions")
 }

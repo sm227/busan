@@ -138,7 +138,7 @@ export default function OccupationInput({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsOpen(results.length > 0 || query.trim().length > 0)}
               placeholder="직업을 검색하세요"
-              className="w-full px-5 py-4 pl-12 text-base bg-white border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-orange-500 transition-colors"
+              className="w-full px-5 py-4 pl-12 text-base text-stone-800 placeholder:text-stone-400 bg-white border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-orange-500 transition-colors"
               autoComplete="off"
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 w-5 h-5" />

@@ -139,6 +139,10 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
 
       if (data.success) {
         setEntries(data.data || []);
+        // 북마크 목록 로드 후 사용자 인터랙션도 로드
+        if (data.data && data.data.length > 0) {
+          await loadUserInteractions(data.data);
+        }
       }
     } catch (error) {
       console.error('북마크 로딩 실패:', error);
@@ -157,6 +161,10 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
 
       if (data.success) {
         setEntries(data.data || []);
+        // 내 활동 로드 후 사용자 인터랙션도 로드
+        if (data.data && data.data.length > 0) {
+          await loadUserInteractions(data.data);
+        }
       }
     } catch (error) {
       console.error('내 활동 로딩 실패:', error);

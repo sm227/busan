@@ -722,6 +722,11 @@ export async function getUserBookmarks(userId: number) {
             select: {
               nickname: true
             }
+          },
+          _count: {
+            select: {
+              comments: true
+            }
           }
         }
       }
@@ -730,9 +735,21 @@ export async function getUserBookmarks(userId: number) {
   });
 
   return bookmarks.map(bookmark => ({
-    ...bookmark.guestbook,
+    id: bookmark.guestbook.id,
+    user_id: bookmark.guestbook.userId,
+    title: bookmark.guestbook.title,
+    content: bookmark.guestbook.content,
+    location: bookmark.guestbook.location,
+    rating: bookmark.guestbook.rating,
+    category: bookmark.guestbook.category,
+    property_id: bookmark.guestbook.propertyId,
+    tags: bookmark.guestbook.tags,
+    likes_count: bookmark.guestbook.likesCount,
+    created_at: bookmark.guestbook.createdAt,
+    updated_at: bookmark.guestbook.updatedAt,
     author_nickname: bookmark.guestbook.user.nickname,
-    tags: bookmark.guestbook.tags ? JSON.parse(bookmark.guestbook.tags) : []
+    comments_count: bookmark.guestbook._count.comments,
+    bookmarked_at: bookmark.createdAt
   }));
 }
 

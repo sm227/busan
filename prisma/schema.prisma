@@ -33,6 +33,7 @@ model User {
 model SurveyResult {
   id           Int      @id @default(autoincrement())
   userId       Int      @map("user_id")
+  occupation   String?
   livingStyle  String   @map("living_style")
   socialStyle  String   @map("social_style")
   workStyle    String   @map("work_style")

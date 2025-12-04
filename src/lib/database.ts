@@ -72,6 +72,7 @@ export async function authenticateUser(nickname: string, password: string) {
 // ==================== 설문 결과 ====================
 
 export async function saveSurveyResult(userId: number, preferences: {
+  occupation?: string;
   livingStyle: string;
   socialStyle: string;
   workStyle: string;
@@ -84,6 +85,7 @@ export async function saveSurveyResult(userId: number, preferences: {
     await prisma.surveyResult.create({
       data: {
         userId,
+        occupation: preferences.occupation,
         livingStyle: preferences.livingStyle,
         socialStyle: preferences.socialStyle,
         workStyle: preferences.workStyle,

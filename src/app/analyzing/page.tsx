@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
-import { Sparkles } from "lucide-react";
+import { Home, Users, MapPin, CheckCircle2, Circle } from "lucide-react";
 import { MatchingAlgorithm } from "@/lib/matching";
 import { UserPreferences } from "@/types";
 import { transformApiResponse, RuralVillageApiResponse } from "@/lib/apiTransformer";
+import Image from "next/image";
+import { motion } from "framer-motion";
 
 export default function AnalyzingPage() {
   const router = useRouter();
@@ -15,162 +17,148 @@ export default function AnalyzingPage() {
 
   useEffect(() => {
     const analyze = async () => {
-      setAnalysisStep(1); // 거주 스타일 분석 중
+      setTimeout(() => setAnalysisStep(1), 500);
 
-      // DB에 설문 결과 저장
       if (currentUser) {
         try {
-          console.log('📤 클라이언트: 설문 저장 요청 전송:', {
-            userId: currentUser.id,
-            preferences: userPreferences,
-          });
-
-          const response = await fetch('/api/survey', {
+          await fetch('/api/survey', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId: currentUser.id,
-              preferences: userPreferences,
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id, preferences: userPreferences }),
           });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error('❌ 설문 결과 저장 실패:', response.status, errorData);
-          } else {
-            console.log('✅ 설문 결과 저장 성공');
-          }
         } catch (error) {
-          console.error('설문 결과 저장 오류:', error);
+          console.error(error);
         }
       }
 
-      setAnalysisStep(2); // 사회적 성향 분석 중
+      setTimeout(() => setAnalysisStep(2), 1500);
 
-      // AI 추천 API 호출
       try {
-        console.log('🚀 AI 추천 시작:', userPreferences);
-
         const aiResponse = await fetch('/api/ai-recommend', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userPreferences }),
         });
 
-        setAnalysisStep(3); // 업무 환경 분석 중
+        setAnalysisStep(3);
 
-        if (!aiResponse.ok) {
-          throw new Error('AI 추천 API 호출 실패');
-        }
-
+        if (!aiResponse.ok) throw new Error('AI Error');
         const aiData = await aiResponse.json();
 
-        if (!aiData.success || !aiData.recommendations || aiData.recommendations.length === 0) {
-          throw new Error(aiData.error || '추천 결과가 없습니다');
-        }
+        if (!aiData.success || !aiData.recommendations?.length) throw new Error('No Data');
 
-        console.log('✅ AI 추천 성공:', {
-          추천지역: aiData.aiRegions,
-          마을수: aiData.recommendations.length
-        });
-
-        // AI 추천 결과에 랜덤 가격 적용
-        const recsWithRandomPrice = MatchingAlgorithm.getRecommendations(
+        const recs = MatchingAlgorithm.getRecommendations(
           userPreferences as UserPreferences,
           aiData.recommendations,
           aiData.recommendations.length
         );
 
-        setRecommendations(recsWithRandomPrice);
+        setRecommendations(recs);
 
-        // 2초 후 매칭 페이지로 이동
         setTimeout(() => {
           router.push("/matching");
-        }, 2000);
+        }, 1000);
+
       } catch (error) {
-        console.error('❌ AI 추천 실패:', error);
-
-        // 에러 발생시 기존 알고리즘으로 fallback
+        // Fallback 로직 (기존 유지)
         try {
-          const fallbackResponse = await fetch('/api/rural-villages?numOfRows=100');
-          if (fallbackResponse.ok) {
-            const fallbackData: RuralVillageApiResponse = await fallbackResponse.json();
-            const fallbackProperties = transformApiResponse(fallbackData);
-
-            if (fallbackProperties.length > 0) {
-              const recs = MatchingAlgorithm.getRecommendations(
-                userPreferences as UserPreferences,
-                fallbackProperties,
-                20
-              );
-
-              const shuffledRecs = [...recs].sort(() => Math.random() - 0.5);
-              setRecommendations(shuffledRecs.slice(0, 10));
-            }
+          const res = await fetch('/api/rural-villages?numOfRows=100');
+          if (res.ok) {
+            const data = await res.json();
+            const props = transformApiResponse(data);
+            const recs = MatchingAlgorithm.getRecommendations(userPreferences as UserPreferences, props, 20);
+            setRecommendations(recs.slice(0, 10));
           }
-        } catch {
-          console.error('Fallback도 실패');
-        }
-
-        // 2초 후 매칭 페이지로 이동
-        setTimeout(() => {
-          router.push("/matching");
-        }, 2000);
+        } catch {}
+        setTimeout(() => router.push("/matching"), 1000);
       }
     };
 
     analyze();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 심플한 상태 리스트 아이템
+  const StatusItem = ({ step, currentStep, icon: Icon, text }: any) => {
+    const isCompleted = currentStep > step;
+    const isActive = currentStep === step;
+
+    return (
+      <div className={`flex items-center gap-3 py-3 transition-colors duration-500 ${
+        isActive || isCompleted ? "opacity-100" : "opacity-30"
+      }`}>
+        <div className="shrink-0">
+          {isCompleted ? (
+            <CheckCircle2 className="w-5 h-5 text-stone-800" />
+          ) : (
+            <Icon className={`w-5 h-5 ${isActive ? "text-stone-800" : "text-stone-400"}`} />
+          )}
+        </div>
+        <span className={`text-sm ${isActive || isCompleted ? "font-bold text-stone-800" : "font-medium text-stone-400"}`}>
+          {text}
+        </span>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 overflow-x-hidden">
-      <div className="max-w-md mx-auto bg-white min-h-screen relative">
-        <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-emerald-100/20 flex flex-col justify-center px-6 py-12">
-          <div className="w-full max-w-sm mx-auto text-center">
-            <div className="mb-12">
-              <div className="relative w-20 h-20 mx-auto mb-8">
-                <div className="absolute inset-0 border-4 border-emerald-200 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-t-emerald-500 border-r-emerald-400 rounded-full animate-spin"></div>
-                <div className="absolute inset-2 border-2 border-emerald-100 rounded-full"></div>
-                <div className="absolute inset-4 bg-emerald-50 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-emerald-600 animate-pulse" />
-                </div>
-              </div>
-
-              <h2 className="text-2xl font-bold text-slate-800 mb-4">
-                AI가 취향을 분석하고 있어요!
-              </h2>
-
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center justify-center space-x-2 text-slate-600">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0s', animationDuration: '1.4s'}}></div>
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0.2s', animationDuration: '1.4s'}}></div>
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0.4s', animationDuration: '1.4s'}}></div>
-                </div>
-                <p className="text-slate-600 font-medium">당신에게 맞는 집을 찾고 있어요</p>
-              </div>
-
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-emerald-100/50">
-                <div className="text-sm text-slate-600 space-y-2">
-                  <p className={analysisStep >= 1 ? 'text-emerald-600 font-semibold' : ''}>
-                    {analysisStep >= 1 ? '✅' : '🏡'} 거주 스타일 분석 {analysisStep >= 1 ? '완료' : '중...'}
-                  </p>
-                  <p className={analysisStep >= 2 ? 'text-emerald-600 font-semibold' : ''}>
-                    {analysisStep >= 2 ? '✅' : '👥'} 사회적 성향 분석 {analysisStep >= 2 ? '완료' : '중...'}
-                  </p>
-                  <p className={analysisStep >= 3 ? 'text-emerald-600 font-semibold' : ''}>
-                    {analysisStep >= 3 ? '✅' : '💼'} AI 지역 추천 {analysisStep >= 3 ? '완료' : '중...'}
-                  </p>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#F5F5F0] overflow-x-hidden font-sans text-stone-800">
+      <div className="max-w-md mx-auto bg-[#F5F5F0] min-h-screen relative flex flex-col justify-center px-10">
+        
+        {/* 1. 로고 (정지 상태, 깔끔하게) */}
+        <div className="flex justify-center mb-10">
+          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center shadow-sm border border-stone-100">
+             <Image 
+               src="/logo.png" 
+               alt="Logo" 
+               width={60} 
+               height={60} 
+               className="object-contain opacity-90"
+             />
           </div>
         </div>
+
+        {/* 2. 타이틀 */}
+        <div className="text-center mb-12">
+          <h2 className="text-xl font-serif font-bold text-stone-800 mb-2">
+            취향 분석 중...
+          </h2>
+          <p className="text-stone-500 text-xs tracking-wide">
+            잠시만 기다려주세요
+          </p>
+        </div>
+
+        {/* 3. 진행 바 (심플한 라인) */}
+        <div className="w-full h-1 bg-stone-200 rounded-full overflow-hidden mb-12">
+           <motion.div 
+             className="h-full bg-stone-800"
+             initial={{ width: "0%" }}
+             animate={{ width: "100%" }}
+             transition={{ duration: 4, ease: "linear" }}
+           />
+        </div>
+
+        {/* 4. 진행 상태 리스트 (텍스트 위주) */}
+        <div className="space-y-1 pl-4 border-l border-stone-200">
+          <StatusItem 
+            step={1} 
+            currentStep={analysisStep} 
+            icon={Home} 
+            text="거주 스타일 확인" 
+          />
+          <StatusItem 
+            step={2} 
+            currentStep={analysisStep} 
+            icon={Users} 
+            text="라이프스타일 매칭" 
+          />
+          <StatusItem 
+            step={3} 
+            currentStep={analysisStep} 
+            icon={MapPin} 
+            text="최적의 마을 탐색" 
+          />
+        </div>
+
       </div>
     </div>
   );

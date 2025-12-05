@@ -135,4 +135,6 @@ export interface GuestbookEntry {
   created_at: string;
   updated_at: string;
   author_nickname?: string;
+  author_occupation?: string;
+  author_hobby_style?: string;
 }

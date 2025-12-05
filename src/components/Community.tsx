@@ -9,6 +9,7 @@ import {
   Edit3, Trash2, X, SortAsc, SortDesc, PenTool, Bookmark, BookmarkCheck, Share, Send
 } from 'lucide-react';
 import Comments from './Comments';
+import { occupations } from '@/data/occupations';
 
 // 태그 처리 헬퍼 함수
 const getTagArray = (tags: string | string[] | undefined): string[] => {
@@ -33,6 +34,8 @@ interface CommunityEntry {
   author_nickname: string;
   user_id: number;
   activity_type?: 'written' | 'liked' | 'commented';
+  author_occupation?: string;
+  author_hobby_style?: string;
 }
 
 interface CommunityProps {
@@ -44,7 +47,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   const router = useRouter();
   const [entries, setEntries] = useState<CommunityEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'list' | 'write' | 'bookmarks' | 'myActivity'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'group' | 'bookmarks' | 'myActivity'>('list');
   const [isInitialized, setIsInitialized] = useState(false);
   const [showWriteForm, setShowWriteForm] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<CommunityEntry | null>(null);
@@ -65,6 +68,12 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   // 공유 상태
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState<any>(null);
+
+  // 그룹 필터 상태
+  const [occupationFilter, setOccupationFilter] = useState<string>('');
+  const [hobbyStyleFilter, setHobbyStyleFilter] = useState<string>('');
+  const [showOccupationDropdown, setShowOccupationDropdown] = useState(false);
+  const [filteredOccupations, setFilteredOccupations] = useState<string[]>(occupations);
 
   const loadEntries = async () => {
     try {
@@ -168,6 +177,37 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
       }
     } catch (error) {
       console.error('내 활동 로딩 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadGroupEntries = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+
+      // 그룹 전용 필터: 직업, 취미만
+      if (occupationFilter) params.append('occupation', occupationFilter);
+      if (hobbyStyleFilter) params.append('hobbyStyle', hobbyStyleFilter);
+
+      // 정렬
+      params.append('sortBy', 'created_at');
+      params.append('sortOrder', 'DESC');
+      params.append('limit', '50');
+
+      const url = `/api/community/groups?${params.toString()}`;
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.success) {
+        setEntries(data.data || []);
+        if (currentUser && data.data && data.data.length > 0) {
+          await loadUserInteractions(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('그룹 필터링 실패:', error);
     } finally {
       setLoading(false);
     }
@@ -345,12 +385,14 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
 
     if (activeTab === 'list') {
       loadEntries();
+    } else if (activeTab === 'group') {
+      loadGroupEntries();
     } else if (activeTab === 'bookmarks') {
       loadBookmarks();
     } else if (activeTab === 'myActivity') {
       loadMyActivity();
     }
-  }, [activeTab, searchTerm, selectedCategory, locationFilter, tagFilter, minRatingFilter, sortBy, sortOrder, currentUser, isInitialized]);
+  }, [activeTab, searchTerm, selectedCategory, locationFilter, tagFilter, minRatingFilter, sortBy, sortOrder, occupationFilter, hobbyStyleFilter, currentUser, isInitialized]);
 
   // UI 헬퍼 함수
   const getCategoryIcon = (category: string) => {
@@ -446,7 +488,18 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
               <ArrowLeft className="w-6 h-6 text-stone-600" />
             </button>
             <h1 className="font-serif font-bold text-xl text-stone-800">커뮤니티</h1>
-            <div className="w-10" /> {/* 레이아웃 균형용 */}
+
+            {/* 작성 버튼 */}
+            {currentUser && (
+              <button
+                onClick={() => setShowWriteForm(true)}
+                className="p-2 -mr-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors shadow-lg"
+                aria-label="글 작성"
+              >
+                <PenTool className="w-5 h-5" />
+              </button>
+            )}
+            {!currentUser && <div className="w-10" />}
           </div>
 
           {/* Tab Navigation */}
@@ -461,18 +514,18 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
             >
               목록
             </button>
+            <button
+              onClick={() => setActiveTab('group')}
+              className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'group'
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              그룹
+            </button>
             {currentUser && (
               <>
-                <button
-                  onClick={() => setActiveTab('write')}
-                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'write'
-                      ? 'bg-white text-stone-900 shadow-sm'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  작성
-                </button>
                 <button
                   onClick={() => setActiveTab('bookmarks')}
                   className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -588,6 +641,105 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                 )}
               </AnimatePresence>
             </>
+          )}
+
+          {/* Filter - only in group tab */}
+          {activeTab === 'group' && (
+            <div className="space-y-3">
+              {/* 직업 검색 - 커스텀 autocomplete */}
+              <div className="relative">
+                <label className="block text-xs font-medium text-stone-600 mb-1.5">직업으로 검색</label>
+                <input
+                  type="text"
+                  placeholder="직업을 입력하거나 선택하세요"
+                  value={occupationFilter}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setOccupationFilter(value);
+
+                    // 검색어에 맞게 직업 목록 필터링
+                    if (value.trim() === '') {
+                      setFilteredOccupations(occupations);
+                    } else {
+                      const filtered = occupations.filter(occupation =>
+                        occupation.toLowerCase().includes(value.toLowerCase())
+                      );
+                      setFilteredOccupations(filtered);
+                    }
+                    setShowOccupationDropdown(true);
+                  }}
+                  onFocus={() => setShowOccupationDropdown(true)}
+                  onBlur={() => {
+                    // 드롭다운 항목 클릭을 위해 약간의 지연
+                    setTimeout(() => setShowOccupationDropdown(false), 200);
+                  }}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-stone-400 transition-colors"
+                />
+
+                {/* 드롭다운 목록 */}
+                {showOccupationDropdown && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <button
+                      onClick={() => {
+                        setOccupationFilter('');
+                        setFilteredOccupations(occupations);
+                        setShowOccupationDropdown(false);
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50 transition-colors border-b border-stone-100"
+                    >
+                      <span className="text-stone-400">전체</span>
+                    </button>
+                    {filteredOccupations.length > 0 ? (
+                      filteredOccupations.map((occupation) => (
+                        <button
+                          key={occupation}
+                          onClick={() => {
+                            setOccupationFilter(occupation);
+                            setShowOccupationDropdown(false);
+                          }}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-stone-50 transition-colors"
+                        >
+                          {occupation}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-stone-400">
+                        검색 결과가 없습니다
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 취미 필터 */}
+              <div>
+                <label className="block text-xs font-medium text-stone-600 mb-1.5">취미로 검색</label>
+                <select
+                  value={hobbyStyleFilter}
+                  onChange={(e) => setHobbyStyleFilter(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-stone-400 transition-colors"
+                >
+                  <option value="">전체</option>
+                  <option value="nature-lover">등산, 낚시, 산책 등 자연 활동</option>
+                  <option value="culture-enthusiast">전통문화 체험, 박물관, 축제</option>
+                  <option value="sports-fan">운동, 자전거, 수영 등</option>
+                  <option value="crafts-person">도자기, 목공예, 텃밭 가꾸기</option>
+                </select>
+              </div>
+
+              {/* 초기화 버튼 */}
+              {(occupationFilter || hobbyStyleFilter) && (
+                <button
+                  onClick={() => {
+                    setOccupationFilter('');
+                    setHobbyStyleFilter('');
+                  }}
+                  className="w-full px-4 py-2 text-xs text-stone-500 border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors"
+                >
+                  필터 초기화
+                </button>
+              )}
+            </div>
           )}
 
           {/* Tab Headers */}

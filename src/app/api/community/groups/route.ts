@@ -17,37 +17,28 @@ export async function GET(request: NextRequest) {
     // WHERE 조건 구성
     const where: any = {};
 
-    // 그룹 필터: 작성자의 occupation, hobbyStyle로 필터링
-    const userConditions: any = {};
+    // 그룹 필터: 직업별/취미별 카테고리의 글만 필터링
+    const andConditions: any[] = [];
 
     if (occupation) {
-      // occupation은 User 테이블의 직접 필드가 아니라 SurveyResult의 occupation 필드
-      // 텍스트 입력 + 드롭다운 선택 모두 지원하므로 부분 매칭
-      userConditions.surveyResults = {
-        some: {
-          occupation: { contains: occupation, mode: 'insensitive' }
-        }
-      };
+      // 직업 필터: occupation-post 카테고리에서 occupationTag로 검색
+      andConditions.push({
+        category: 'occupation-post',
+        occupationTag: { contains: occupation, mode: 'insensitive' }
+      });
     }
 
     if (hobbyStyle) {
-      if (userConditions.surveyResults) {
-        // occupation과 hobbyStyle 둘 다 있을 경우
-        userConditions.surveyResults.some = {
-          ...userConditions.surveyResults.some,
-          hobbyStyle
-        };
-      } else {
-        userConditions.surveyResults = {
-          some: {
-            hobbyStyle
-          }
-        };
-      }
+      // 취미 필터: hobby-post 카테고리에서 hobbyStyleTag로 검색
+      andConditions.push({
+        category: 'hobby-post',
+        hobbyStyleTag: hobbyStyle
+      });
     }
 
-    if (Object.keys(userConditions).length > 0) {
-      where.user = userConditions;
+    // AND 조건이 있으면 적용 (직업과 취미 모두 만족해야 함)
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     // ORDER BY 구성
@@ -56,7 +47,7 @@ export async function GET(request: NextRequest) {
       orderBy = { createdAt: sortOrder.toLowerCase() };
     } else if (sortBy === 'likes_count') {
       orderBy = { likesCount: sortOrder.toLowerCase() };
-    } else if (sortBy === 'rating' && minRating) {
+    } else if (sortBy === 'rating') {
       orderBy = { rating: sortOrder.toLowerCase() };
     } else if (sortBy === 'comments_count') {
       orderBy = { comments: { _count: sortOrder.toLowerCase() } };
@@ -124,6 +115,8 @@ export async function GET(request: NextRequest) {
       category: entry.category,
       property_id: entry.propertyId,
       tags: entry.tags,
+      occupation_tag: entry.occupationTag,
+      hobby_style_tag: entry.hobbyStyleTag,
       likes_count: entry.likesCount,
       created_at: entry.createdAt.toISOString(),
       updated_at: entry.updatedAt.toISOString(),

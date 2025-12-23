@@ -188,9 +188,11 @@ export async function createGuestbookEntry(userId: number, entry: {
   content: string;
   location?: string;
   rating?: number;
-  category: 'experience' | 'review' | 'tip' | 'question';
+  category: 'experience' | 'review' | 'tip' | 'question' | 'occupation-post' | 'hobby-post';
   propertyId?: string;
   tags?: string[];
+  occupationTag?: string | null;
+  hobbyStyleTag?: string | null;
 }) {
   try {
     const guestbook = await prisma.guestbook.create({
@@ -202,7 +204,9 @@ export async function createGuestbookEntry(userId: number, entry: {
         rating: entry.rating,
         category: entry.category,
         propertyId: entry.propertyId,
-        tags: entry.tags ? JSON.stringify(entry.tags) : null
+        tags: entry.tags ? JSON.stringify(entry.tags) : null,
+        occupationTag: entry.occupationTag || null,
+        hobbyStyleTag: entry.hobbyStyleTag || null
       }
     });
 
@@ -223,6 +227,8 @@ interface GuestbookFilters {
   location?: string;
   tag?: string;
   minRating?: number;
+  occupationTag?: string;
+  hobbyStyleTag?: string;
   sortBy?: 'created_at' | 'likes_count' | 'rating' | 'comments_count' | 'latest_comment';
   sortOrder?: 'ASC' | 'DESC';
   limit?: number;
@@ -259,6 +265,16 @@ export async function getGuestbookEntries(filters: GuestbookFilters = {}) {
   // 평점 필터
   if (filters.minRating) {
     where.rating = { gte: filters.minRating };
+  }
+
+  // 직업 태그 필터
+  if (filters.occupationTag) {
+    where.occupationTag = { contains: filters.occupationTag, mode: 'insensitive' };
+  }
+
+  // 취미 스타일 태그 필터
+  if (filters.hobbyStyleTag) {
+    where.hobbyStyleTag = filters.hobbyStyleTag;
   }
 
   // 정렬 옵션
@@ -299,6 +315,8 @@ export async function getGuestbookEntries(filters: GuestbookFilters = {}) {
     category: entry.category,
     property_id: entry.propertyId,
     tags: entry.tags,
+    occupation_tag: entry.occupationTag,
+    hobby_style_tag: entry.hobbyStyleTag,
     likes_count: entry.likesCount,
     created_at: entry.createdAt,
     updated_at: entry.updatedAt,
@@ -332,6 +350,8 @@ export async function getGuestbookEntry(entryId: number) {
     category: entry.category,
     property_id: entry.propertyId,
     tags: entry.tags,
+    occupation_tag: entry.occupationTag,
+    hobby_style_tag: entry.hobbyStyleTag,
     likes_count: entry.likesCount,
     created_at: entry.createdAt,
     updated_at: entry.updatedAt,
@@ -365,6 +385,8 @@ export async function getUserGuestbookEntries(userId: number) {
     category: entry.category,
     property_id: entry.propertyId,
     tags: entry.tags,
+    occupation_tag: entry.occupationTag,
+    hobby_style_tag: entry.hobbyStyleTag,
     likes_count: entry.likesCount,
     created_at: entry.createdAt,
     updated_at: entry.updatedAt,
@@ -380,6 +402,8 @@ export async function updateGuestbookEntry(entryId: number, userId: number, upda
   rating?: number;
   category?: string;
   tags?: string[];
+  occupationTag?: string | null;
+  hobbyStyleTag?: string | null;
 }) {
   try {
     // 권한 확인
@@ -398,6 +422,8 @@ export async function updateGuestbookEntry(entryId: number, userId: number, upda
     if (updates.rating !== undefined) updateData.rating = updates.rating;
     if (updates.category !== undefined) updateData.category = updates.category;
     if (updates.tags !== undefined) updateData.tags = JSON.stringify(updates.tags);
+    if (updates.occupationTag !== undefined) updateData.occupationTag = updates.occupationTag;
+    if (updates.hobbyStyleTag !== undefined) updateData.hobbyStyleTag = updates.hobbyStyleTag;
 
     await prisma.guestbook.update({
       where: { id: entryId },

@@ -6,10 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Plus, Heart, Star, MapPin, Calendar, User,
   MessageCircle, BookOpen, HelpCircle, Award, Filter, Search,
-  Edit3, Trash2, X, SortAsc, SortDesc, PenTool, Bookmark, BookmarkCheck, Share, Send
+  Edit3, Trash2, X, SortAsc, SortDesc, PenTool, Bookmark, BookmarkCheck, Share, Send, Briefcase
 } from 'lucide-react';
 import Comments from './Comments';
 import { occupations } from '@/data/occupations';
+import OccupationSelector from './OccupationSelector';
+import HobbySelector from './HobbySelector';
 
 // 태그 처리 헬퍼 함수
 const getTagArray = (tags: string | string[] | undefined): string[] => {
@@ -25,9 +27,11 @@ interface CommunityEntry {
   content: string;
   location?: string;
   rating?: number;
-  category: 'experience' | 'review' | 'tip' | 'question';
+  category: 'experience' | 'review' | 'tip' | 'question' | 'occupation-post' | 'hobby-post';
   property_id?: string;
   tags?: string | string[];
+  occupation_tag?: string;
+  hobby_style_tag?: string;
   likes_count: number;
   comments_count: number;
   created_at: string;
@@ -70,7 +74,8 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   const [shareData, setShareData] = useState<any>(null);
 
   // 그룹 필터 상태
-  const [occupationFilter, setOccupationFilter] = useState<string>('');
+  const [occupationFilter, setOccupationFilter] = useState<string>(''); // 실제 적용된 필터
+  const [occupationInput, setOccupationInput] = useState<string>(''); // 입력창 값
   const [hobbyStyleFilter, setHobbyStyleFilter] = useState<string>('');
   const [showOccupationDropdown, setShowOccupationDropdown] = useState(false);
   const [filteredOccupations, setFilteredOccupations] = useState<string[]>(occupations);
@@ -197,6 +202,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
       params.append('limit', '50');
 
       const url = `/api/community/groups?${params.toString()}`;
+
       const response = await fetch(url);
       const data = await response.json();
 
@@ -401,16 +407,32 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
       case 'review': return <Star className="w-4 h-4" />;
       case 'tip': return <Award className="w-4 h-4" />;
       case 'question': return <HelpCircle className="w-4 h-4" />;
+      case 'occupation-post': return <Briefcase className="w-4 h-4" />;
+      case 'hobby-post': return <Heart className="w-4 h-4" />;
       default: return <MessageCircle className="w-4 h-4" />;
     }
   };
 
-  const getCategoryName = (category: string) => {
+  const getHobbyLabel = (value: string | undefined) => {
+    const hobbyMap: Record<string, string> = {
+      'nature-lover': '자연 활동',
+      'culture-enthusiast': '문화 체험',
+      'sports-fan': '스포츠',
+      'crafts-person': '공예/텃밭'
+    };
+    return value ? hobbyMap[value] || value : '';
+  };
+
+  const getCategoryName = (category: string, entry?: CommunityEntry) => {
     switch (category) {
       case 'experience': return '이주 경험';
       case 'review': return '솔직 후기';
       case 'tip': return '꿀팁 공유';
       case 'question': return '질문있어요';
+      case 'occupation-post':
+        return entry?.occupation_tag ? `직업별: ${entry.occupation_tag}` : '직업별';
+      case 'hobby-post':
+        return entry?.hobby_style_tag ? `취미별: ${getHobbyLabel(entry.hobby_style_tag)}` : '취미별';
       default: return '전체보기';
     }
   };
@@ -595,6 +617,8 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                             <option value="review">후기</option>
                             <option value="tip">팁</option>
                             <option value="question">질문</option>
+                            <option value="occupation-post">직업별 이야기</option>
+                            <option value="hobby-post">취미별 이야기</option>
                           </select>
                           <input
                             type="text"
@@ -652,10 +676,10 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                 <input
                   type="text"
                   placeholder="직업을 입력하거나 선택하세요"
-                  value={occupationFilter}
+                  value={occupationInput}
                   onChange={(e) => {
                     const value = e.target.value;
-                    setOccupationFilter(value);
+                    setOccupationInput(value);
 
                     // 검색어에 맞게 직업 목록 필터링
                     if (value.trim() === '') {
@@ -667,6 +691,12 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                       setFilteredOccupations(filtered);
                     }
                     setShowOccupationDropdown(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && occupationInput.trim()) {
+                      setOccupationFilter(occupationInput.trim());
+                      setShowOccupationDropdown(false);
+                    }
                   }}
                   onFocus={() => setShowOccupationDropdown(true)}
                   onBlur={() => {
@@ -681,6 +711,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                   <div className="absolute z-10 w-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     <button
                       onClick={() => {
+                        setOccupationInput('');
                         setOccupationFilter('');
                         setFilteredOccupations(occupations);
                         setShowOccupationDropdown(false);
@@ -694,6 +725,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                         <button
                           key={occupation}
                           onClick={() => {
+                            setOccupationInput(occupation);
                             setOccupationFilter(occupation);
                             setShowOccupationDropdown(false);
                           }}
@@ -731,6 +763,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
               {(occupationFilter || hobbyStyleFilter) && (
                 <button
                   onClick={() => {
+                    setOccupationInput('');
                     setOccupationFilter('');
                     setHobbyStyleFilter('');
                   }}
@@ -798,7 +831,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                                 entry.category === 'tip' ? 'bg-blue-50 text-blue-600 border-blue-100' :
                                 'bg-stone-50 text-stone-600 border-stone-100'
                              }`}>
-                                {getCategoryName(entry.category)}
+                                {getCategoryName(entry.category, entry)}
                              </span>
                              {entry.location && (
                                 <span className="flex items-center gap-0.5 text-[10px] text-stone-400">
@@ -943,12 +976,24 @@ function CommunityWriteContent({ currentUser, onSuccess }: any) {
     location: '',
     rating: 0,
     category: 'experience' as const,
-    tags: ''
+    tags: '',
+    occupationTag: '',
+    hobbyStyleTag: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
+
+    // 검증
+    if (formData.category === 'occupation-post' && !formData.occupationTag) {
+      alert('직업을 선택해주세요.');
+      return;
+    }
+    if (formData.category === 'hobby-post' && !formData.hobbyStyleTag) {
+      alert('취미 스타일을 선택해주세요.');
+      return;
+    }
 
     try {
       const response = await fetch('/api/community', {
@@ -957,7 +1002,9 @@ function CommunityWriteContent({ currentUser, onSuccess }: any) {
         body: JSON.stringify({
           userId: currentUser.id,
           ...formData,
-          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+          occupationTag: formData.category === 'occupation-post' ? formData.occupationTag : null,
+          hobbyStyleTag: formData.category === 'hobby-post' ? formData.hobbyStyleTag : null
         })
       });
 
@@ -969,12 +1016,17 @@ function CommunityWriteContent({ currentUser, onSuccess }: any) {
           location: '',
           rating: 0,
           category: 'experience',
-          tags: ''
+          tags: '',
+          occupationTag: '',
+          hobbyStyleTag: ''
         });
         onSuccess();
+      } else {
+        alert(data.error || '글 작성에 실패했습니다.');
       }
     } catch (error) {
       console.error('글 작성 실패:', error);
+      alert('글 작성에 실패했습니다.');
     }
   };
 
@@ -989,12 +1041,19 @@ function CommunityWriteContent({ currentUser, onSuccess }: any) {
               { value: 'experience', icon: '📖', name: '이주 경험' },
               { value: 'review', icon: '⭐', name: '후기' },
               { value: 'tip', icon: '💡', name: '팁' },
-              { value: 'question', icon: '❓', name: '질문' }
+              { value: 'question', icon: '❓', name: '질문' },
+              { value: 'occupation-post', icon: '💼', name: '직업별 이야기' },
+              { value: 'hobby-post', icon: '❤️', name: '취미별 이야기' }
             ].map((category) => (
               <button
                 key={category.value}
                 type="button"
-                onClick={() => setFormData({ ...formData, category: category.value as any })}
+                onClick={() => setFormData({
+                  ...formData,
+                  category: category.value as any,
+                  occupationTag: category.value === 'occupation-post' ? formData.occupationTag : '',
+                  hobbyStyleTag: category.value === 'hobby-post' ? formData.hobbyStyleTag : ''
+                })}
                 className={`p-3 rounded-lg border-2 text-center transition-colors ${
                   formData.category === category.value
                     ? 'border-stone-800 bg-stone-50 text-stone-800'
@@ -1007,6 +1066,29 @@ function CommunityWriteContent({ currentUser, onSuccess }: any) {
             ))}
           </div>
         </div>
+
+        {/* 직업 선택 (occupation-post일 때만 표시) */}
+        {formData.category === 'occupation-post' && (
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">직업 선택 *</label>
+            <OccupationSelector
+              value={formData.occupationTag}
+              onChange={(val) => setFormData({...formData, occupationTag: val})}
+              placeholder="직업을 검색하세요"
+            />
+          </div>
+        )}
+
+        {/* 취미 선택 (hobby-post일 때만 표시) */}
+        {formData.category === 'hobby-post' && (
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">취미 스타일 선택 *</label>
+            <HobbySelector
+              value={formData.hobbyStyleTag}
+              onChange={(val) => setFormData({...formData, hobbyStyleTag: val})}
+            />
+          </div>
+        )}
 
         {/* 제목 */}
         <div>
@@ -1097,10 +1179,22 @@ function CommunityWriteForm({ onBack, onSubmit, editingEntry, currentUser }: any
       title: editingEntry?.title || '',
       content: editingEntry?.content || '',
       category: editingEntry?.category || 'experience',
+      occupationTag: editingEntry?.occupation_tag || '',
+      hobbyStyleTag: editingEntry?.hobby_style_tag || ''
    });
 
    const handleSubmit = async () => {
      if (!currentUser) return;
+
+     // 검증
+     if (formData.category === 'occupation-post' && !formData.occupationTag) {
+       alert('직업을 선택해주세요.');
+       return;
+     }
+     if (formData.category === 'hobby-post' && !formData.hobbyStyleTag) {
+       alert('취미 스타일을 선택해주세요.');
+       return;
+     }
 
      try {
        const response = await fetch('/api/community', {
@@ -1109,16 +1203,21 @@ function CommunityWriteForm({ onBack, onSubmit, editingEntry, currentUser }: any
          body: JSON.stringify({
            ...(editingEntry ? { entryId: editingEntry.id } : {}),
            userId: currentUser.id,
-           ...formData
+           ...formData,
+           occupationTag: formData.category === 'occupation-post' ? formData.occupationTag : null,
+           hobbyStyleTag: formData.category === 'hobby-post' ? formData.hobbyStyleTag : null
          })
        });
 
        const data = await response.json();
        if (data.success) {
          onSubmit();
+       } else {
+         alert(data.error || '글 작성/수정에 실패했습니다.');
        }
      } catch (error) {
        console.error('글 작성/수정 실패:', error);
+       alert('글 작성/수정에 실패했습니다.');
      }
    };
 
@@ -1142,18 +1241,47 @@ function CommunityWriteForm({ onBack, onSubmit, editingEntry, currentUser }: any
                  onChange={e => setFormData({...formData, title: e.target.value})}
                />
                <div className="flex gap-2 overflow-x-auto scrollbar-hide py-2">
-                  {['experience', 'review', 'tip', 'question'].map(cat => (
+                  {['experience', 'review', 'tip', 'question', 'occupation-post', 'hobby-post'].map(cat => (
                      <button
                        key={cat}
-                       onClick={() => setFormData({...formData, category: cat})}
-                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                       onClick={() => setFormData({
+                         ...formData,
+                         category: cat,
+                         occupationTag: cat === 'occupation-post' ? formData.occupationTag : '',
+                         hobbyStyleTag: cat === 'hobby-post' ? formData.hobbyStyleTag : ''
+                       })}
+                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap ${
                           formData.category === cat ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-500 border-stone-200'
                        }`}
                      >
-                        {cat === 'experience' ? '경험담' : cat === 'review' ? '후기' : cat === 'tip' ? '꿀팁' : '질문'}
+                        {cat === 'experience' ? '경험담' :
+                         cat === 'review' ? '후기' :
+                         cat === 'tip' ? '꿀팁' :
+                         cat === 'question' ? '질문' :
+                         cat === 'occupation-post' ? '직업별' :
+                         '취미별'}
                      </button>
                   ))}
                </div>
+               {/* 직업 선택 (occupation-post일 때만 표시) */}
+               {formData.category === 'occupation-post' && (
+                 <div>
+                   <OccupationSelector
+                     value={formData.occupationTag}
+                     onChange={(val) => setFormData({...formData, occupationTag: val})}
+                     placeholder="직업을 검색하세요"
+                   />
+                 </div>
+               )}
+               {/* 취미 선택 (hobby-post일 때만 표시) */}
+               {formData.category === 'hobby-post' && (
+                 <div>
+                   <HobbySelector
+                     value={formData.hobbyStyleTag}
+                     onChange={(val) => setFormData({...formData, hobbyStyleTag: val})}
+                   />
+                 </div>
+               )}
                <textarea
                  placeholder="내용을 입력하세요..."
                  className="w-full h-64 resize-none outline-none text-sm leading-relaxed placeholder:text-stone-300"

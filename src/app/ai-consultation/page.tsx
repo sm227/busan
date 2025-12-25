@@ -6,6 +6,8 @@ import { useApp } from "@/contexts/AppContext";
 import { ArrowLeft, Send, Sparkles, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useAIModel } from "@/hooks/useAIModel";
+import { ModelSelector } from "@/components/ModelSelector";
 
 // 메시지 타입 정의
 interface Message {
@@ -26,6 +28,7 @@ const SUGGESTED_QUESTIONS = [
 export default function AIConsultationPage() {
   const router = useRouter();
   const { userPreferences } = useApp();
+  const { selectedModel } = useAIModel();
 
   // 1. 상태 관리
   const [messages, setMessages] = useState<Message[]>([
@@ -76,6 +79,7 @@ export default function AIConsultationPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text.trim(),
+          model: selectedModel,
           context: {
             userPreferences,
             currentLocation: "서울", // 추후 실제 위치로 변경 가능
@@ -129,7 +133,8 @@ export default function AIConsultationPage() {
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <span className="font-sans font-bold text-lg text-stone-800">AI 상담</span>
+          <span className="font-sans font-bold text-lg text-stone-800 flex-1">AI 상담</span>
+          <ModelSelector />
         </div>
 
         {/* 채팅 영역 (스크롤 가능) */}

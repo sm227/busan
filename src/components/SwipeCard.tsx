@@ -20,6 +20,7 @@ interface SwipeCardProps {
   currentUserId?: number;
   onUnlock?: (propertyId: string) => void;
   coinBalance?: number;
+  onCoinBalanceUpdate?: (newBalance: number) => void;
 }
 
 // forwardRef로 감싸기
@@ -31,7 +32,8 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
   onRemove,
   currentUserId,
   onUnlock,
-  coinBalance
+  coinBalance,
+  onCoinBalanceUpdate
 }, ref) => {
   const router = useRouter();
   const [isRemoving, setIsRemoving] = useState(false);
@@ -72,27 +74,13 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
   };
 
   const handleUnlockClick = async () => {
-    if (!currentUserId || !onUnlock) return;
+    if (!onUnlock) return;
 
     setIsUnlocking(true);
     try {
-      const response = await fetch('/api/unlock-property', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUserId,
-          propertyId: property.id
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        onUnlock(property.id);
-        setShowUnlockModal(false);
-      } else {
-        alert(data.error || '잠금 해제에 실패했습니다.');
-      }
+      // SwipeStack의 handleUnlock 호출 (중복 API 호출 방지)
+      await onUnlock(property.id);
+      setShowUnlockModal(false);
     } catch (error) {
       console.error('잠금 해제 오류:', error);
       alert('잠금 해제 중 오류가 발생했습니다.');
@@ -122,10 +110,12 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
 
       if (data.success) {
         alert(`코인 ${amount}개를 구매했습니다!`);
+        // 코인 잔액 업데이트
+        if (onCoinBalanceUpdate) {
+          onCoinBalanceUpdate(data.data.newBalance);
+        }
         setShowPurchaseModal(false);
-        setShowUnlockModal(true);
-        // 코인 잔액 업데이트는 부모 컴포넌트에서 처리
-        window.location.reload(); // 간단하게 페이지 새로고침
+        // 구매 후 잠금 해제 모달 표시하지 않고 그냥 닫기
       } else {
         alert(data.error || '구매에 실패했습니다.');
       }

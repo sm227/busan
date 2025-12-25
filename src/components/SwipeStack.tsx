@@ -191,6 +191,7 @@ const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
                   currentUserId={currentUserId}
                   onUnlock={handleUnlock}
                   coinBalance={coinBalance}
+                  onCoinBalanceUpdate={onCoinBalanceUpdate}
                 />
               ) : (
                 <div className="bg-white border border-stone-200 rounded-3xl shadow-xl h-full overflow-hidden relative">

@@ -29,18 +29,15 @@ export default function PopularPostsSlider({ onPostClick }: PopularPostsSliderPr
   const [loading, setLoading] = useState(true);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  // 인기 게시글 로드
+  // 인기 게시글 로드 (좋아요 많은 순)
   useEffect(() => {
     const loadPopularPosts = async () => {
       try {
-        const response = await fetch('/api/community?limit=5');
+        const response = await fetch('/api/community?limit=5&sortBy=likes_count&sortOrder=DESC');
         const data = await response.json();
 
         if (data.success) {
-          const sortedPosts = (data.data || []).sort((a: PopularPost, b: PopularPost) =>
-            b.likes_count - a.likes_count
-          );
-          setPosts(sortedPosts);
+          setPosts(data.data || []);
         }
       } catch (error) {
         console.error('인기 게시글 로드 실패:', error);

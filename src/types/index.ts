@@ -128,11 +128,15 @@ export interface GuestbookEntry {
   content: string;
   location?: string;
   rating?: number;
-  category: 'experience' | 'review' | 'tip' | 'question';
+  category: 'experience' | 'review' | 'tip' | 'question' | 'occupation-post' | 'hobby-post';
   property_id?: string;
   tags?: string | string[];
+  occupation_tag?: string;
+  hobby_style_tag?: string;
   likes_count: number;
   created_at: string;
   updated_at: string;
   author_nickname?: string;
+  author_occupation?: string;
+  author_hobby_style?: string;
 }

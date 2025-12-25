@@ -75,6 +75,8 @@ model Guestbook {
   category       String
   propertyId     String?         @map("property_id")
   tags           String?
+  occupationTag  String?         @map("occupation_tag")
+  hobbyStyleTag  String?         @map("hobby_style_tag")
   likesCount     Int             @default(0) @map("likes_count")
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @default(now()) @updatedAt @map("updated_at")
@@ -86,6 +88,10 @@ model Guestbook {
   @@index([userId])
   @@index([category])
   @@index([createdAt])
+  @@index([occupationTag])
+  @@index([hobbyStyleTag])
+  @@index([category, occupationTag])
+  @@index([category, hobbyStyleTag])
   @@map("guestbook")
 }
 

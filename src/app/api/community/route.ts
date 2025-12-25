@@ -10,7 +10,7 @@ import {
 // 커뮤니티 글 작성
 export async function POST(request: NextRequest) {
   try {
-    const { userId, title, content, location, rating, category, propertyId, tags } = await request.json();
+    const { userId, title, content, location, rating, category, propertyId, tags, occupationTag, hobbyStyleTag } = await request.json();
 
     // 입력 값 검증
     if (!userId || !title || !content || !category) {
@@ -21,12 +21,40 @@ export async function POST(request: NextRequest) {
     }
 
     // 카테고리 검증
-    const validCategories = ['experience', 'review', 'tip', 'question'];
+    const validCategories = ['experience', 'review', 'tip', 'question', 'occupation-post', 'hobby-post'];
     if (!validCategories.includes(category)) {
       return NextResponse.json(
         { success: false, error: '올바르지 않은 카테고리입니다.' },
         { status: 400 }
       );
+    }
+
+    // occupation-post 검증
+    if (category === 'occupation-post') {
+      if (!occupationTag || occupationTag.trim() === '') {
+        return NextResponse.json(
+          { success: false, error: '직업을 선택해주세요.' },
+          { status: 400 }
+        );
+      }
+      // occupationTag 길이 제한 (50자)
+      if (occupationTag.length > 50) {
+        return NextResponse.json(
+          { success: false, error: '직업명은 50자 이내로 입력해주세요.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // hobby-post 검증
+    if (category === 'hobby-post') {
+      const validHobbyStyles = ['nature-lover', 'culture-enthusiast', 'sports-fan', 'crafts-person'];
+      if (!hobbyStyleTag || !validHobbyStyles.includes(hobbyStyleTag)) {
+        return NextResponse.json(
+          { success: false, error: '취미 스타일을 선택해주세요.' },
+          { status: 400 }
+        );
+      }
     }
 
     // 제목과 내용 길이 검증
@@ -59,7 +87,9 @@ export async function POST(request: NextRequest) {
       rating,
       category,
       propertyId,
-      tags: Array.isArray(tags) ? tags : tags ? [tags] : []
+      tags: Array.isArray(tags) ? tags : tags ? [tags] : [],
+      occupationTag: category === 'occupation-post' ? occupationTag : null,
+      hobbyStyleTag: category === 'hobby-post' ? hobbyStyleTag : null
     });
 
     if (!result.success) {
@@ -92,6 +122,8 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get('location');
     const tag = searchParams.get('tag');
     const minRating = searchParams.get('minRating');
+    const occupationTag = searchParams.get('occupationTag');
+    const hobbyStyleTag = searchParams.get('hobbyStyleTag');
     const sortBy = searchParams.get('sortBy') || 'created_at';
     const sortOrder = (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC';
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -121,6 +153,8 @@ export async function GET(request: NextRequest) {
       location: location || undefined,
       tag: tag || undefined,
       minRating: minRating ? parseInt(minRating) : undefined,
+      occupationTag: occupationTag || undefined,
+      hobbyStyleTag: hobbyStyleTag || undefined,
       sortBy: sortBy as any,
       sortOrder,
       limit,
@@ -143,7 +177,7 @@ export async function GET(request: NextRequest) {
 // 커뮤니티 글 수정
 export async function PUT(request: NextRequest) {
   try {
-    const { entryId, userId, title, content, location, rating, category, tags } = await request.json();
+    const { entryId, userId, title, content, location, rating, category, tags, occupationTag, hobbyStyleTag } = await request.json();
 
     if (!entryId || !userId) {
       return NextResponse.json(
@@ -152,12 +186,67 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // 카테고리 변경 시 검증
+    if (category !== undefined) {
+      const validCategories = ['experience', 'review', 'tip', 'question', 'occupation-post', 'hobby-post'];
+      if (!validCategories.includes(category)) {
+        return NextResponse.json(
+          { success: false, error: '올바르지 않은 카테고리입니다.' },
+          { status: 400 }
+        );
+      }
+
+      // occupation-post 검증
+      if (category === 'occupation-post' && occupationTag !== undefined) {
+        if (!occupationTag || occupationTag.trim() === '') {
+          return NextResponse.json(
+            { success: false, error: '직업을 선택해주세요.' },
+            { status: 400 }
+          );
+        }
+        if (occupationTag.length > 50) {
+          return NextResponse.json(
+            { success: false, error: '직업명은 50자 이내로 입력해주세요.' },
+            { status: 400 }
+          );
+        }
+      }
+
+      // hobby-post 검증
+      if (category === 'hobby-post' && hobbyStyleTag !== undefined) {
+        const validHobbyStyles = ['nature-lover', 'culture-enthusiast', 'sports-fan', 'crafts-person'];
+        if (!hobbyStyleTag || !validHobbyStyles.includes(hobbyStyleTag)) {
+          return NextResponse.json(
+            { success: false, error: '취미 스타일을 선택해주세요.' },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     const updates: any = {};
     if (title !== undefined) updates.title = title;
     if (content !== undefined) updates.content = content;
     if (location !== undefined) updates.location = location;
     if (rating !== undefined) updates.rating = rating;
-    if (category !== undefined) updates.category = category;
+    if (category !== undefined) {
+      updates.category = category;
+      // 카테고리 변경 시 적절한 태그만 유지
+      if (category === 'occupation-post') {
+        updates.occupationTag = occupationTag || null;
+        updates.hobbyStyleTag = null;
+      } else if (category === 'hobby-post') {
+        updates.hobbyStyleTag = hobbyStyleTag || null;
+        updates.occupationTag = null;
+      } else {
+        updates.occupationTag = null;
+        updates.hobbyStyleTag = null;
+      }
+    } else {
+      // 카테고리 변경 없이 태그만 업데이트
+      if (occupationTag !== undefined) updates.occupationTag = occupationTag;
+      if (hobbyStyleTag !== undefined) updates.hobbyStyleTag = hobbyStyleTag;
+    }
     if (tags !== undefined) updates.tags = Array.isArray(tags) ? tags : tags ? [tags] : [];
 
     const result = await updateGuestbookEntry(

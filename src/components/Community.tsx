@@ -51,7 +51,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   const router = useRouter();
   const [entries, setEntries] = useState<CommunityEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'list' | 'group' | 'bookmarks' | 'myActivity'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'write' | 'group' | 'bookmarks' | 'myActivity'>('list');
   const [isInitialized, setIsInitialized] = useState(false);
   const [showWriteForm, setShowWriteForm] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<CommunityEntry | null>(null);
@@ -970,12 +970,21 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
 // --- 하위 컴포넌트 (WriteForm & Detail) ---
 
 function CommunityWriteContent({ currentUser, onSuccess }: any) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    content: string;
+    location: string;
+    rating: number;
+    category: 'experience' | 'review' | 'tip' | 'question' | 'occupation-post' | 'hobby-post';
+    tags: string;
+    occupationTag: string;
+    hobbyStyleTag: string;
+  }>({
     title: '',
     content: '',
     location: '',
     rating: 0,
-    category: 'experience' as const,
+    category: 'experience',
     tags: '',
     occupationTag: '',
     hobbyStyleTag: ''

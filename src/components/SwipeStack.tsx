@@ -16,6 +16,9 @@ interface SwipeStackProps {
   purchaseType?: 'sale' | 'rent';
   onSwipe: (direction: 'left' | 'right', property: RuralProperty) => void;
   onComplete: () => void;
+  currentUserId?: number;
+  coinBalance?: number;
+  onCoinBalanceUpdate?: (newBalance: number) => void;
 }
 
 const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
@@ -23,12 +26,16 @@ const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
   stories,
   purchaseType,
   onSwipe,
-  onComplete
+  onComplete,
+  currentUserId,
+  coinBalance,
+  onCoinBalanceUpdate
 }, ref) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleCards] = useState(3);
   const [removingCard, setRemovingCard] = useState<string | null>(null);
   const [stackRenderKey, setStackRenderKey] = useState(0);
+  const [unlockedProperties, setUnlockedProperties] = useState<Set<string>>(new Set());
 
   const currentCardRef = useRef<SwipeCardRef>(null);
 
@@ -65,6 +72,32 @@ const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
         setRemovingCard(null);
         setStackRenderKey(prev => prev + 1);
       }, 100);
+    }
+  };
+
+  const handleUnlock = async (propertyId: string) => {
+    if (!currentUserId) return;
+
+    try {
+      const response = await fetch('/api/unlock-property', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUserId,
+          propertyId
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setUnlockedProperties(prev => new Set(prev).add(propertyId));
+        if (onCoinBalanceUpdate) {
+          onCoinBalanceUpdate(data.newBalance);
+        }
+      }
+    } catch (error) {
+      console.error('잠금 해제 오류:', error);
     }
   };
 
@@ -121,16 +154,23 @@ const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
           // ✨ 중요: key 값을 ID + Index 조합으로 변경하여 중복 에러 방지
           const uniqueKey = `${property.id}-${actualIndex}-${stackRenderKey}`;
 
+          // 잠금 해제 여부 확인
+          const isUnlocked = unlockedProperties.has(property.id);
+          const displayProperty = {
+            ...property,
+            isLocked: property.isLocked && !isUnlocked
+          };
+
           return (
             <motion.div
               key={uniqueKey}
               className="absolute inset-0"
-              initial={{ 
+              initial={{
                 scale: 1 - index * 0.05,
                 y: index * 12,
                 zIndex: visibleCards - index
               }}
-              animate={{ 
+              animate={{
                 scale: 1 - index * 0.05,
                 y: index * 12,
                 zIndex: visibleCards - index
@@ -143,11 +183,14 @@ const SwipeStack = forwardRef<SwipeStackRef, SwipeStackProps>(({
               {index === 0 ? (
                 <SwipeCard
                   ref={currentCardRef}
-                  property={property}
+                  property={displayProperty}
                   story={story}
                   purchaseType={purchaseType}
                   onSwipe={handleSwipe}
                   onRemove={handleRemove}
+                  currentUserId={currentUserId}
+                  onUnlock={handleUnlock}
+                  coinBalance={coinBalance}
                 />
               ) : (
                 <div className="bg-white border border-stone-200 rounded-3xl shadow-xl h-full overflow-hidden relative">

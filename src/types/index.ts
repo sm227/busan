@@ -68,6 +68,7 @@ export interface RuralProperty {
   isUserProperty?: boolean; // 사용자가 등록한 매물 여부
   userNickname?: string; // 등록한 사용자 닉네임
   contact?: string; // 연락처
+  isLocked?: boolean; // 코인으로 잠금 해제 필요 여부
 }
 
 export interface VillageStory {

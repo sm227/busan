@@ -6,14 +6,36 @@ import SwipeStack, { SwipeStackRef } from "@/components/SwipeStack"; // 타입 �
 import { villageStories } from "@/data/stories";
 import { RuralProperty } from "@/types";
 import { ArrowLeft, X, Heart } from "lucide-react";
-import { useRef } from "react"; // useRef 추가
+import { useRef, useState, useEffect } from "react"; // useRef 추가
 
 export default function MatchingPage() {
   const router = useRouter();
   const { currentUser, userPreferences, recommendations, likedProperties, rejectedProperties, setLikedProperties, setRejectedProperties } = useApp();
-  
+
   // 1. 스택을 제어할 Ref 생성
   const stackRef = useRef<SwipeStackRef>(null);
+
+  // 2. 코인 잔액 상태 관리
+  const [coinBalance, setCoinBalance] = useState(0);
+
+  // 3. 코인 잔액 가져오기
+  useEffect(() => {
+    const fetchCoinBalance = async () => {
+      if (currentUser) {
+        try {
+          const response = await fetch(`/api/coins?userId=${currentUser.id}&action=balance`);
+          const data = await response.json();
+          if (data.success) {
+            setCoinBalance(data.data.balance);
+          }
+        } catch (error) {
+          console.error('코인 잔액 조회 실패:', error);
+        }
+      }
+    };
+
+    fetchCoinBalance();
+  }, [currentUser]);
 
   const handleSwipe = async (
     direction: "left" | "right",
@@ -57,6 +79,10 @@ export default function MatchingPage() {
     router.push("/results");
   };
 
+  const handleCoinBalanceUpdate = (newBalance: number) => {
+    setCoinBalance(newBalance);
+  };
+
   return (
     <div className="h-screen bg-[#F5F5F0] overflow-hidden font-sans text-stone-800">
       <div className="max-w-md mx-auto bg-white h-screen relative shadow-xl flex flex-col">
@@ -95,6 +121,9 @@ export default function MatchingPage() {
               purchaseType={userPreferences.purchaseType}
               onSwipe={handleSwipe}
               onComplete={handleMatchingComplete}
+              currentUserId={currentUser?.id}
+              coinBalance={coinBalance}
+              onCoinBalanceUpdate={handleCoinBalanceUpdate}
             />
           </div>
 

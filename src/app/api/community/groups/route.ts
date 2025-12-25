@@ -17,28 +17,30 @@ export async function GET(request: NextRequest) {
     // WHERE 조건 구성
     const where: any = {};
 
-    // 그룹 필터: 직업별/취미별 카테고리의 글만 필터링
-    const andConditions: any[] = [];
-
-    if (occupation) {
-      // 직업 필터: occupation-post 카테고리에서 occupationTag로 검색
-      andConditions.push({
-        category: 'occupation-post',
-        occupationTag: { contains: occupation, mode: 'insensitive' }
-      });
-    }
-
-    if (hobbyStyle) {
-      // 취미 필터: hobby-post 카테고리에서 hobbyStyleTag로 검색
-      andConditions.push({
-        category: 'hobby-post',
-        hobbyStyleTag: hobbyStyle
-      });
-    }
-
-    // AND 조건이 있으면 적용 (직업과 취미 모두 만족해야 함)
-    if (andConditions.length > 0) {
-      where.AND = andConditions;
+    // 그룹 탭에서는 기본적으로 직업별/취미별 카테고리만 표시
+    if (occupation && hobbyStyle) {
+      // 둘 다 필터링: 직업 AND 취미 조건
+      where.AND = [
+        {
+          category: 'occupation-post',
+          occupationTag: { contains: occupation, mode: 'insensitive' }
+        },
+        {
+          category: 'hobby-post',
+          hobbyStyleTag: hobbyStyle
+        }
+      ];
+    } else if (occupation) {
+      // 직업만 필터링
+      where.category = 'occupation-post';
+      where.occupationTag = { contains: occupation, mode: 'insensitive' };
+    } else if (hobbyStyle) {
+      // 취미만 필터링
+      where.category = 'hobby-post';
+      where.hobbyStyleTag = hobbyStyle;
+    } else {
+      // 필터 없음: 직업별 또는 취미별 카테고리 글만 표시
+      where.category = { in: ['occupation-post', 'hobby-post'] };
     }
 
     // ORDER BY 구성

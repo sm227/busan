@@ -66,7 +66,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   const [tagFilter, setTagFilter] = useState('');
   const [minRatingFilter, setMinRatingFilter] = useState<number>(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'created_at' | 'likes_count' | 'comments_count' | 'latest_comment' | 'rating'>('created_at');
+  const [sortBy, setSortBy] = useState<'created_at' | 'likes_count' | 'comments_count' | 'latest_comment' | 'rating'>('likes_count');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
 
   // 공유 상태
@@ -197,7 +197,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
       if (hobbyStyleFilter) params.append('hobbyStyle', hobbyStyleFilter);
 
       // 정렬
-      params.append('sortBy', 'created_at');
+      params.append('sortBy', 'likes_count');
       params.append('sortOrder', 'DESC');
       params.append('limit', '50');
 

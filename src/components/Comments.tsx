@@ -228,7 +228,7 @@ export default function Comments({ guestbookId, currentUser }: CommentsProps) {
                     isEditing={editingComment === comment.id}
                     editContent={editContent}
                     setEditContent={setEditContent}
-                    onSaveEdit={(content) => handleEditComment(comment.id, content)}
+                    onSaveEdit={(content: string) => handleEditComment(comment.id, content)}
                     onCancelEdit={() => { setEditingComment(null); setEditContent(''); }}
                     formatDate={formatDate}
                     submitting={submitting}
@@ -248,7 +248,7 @@ export default function Comments({ guestbookId, currentUser }: CommentsProps) {
                         isEditing={editingComment === child.id}
                         editContent={editContent}
                         setEditContent={setEditContent}
-                        onSaveEdit={(content) => handleEditComment(child.id, content)}
+                        onSaveEdit={(content: string) => handleEditComment(child.id, content)}
                         onCancelEdit={() => { setEditingComment(null); setEditContent(''); }}
                         formatDate={formatDate}
                         submitting={submitting}

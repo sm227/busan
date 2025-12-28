@@ -10,9 +10,10 @@ import { getClassDetailForAdmin, isAdmin } from '@/lib/admin';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -32,7 +33,7 @@ export async function GET(
       );
     }
 
-    const classData = await getClassDetailForAdmin(params.id);
+    const classData = await getClassDetailForAdmin(id);
 
     if (!classData) {
       return NextResponse.json(

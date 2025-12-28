@@ -10,9 +10,10 @@ import { approveClass } from '@/lib/admin';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { userId } = body;
 
@@ -23,7 +24,7 @@ export async function POST(
       );
     }
 
-    const updatedClass = await approveClass(params.id, parseInt(userId));
+    const updatedClass = await approveClass(id, parseInt(userId));
 
     return NextResponse.json({
       success: true,

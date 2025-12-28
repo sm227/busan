@@ -10,9 +10,10 @@ import { prisma } from '@/lib/prisma';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { userId } = body;
 
@@ -25,7 +26,7 @@ export async function POST(
 
     // 클래스 조회
     const classData = await prisma.oneDayClass.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         instructorId: true,
         status: true
@@ -57,7 +58,7 @@ export async function POST(
 
     // 상태를 pending으로 변경하고 거부 사유 제거
     const updated = await prisma.oneDayClass.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: 'pending',
         rejectionReason: null,

@@ -11,9 +11,10 @@ import { rejectClass } from '@/lib/admin';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { userId, reason } = body;
 
@@ -31,7 +32,7 @@ export async function POST(
       );
     }
 
-    const updatedClass = await rejectClass(params.id, parseInt(userId), reason);
+    const updatedClass = await rejectClass(id, parseInt(userId), reason);
 
     return NextResponse.json({
       success: true,

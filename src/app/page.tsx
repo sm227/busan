@@ -22,7 +22,11 @@ import {
   ExternalLink,
   Handshake,
   Coins,
+  Menu,
+  X,
+  Gift,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import PopularPostsSlider from "@/components/PopularPostsSlider";
 import { MatchingAlgorithm } from "@/lib/matching";
@@ -46,6 +50,7 @@ export default function Home() {
   const [isLoadingProperties, setIsLoadingProperties] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [coinBalance, setCoinBalance] = useState(0);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // --- 배너 슬라이더 상태 관리 ---
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -179,6 +184,64 @@ export default function Home() {
     }
   };
 
+  // Menu helper components and functions
+  const handleMenuNavigation = (route: string) => {
+    setIsMenuOpen(false);
+    router.push(route);
+  };
+
+  const MenuSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="mb-6">
+      <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3 px-2">
+        {title}
+      </h3>
+      <div className="grid grid-cols-2 gap-2">
+        {children}
+      </div>
+    </div>
+  );
+
+  const MenuItem = ({
+    icon: Icon,
+    label,
+    route
+  }: {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    route: string;
+  }) => (
+    <button
+      onClick={() => handleMenuNavigation(route)}
+      className="flex items-center space-x-3 px-4 py-3 text-stone-700 hover:bg-stone-50 rounded-xl transition-colors group border border-stone-100"
+    >
+      <Icon className="w-5 h-5 text-stone-500 group-hover:text-stone-700 transition-colors flex-shrink-0" />
+      <span className="text-sm font-medium">{label}</span>
+    </button>
+  );
+
+  // Body scroll lock when menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
+
+  // Escape key handler
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMenuOpen) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMenuOpen]);
+
   if (!isInitialized) {
     return (
       <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
@@ -193,7 +256,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F0] overflow-x-hidden font-sans text-stone-800">
-      <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-xl">
+      <div className={`max-w-md mx-auto bg-white min-h-screen relative shadow-xl ${isMenuOpen ? 'overflow-hidden' : ''}`}>
         
         {/* 헤더 */}
         <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-stone-100 px-6 py-4">
@@ -225,10 +288,11 @@ export default function Home() {
                 <Map className="w-5 h-5" />
               </button>
               <button
-                onClick={() => router.push("/my-page")}
+                onClick={() => setIsMenuOpen(true)}
                 className="p-2 text-stone-600 hover:bg-stone-50 rounded-full transition-colors"
+                aria-label="메뉴 열기"
               >
-                <User className="w-5 h-5" />
+                <Menu className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -404,7 +468,7 @@ export default function Home() {
                 <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-stone-100 transition-colors">
                   <Users className="w-5 h-5 text-stone-700" />
                 </div>
-                <span className="font-bold text-stone-800 text-sm">커뮤니티</span>
+                <span className="font-bold text-stone-800 text-sm">마을회관</span>
                 <span className="text-[10px] text-stone-400 mt-1">이웃과 소통하기</span>
               </button>
 
@@ -533,7 +597,7 @@ export default function Home() {
               className="flex flex-col items-center py-3 text-stone-400 hover:text-stone-800 transition-colors"
             >
               <Users className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">소통</span>
+              <span className="text-[10px] font-medium">마을회관</span>
             </button>
             <button
               onClick={() => router.push("/my-page")}
@@ -544,6 +608,81 @@ export default function Home() {
             </button>
           </div>
         </div>
+
+        {/* Full-Screen Menu Page */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <>
+              {/* Backdrop to cover everything */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-[#F5F5F0] z-[60]"
+              />
+
+              {/* Menu Container */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed top-0 bottom-0 right-0 left-0 bg-white z-[61] flex flex-col max-w-md mx-auto shadow-2xl"
+              >
+                {/* Header */}
+                <div className="sticky top-0 bg-white border-b border-stone-100 px-6 py-4 flex items-center">
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 -ml-2 text-stone-600 hover:bg-stone-50 rounded-full transition-colors"
+                  aria-label="메뉴 닫기"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <h2 className="text-xl font-bold text-stone-800 ml-2">전체 메뉴</h2>
+              </div>
+
+              {/* Menu Content */}
+              <div className="flex-1 overflow-y-auto px-6 py-6">
+                {/* User Profile Section */}
+                {currentUser && (
+                  <div className="mb-8 p-4 bg-gradient-to-br from-stone-50 to-stone-100 rounded-2xl">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-stone-300 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-stone-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-bold text-stone-800">{currentUser.nickname}</p>
+                        <div className="flex items-center space-x-1 text-sm text-stone-500">
+                          <Coins className="w-4 h-4" />
+                          <span>{coinBalance} 코인</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 주요 메뉴 */}
+                <MenuSection title="주요 메뉴">
+                  <MenuItem icon={HomeIcon} label="홈" route="/" />
+                  <MenuItem icon={Map} label="지도" route="/maps" />
+                  <MenuItem icon={Bot} label="AI상담" route="/ai-consultation" />
+                  <MenuItem icon={Users} label="마을회관" route="/community" />
+                  <MenuItem icon={User} label="MY" route="/my-page" />
+                </MenuSection>
+
+                {/* 추가 서비스 */}
+                <MenuSection title="추가 서비스">
+                  <MenuItem icon={Handshake} label="빈집거래" route="/trade" />
+                  <MenuItem icon={Calendar} label="지역축제" route="/festival" />
+                  <MenuItem icon={Coins} label="코인" route="/coin" />
+                  <MenuItem icon={Gift} label="귀농귀촌혜택" route="/texHelp" />
+                </MenuSection>
+              </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* 게시글 상세보기 모달 */}
         {showPostModal && selectedPost && (

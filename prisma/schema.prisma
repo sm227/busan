@@ -12,6 +12,7 @@ model User {
   nickname         String             @unique
   password         String
   coinBalance      Int                @default(0) @map("coin_balance")
+  role             String             @default("user") // user, instructor, admin
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at")
   bookmarks        Bookmark[]
@@ -25,6 +26,11 @@ model User {
   userProperties   UserProperty[]
   coinPurchases    CoinPurchase[]
   coinTransactions CoinTransaction[]
+  instructorClasses OneDayClass[]     @relation("InstructorClasses")
+  classEnrollments  ClassEnrollment[] @relation("UserEnrollments")
+  classLikes        ClassLike[]       @relation("UserClassLikes")
+  classBookmarks    ClassBookmark[]   @relation("UserClassBookmarks")
+  classReviews      ClassReview[]     @relation("UserClassReviews")
   chatMessages     ChatMessage[]
 
   @@index([nickname])
@@ -328,6 +334,212 @@ model CoinTransaction {
   @@index([type])
   @@index([createdAt])
   @@map("coin_transactions")
+}
+
+// ==================== 원데이 클래스 시스템 ====================
+
+model OneDayClass {
+  id               String            @id @default(cuid())
+  instructorId     Int               @map("instructor_id")
+  title            String
+  description      String            @db.Text
+  category         String            // farming, crafts, cooking, culture, nature
+  subCategory      String?           @map("sub_category")
+
+  // 위치 정보
+  province         String
+  city             String
+  district         String
+  address          String?
+  locationDetail   String?           @map("location_detail")
+
+  // 난이도 & 대상
+  difficulty       String            // beginner, intermediate, advanced
+  minAge           Int?              @map("min_age")
+  maxAge           Int?              @map("max_age")
+  targetAudience   String?           @map("target_audience")
+
+  // 가격 정보
+  price            Int               // 코인 가격
+  originalPrice    Int?              @map("original_price")
+
+  // 이미지
+  thumbnailUrl     String?           @map("thumbnail_url")
+  imageUrls        Json?             @map("image_urls")
+
+  // 클래스 정보
+  duration         Int               // 분 단위
+  materials        Json?             // 준비물 배열
+  includes         Json?             // 포함 사항 배열
+  excludes         Json?             // 불포함 사항 배열
+  prerequisites    String?           @db.Text
+
+  // 통계 (비정규화)
+  likesCount       Int               @default(0) @map("likes_count")
+  bookmarksCount   Int               @default(0) @map("bookmarks_count")
+  enrollmentsCount Int               @default(0) @map("enrollments_count")
+  reviewsCount     Int               @default(0) @map("reviews_count")
+  averageRating    Float             @default(0) @map("average_rating")
+
+  // 상태
+  status           String            @default("pending") // pending, approved, rejected, active, inactive
+  rejectionReason  String?           @map("rejection_reason") @db.Text
+  approvedAt       DateTime?         @map("approved_at")
+  approvedBy       Int?              @map("approved_by")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  instructor       User              @relation("InstructorClasses", fields: [instructorId], references: [id])
+  sessions         ClassSession[]
+  enrollments      ClassEnrollment[]
+  likes            ClassLike[]
+  bookmarks        ClassBookmark[]
+  reviews          ClassReview[]
+
+  @@index([instructorId])
+  @@index([category])
+  @@index([province])
+  @@index([city])
+  @@index([difficulty])
+  @@index([status])
+  @@index([createdAt])
+  @@index([averageRating])
+  @@index([category, province])
+  @@index([category, difficulty])
+  @@map("oneday_classes")
+}
+
+model ClassSession {
+  id              String            @id @default(cuid())
+  classId         String            @map("class_id")
+  sessionDate     DateTime          @map("session_date")
+  startTime       String            @map("start_time") // HH:mm 형식
+  endTime         String            @map("end_time")
+  maxCapacity     Int               @map("max_capacity")
+  currentEnrolled Int               @default(0) @map("current_enrolled")
+  status          String            @default("open") // open, full, cancelled, completed
+  notes           String?           @db.Text
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  // Relations
+  class           OneDayClass       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  enrollments     ClassEnrollment[]
+
+  @@index([classId])
+  @@index([sessionDate])
+  @@index([status])
+  @@index([classId, sessionDate])
+  @@map("class_sessions")
+}
+
+model ClassEnrollment {
+  id               String        @id @default(cuid())
+  userId           Int           @map("user_id")
+  classId          String        @map("class_id")
+  sessionId        String        @map("session_id")
+
+  // 결제 정보
+  paidAmount       Int           @map("paid_amount")
+  transactionId    String        @map("transaction_id")
+
+  // 상태
+  status           String        @default("confirmed") // confirmed, cancelled, completed, noshow
+  attendanceStatus String?       @map("attendance_status") // attended, absent, late
+
+  // 참가자 정보
+  participants     Int           @default(1)
+  specialRequests  String?       @map("special_requests") @db.Text
+
+  // 타임스탬프
+  enrolledAt       DateTime      @default(now()) @map("enrolled_at")
+  cancelledAt      DateTime?     @map("cancelled_at")
+  completedAt      DateTime?     @map("completed_at")
+
+  // Relations
+  user             User          @relation("UserEnrollments", fields: [userId], references: [id])
+  class            OneDayClass   @relation(fields: [classId], references: [id])
+  session          ClassSession  @relation(fields: [sessionId], references: [id])
+  review           ClassReview?
+
+  @@unique([userId, sessionId])
+  @@index([userId])
+  @@index([classId])
+  @@index([sessionId])
+  @@index([status])
+  @@index([enrolledAt])
+  @@map("class_enrollments")
+}
+
+model ClassLike {
+  id        String      @id @default(cuid())
+  userId    Int         @map("user_id")
+  classId   String      @map("class_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  user      User        @relation("UserClassLikes", fields: [userId], references: [id])
+  class     OneDayClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, classId])
+  @@index([userId])
+  @@index([classId])
+  @@map("class_likes")
+}
+
+model ClassBookmark {
+  id        String      @id @default(cuid())
+  userId    Int         @map("user_id")
+  classId   String      @map("class_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  user      User        @relation("UserClassBookmarks", fields: [userId], references: [id])
+  class     OneDayClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, classId])
+  @@index([userId])
+  @@index([classId])
+  @@map("class_bookmarks")
+}
+
+model ClassReview {
+  id                String          @id @default(cuid())
+  enrollmentId      String          @unique @map("enrollment_id")
+  userId            Int             @map("user_id")
+  classId           String          @map("class_id")
+
+  // 리뷰 내용
+  rating            Int             // 1-5
+  title             String?
+  content           String          @db.Text
+  images            Json?
+
+  // 세부 평가 (선택)
+  instructorRating  Int?            @map("instructor_rating")
+  contentRating     Int?            @map("content_rating")
+  facilityRating    Int?            @map("facility_rating")
+  valueRating       Int?            @map("value_rating")
+
+  // 태그
+  tags              Json?
+
+  // 통계
+  helpfulCount      Int             @default(0) @map("helpful_count")
+
+  // 상태
+  isReported        Boolean         @default(false) @map("is_reported")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  enrollment        ClassEnrollment @relation(fields: [enrollmentId], references: [id])
+  user              User            @relation("UserClassReviews", fields: [userId], references: [id])
+  class             OneDayClass     @relation(fields: [classId], references: [id])
+
+  @@index([userId])
+  @@index([classId])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("class_reviews")
 }
 
 // ==================== 채팅 시스템 ====================

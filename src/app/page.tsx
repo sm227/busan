@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Handshake,
   Coins,
+  GraduationCap,
   Menu,
   X,
   Gift,
@@ -492,6 +493,28 @@ export default function Home() {
                 </div>
                 <span className="font-bold text-stone-800 text-sm">지역축제</span>
                 <span className="text-[10px] text-stone-400 mt-1">2025 축제 정보</span>
+              </button>
+
+              <button
+                onClick={() => router.push("/classes")}
+                className="flex flex-col items-start p-4 bg-white border border-stone-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-stone-300 transition-all group"
+              >
+                <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-stone-100 transition-colors">
+                  <GraduationCap className="w-5 h-5 text-stone-700" />
+                </div>
+                <span className="font-bold text-stone-800 text-sm">원데이 클래스</span>
+                <span className="text-[10px] text-stone-400 mt-1">농촌 체험 배우기</span>
+              </button>
+
+              <button
+                onClick={() => router.push("/my-classes/all")}
+                className="flex flex-col items-start p-4 bg-white border border-stone-100 rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-stone-300 transition-all group"
+              >
+                <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-stone-100 transition-colors">
+                  <GraduationCap className="w-5 h-5 text-stone-700" />
+                </div>
+                <span className="font-bold text-stone-800 text-sm">내 클래스</span>
+                <span className="text-[10px] text-stone-400 mt-1">수강/강사 관리</span>
               </button>
             </div>
           </div>

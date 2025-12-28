@@ -404,7 +404,7 @@ export default function Home() {
                 <div className="w-10 h-10 bg-stone-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-stone-100 transition-colors">
                   <Users className="w-5 h-5 text-stone-700" />
                 </div>
-                <span className="font-bold text-stone-800 text-sm">커뮤니티</span>
+                <span className="font-bold text-stone-800 text-sm">마을회관</span>
                 <span className="text-[10px] text-stone-400 mt-1">이웃과 소통하기</span>
               </button>
 
@@ -533,7 +533,7 @@ export default function Home() {
               className="flex flex-col items-center py-3 text-stone-400 hover:text-stone-800 transition-colors"
             >
               <Users className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">소통</span>
+              <span className="text-[10px] font-medium">마을회관</span>
             </button>
             <button
               onClick={() => router.push("/my-page")}

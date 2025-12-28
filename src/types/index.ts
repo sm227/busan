@@ -1,3 +1,6 @@
+// 원데이 클래스 타입
+export * from './oneday-class';
+
 // 사용자 라이프스타일 분석을 위한 타입 정의
 export interface UserPreferences {
   occupation?: string;

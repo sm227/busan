@@ -31,6 +31,7 @@ model User {
   classLikes        ClassLike[]       @relation("UserClassLikes")
   classBookmarks    ClassBookmark[]   @relation("UserClassBookmarks")
   classReviews      ClassReview[]     @relation("UserClassReviews")
+  chatMessages     ChatMessage[]
 
   @@index([nickname])
   @@map("users")
@@ -539,4 +540,40 @@ model ClassReview {
   @@index([rating])
   @@index([createdAt])
   @@map("class_reviews")
+}
+
+// ==================== 채팅 시스템 ====================
+
+model ChatRoom {
+  id          String        @id @default(cuid())
+  name        String        // 채팅방 이름 (예: "원격근무러 모임")
+  description String?       // 채팅방 설명
+  category    String        // occupation, hobby, region
+  categoryTag String        @map("category_tag") // 구체적인 카테고리 값 (예: "원격근무", "등산", "강원도")
+  icon        String?       // 아이콘 이미지 URL 또는 이모지
+  isActive    Boolean       @default(true) @map("is_active") // 활성화 여부
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at")
+  messages    ChatMessage[]
+
+  @@index([category])
+  @@index([categoryTag])
+  @@index([isActive])
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  roomId     String   @map("room_id")
+  userId     Int      @map("user_id")
+  content    String   // 메시지 내용
+  isSystem   Boolean  @default(false) @map("is_system") // 시스템 메시지 여부 (예: "XXX님이 입장했습니다")
+  createdAt  DateTime @default(now()) @map("created_at")
+  room       ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([roomId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("chat_messages")
 }

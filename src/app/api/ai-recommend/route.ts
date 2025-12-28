@@ -273,24 +273,30 @@ JSON만 출력: {"recommendedRegions": ["42", "43", "44", "45", "46", "47", "48"
       (b.matchScore || 0) - (a.matchScore || 0)
     );
 
-    const regionCounts = sortedByScore.reduce((acc: any, prop: any) => {
+    // 5-6. 처음 5개는 무료, 나머지는 잠금 처리
+    const sortedWithLock = sortedByScore.map((property, index) => ({
+      ...property,
+      isLocked: index >= 5 // 인덱스 5 이상(6번째부터)는 잠금
+    }));
+
+    const regionCounts = sortedWithLock.reduce((acc: any, prop: any) => {
       const region = prop.location.district;
       acc[region] = (acc[region] || 0) + 1;
       return acc;
     }, {});
 
     console.log('매칭 점수 범위:', {
-      highest: sortedByScore[0]?.matchScore,
-      lowest: sortedByScore[sortedByScore.length - 1]?.matchScore,
-      average: sortedByScore.length > 0
-        ? Math.round(sortedByScore.reduce((sum, p) => sum + (p.matchScore || 0), 0) / sortedByScore.length)
+      highest: sortedWithLock[0]?.matchScore,
+      lowest: sortedWithLock[sortedWithLock.length - 1]?.matchScore,
+      average: sortedWithLock.length > 0
+        ? Math.round(sortedWithLock.reduce((sum, p) => sum + (p.matchScore || 0), 0) / sortedWithLock.length)
         : 0
     });
-    // console.log(`최종 추천 매물 수: ${sortedByScore.length}개 (최소 매칭 점수 ${MIN_MATCH_SCORE}% 이상)`);
+    console.log(`잠금 상태: 무료 5개, 잠금 ${sortedWithLock.filter(p => p.isLocked).length}개`);
 
     return NextResponse.json({
       success: true,
-      recommendations: sortedByScore,
+      recommendations: sortedWithLock,
       aiRegions: recommendedRegions,
       regionDistribution: regionCounts,
     });

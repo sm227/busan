@@ -12,6 +12,8 @@ import Comments from './Comments';
 import { occupations } from '@/data/occupations';
 import OccupationSelector from './OccupationSelector';
 import HobbySelector from './HobbySelector';
+import ChatRoomList from './ChatRoomList';
+import ChatRoom from './ChatRoom';
 
 // 태그 처리 헬퍼 함수
 const getTagArray = (tags: string | string[] | undefined): string[] => {
@@ -51,6 +53,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   const router = useRouter();
   const [entries, setEntries] = useState<CommunityEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mainTab, setMainTab] = useState<'community' | 'chat'>('community');
   const [activeTab, setActiveTab] = useState<'list' | 'write' | 'group' | 'bookmarks' | 'myActivity'>('list');
   const [isInitialized, setIsInitialized] = useState(false);
   const [showWriteForm, setShowWriteForm] = useState(false);
@@ -59,6 +62,9 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   const [editingEntry, setEditingEntry] = useState<CommunityEntry | null>(null);
   const [likedEntries, setLikedEntries] = useState<Set<number>>(new Set());
   const [bookmarkedEntries, setBookmarkedEntries] = useState<Set<number>>(new Set());
+
+  // 채팅 관련 state
+  const [selectedChatRoom, setSelectedChatRoom] = useState<any>(null);
 
   // 검색 & 필터 상태
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -389,6 +395,9 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
   useEffect(() => {
     if (!isInitialized) return;
 
+    // 채팅 탭일 때는 데이터 로딩 불필요
+    if (mainTab === 'chat') return;
+
     if (activeTab === 'list') {
       loadEntries();
     } else if (activeTab === 'group') {
@@ -398,7 +407,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
     } else if (activeTab === 'myActivity') {
       loadMyActivity();
     }
-  }, [activeTab, searchTerm, selectedCategory, locationFilter, tagFilter, minRatingFilter, sortBy, sortOrder, occupationFilter, hobbyStyleFilter, currentUser, isInitialized]);
+  }, [mainTab, activeTab, searchTerm, selectedCategory, locationFilter, tagFilter, minRatingFilter, sortBy, sortOrder, occupationFilter, hobbyStyleFilter, currentUser, isInitialized]);
 
   // UI 헬퍼 함수
   const getCategoryIcon = (category: string) => {
@@ -461,7 +470,17 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
     }
   };
 
-  // 조건부 렌더링 (글쓰기, 상세보기)
+  // 조건부 렌더링 (채팅방, 글쓰기, 상세보기)
+  if (selectedChatRoom && currentUser) {
+    return (
+      <ChatRoom
+        room={selectedChatRoom}
+        currentUser={currentUser}
+        onBack={() => setSelectedChatRoom(null)}
+      />
+    );
+  }
+
   if (showWriteForm) {
     return (
       <CommunityWriteForm
@@ -509,7 +528,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
             <button onClick={onBack} className="p-2 -ml-2 hover:bg-stone-100 rounded-full transition-colors">
               <ArrowLeft className="w-6 h-6 text-stone-600" />
             </button>
-            <h1 className="font-serif font-bold text-xl text-stone-800">커뮤니티</h1>
+            <h1 className="font-serif font-bold text-xl text-stone-800">마을회관</h1>
 
             {/* 작성 버튼 */}
             {currentUser && (
@@ -524,56 +543,82 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
             {!currentUser && <div className="w-10" />}
           </div>
 
-          {/* Tab Navigation */}
+          {/* Main Tab Navigation */}
           <div className="flex space-x-1 bg-stone-100 rounded-lg p-1 mb-4">
             <button
-              onClick={() => setActiveTab('list')}
-              className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'list'
+              onClick={() => setMainTab('community')}
+              className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                mainTab === 'community'
                   ? 'bg-white text-stone-900 shadow-sm'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              목록
+              시골생활
             </button>
             <button
-              onClick={() => setActiveTab('group')}
-              className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'group'
+              onClick={() => setMainTab('chat')}
+              className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                mainTab === 'chat'
                   ? 'bg-white text-stone-900 shadow-sm'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              그룹
+              채팅
             </button>
-            {currentUser && (
-              <>
-                <button
-                  onClick={() => setActiveTab('bookmarks')}
-                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'bookmarks'
-                      ? 'bg-white text-stone-900 shadow-sm'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  북마크
-                </button>
-                <button
-                  onClick={() => setActiveTab('myActivity')}
-                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === 'myActivity'
-                      ? 'bg-white text-stone-900 shadow-sm'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  내활동
-                </button>
-              </>
-            )}
           </div>
 
-          {/* Search & Filter - only in list tab */}
-          {activeTab === 'list' && (
+          {/* Sub Tab Navigation - 시골생활 탭일 때만 표시 */}
+          {mainTab === 'community' && (
+            <div className="flex space-x-1 bg-stone-50 rounded-lg p-1 mb-4 overflow-x-auto">
+              <button
+                onClick={() => setActiveTab('list')}
+                className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                  activeTab === 'list'
+                    ? 'bg-white text-stone-900 shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                목록
+              </button>
+              <button
+                onClick={() => setActiveTab('group')}
+                className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                  activeTab === 'group'
+                    ? 'bg-white text-stone-900 shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                그룹
+              </button>
+              {currentUser && (
+                <>
+                  <button
+                    onClick={() => setActiveTab('bookmarks')}
+                    className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                      activeTab === 'bookmarks'
+                        ? 'bg-white text-stone-900 shadow-sm'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    북마크
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('myActivity')}
+                    className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                      activeTab === 'myActivity'
+                        ? 'bg-white text-stone-900 shadow-sm'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    내활동
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Search & Filter - only in list tab and community main tab */}
+          {mainTab === 'community' && activeTab === 'list' && (
             <>
               <div className="flex gap-2">
                 <div className="flex-1 relative">
@@ -667,8 +712,8 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
             </>
           )}
 
-          {/* Filter - only in group tab */}
-          {activeTab === 'group' && (
+          {/* Filter - only in group tab and community main tab */}
+          {mainTab === 'community' && activeTab === 'group' && (
             <div className="space-y-3">
               {/* 직업 검색 - 커스텀 autocomplete */}
               <div className="relative">
@@ -775,14 +820,14 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
             </div>
           )}
 
-          {/* Tab Headers */}
-          {activeTab === 'bookmarks' && (
+          {/* Tab Headers - only in community main tab */}
+          {mainTab === 'community' && activeTab === 'bookmarks' && (
             <div className="mb-2">
               <h2 className="text-lg font-bold text-stone-800">북마크</h2>
               <p className="text-xs text-stone-400">저장한 글 목록</p>
             </div>
           )}
-          {activeTab === 'myActivity' && (
+          {mainTab === 'community' && activeTab === 'myActivity' && (
             <div className="mb-2">
               <h2 className="text-lg font-bold text-stone-800">내 활동</h2>
               <p className="text-xs text-stone-400">내가 작성하거나 상호작용한 글들</p>
@@ -791,15 +836,22 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
         </div>
 
         {/* 3. Content List */}
-        <div className="flex-1 overflow-y-auto bg-[#FDFBF7] px-6 py-6">
-           {activeTab === 'write' && currentUser ? (
-             <CommunityWriteContent
+        <div className="flex-1 overflow-y-auto bg-[#FDFBF7]">
+           {mainTab === 'chat' ? (
+             <ChatRoomList
+               onSelectRoom={(room) => setSelectedChatRoom(room)}
                currentUser={currentUser}
-               onSuccess={() => {
-                 setActiveTab('list');
-                 loadEntries();
-               }}
              />
+           ) : activeTab === 'write' && currentUser ? (
+             <div className="px-6 py-6">
+               <CommunityWriteContent
+                 currentUser={currentUser}
+                 onSuccess={() => {
+                   setActiveTab('list');
+                   loadEntries();
+                 }}
+               />
+             </div>
            ) : loading ? (
               <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-stone-800 border-t-transparent rounded-full animate-spin"/></div>
            ) : entries.length === 0 ? (
@@ -807,12 +859,14 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                  {activeTab === 'myActivity' && '아직 활동 내역이 없습니다.'}
                  {activeTab === 'bookmarks' && '북마크한 글이 없습니다.'}
                  {activeTab === 'list' && '작성된 글이 없습니다.'}
+                 {activeTab === 'group' && '해당하는 글이 없습니다.'}
               </div>
            ) : (
-              <div className="space-y-4">
-                 {entries.map((entry, idx) => {
-                    const isLiked = likedEntries.has(entry.id);
-                    const isBookmarked = bookmarkedEntries.has(entry.id);
+              <div className="px-6 py-6">
+                <div className="space-y-4">
+                   {entries.map((entry, idx) => {
+                      const isLiked = likedEntries.has(entry.id);
+                      const isBookmarked = bookmarkedEntries.has(entry.id);
 
                     return (
                     <motion.div
@@ -893,6 +947,7 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                        </div>
                     </motion.div>
                  )})}
+                </div>
               </div>
            )}
         </div>
@@ -1393,7 +1448,7 @@ function CommunityDetail({ entry, onBack, onLike, onEdit, onDelete, onBookmark, 
                </div>
             </div>
 
-            {/* Like FAB */}
+            {/* Like FAB
             {currentUser && (
               <button
                  onClick={() => onLike(entry.id)}
@@ -1403,7 +1458,7 @@ function CommunityDetail({ entry, onBack, onLike, onEdit, onDelete, onBookmark, 
               >
                  <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
               </button>
-            )}
+            )} */}
          </div>
       </div>
    );

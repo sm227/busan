@@ -145,11 +145,11 @@ export default function PropertyDetailPage() {
               </div>
               <div className="space-y-1">
                 <div className="text-3xl font-bold text-orange-600">
-                  월세 {property.price.rent?.toLocaleString()}만원
+                  월세 {Math.floor((property.price.rent || 0) / 10000).toLocaleString()}만원
                 </div>
                 {property.price.deposit && (
                   <div className="text-sm text-stone-400">
-                    보증금 {property.price.deposit.toLocaleString()}만원
+                    보증금 {Math.floor(property.price.deposit / 10000).toLocaleString()}만원
                   </div>
                 )}
               </div>

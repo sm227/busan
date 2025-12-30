@@ -366,3 +366,148 @@ export async function getRecentActivity(limit: number = 20) {
     reviews: recentReviews
   };
 }
+
+/**
+ * 빈집 매물 목록 조회 (관리자용)
+ */
+export async function getPropertiesForAdmin(options: {
+  status?: string;
+  limit?: number;
+  offset?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  search?: string;
+  district?: string;
+  city?: string;
+  type?: string;
+  userId?: string;
+}) {
+  const {
+    status,
+    limit = 20,
+    offset = 0,
+    sortBy = 'createdAt',
+    sortOrder = 'DESC',
+    search,
+    district,
+    city,
+    type,
+    userId: ownerId
+  } = options;
+
+  const where: any = {};
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+      { address: { contains: search, mode: 'insensitive' } }
+    ];
+  }
+
+  if (district && district !== 'all') {
+    where.district = district;
+  }
+
+  if (city && city !== 'all') {
+    where.city = city;
+  }
+
+  if (type && type !== 'all') {
+    where.type = type;
+  }
+
+  if (ownerId) {
+    where.userId = parseInt(ownerId);
+  }
+
+  const orderBy: any = {};
+  orderBy[sortBy] = sortOrder.toLowerCase();
+
+  const [properties, total] = await Promise.all([
+    prisma.userProperty.findMany({
+      where,
+      include: {
+        user: {
+          select: { id: true, nickname: true }
+        },
+        images: {
+          orderBy: { order: 'asc' },
+          take: 1
+        }
+      },
+      orderBy,
+      take: limit,
+      skip: offset
+    }),
+    prisma.userProperty.count({ where })
+  ]);
+
+  return { properties, total };
+}
+
+/**
+ * 빈집 매물 상세 정보 조회 (관리자용)
+ */
+export async function getPropertyDetailForAdmin(propertyId: string) {
+  const property = await prisma.userProperty.findUnique({
+    where: { id: propertyId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          nickname: true,
+          role: true,
+          createdAt: true,
+          _count: {
+            select: {
+              userProperties: true
+            }
+          }
+        }
+      },
+      images: {
+        orderBy: { order: 'asc' }
+      }
+    }
+  });
+
+  return property;
+}
+
+/**
+ * 빈집 매물 상태 변경
+ */
+export async function updatePropertyStatus(
+  propertyId: string,
+  adminId: number,
+  newStatus: 'active' | 'inactive' | 'sold' | 'deleted'
+) {
+  await requireAdmin(adminId);
+
+  const updated = await prisma.userProperty.update({
+    where: { id: propertyId },
+    data: { status: newStatus, updatedAt: new Date() }
+  });
+
+  return updated;
+}
+
+/**
+ * 빈집 매물 삭제
+ */
+export async function deleteProperty(propertyId: string, adminId: number) {
+  await requireAdmin(adminId);
+
+  // 소프트 삭제 (상태를 deleted로 변경)
+  const deleted = await prisma.userProperty.update({
+    where: { id: propertyId },
+    data: { status: 'deleted', updatedAt: new Date() }
+  });
+
+  return deleted;
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ClassesManagementProps {
   userId: number;
@@ -90,35 +90,25 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
-  // 필터 초기화 중인지 추적하는 ref
-  const isInitializingRef = useRef(false);
-
   // 다른 모듈에서 특정 강사를 선택하여 왔을 때
   useEffect(() => {
     if (initialInstructorId) {
-      isInitializingRef.current = true;
       setInstructorFilter(initialInstructorId.toString());
-      setOffset(0);
-      // 다음 렌더링 사이클 후에 플래그 해제
-      setTimeout(() => {
-        isInitializingRef.current = false;
-      }, 0);
     }
   }, [initialInstructorId]);
 
-  // 필터 변경 시 offset 리셋
+  // 필터 변경 시 offset 리셋 및 데이터 fetch
   useEffect(() => {
-    if (!isInitializingRef.current) {
-      setOffset(0);
-    }
+    setOffset(0);
+    fetchClasses();
   }, [statusFilter, searchQuery, categoryFilter, instructorFilter]);
 
-  // 데이터 fetch
+  // offset 변경 시 데이터 fetch (페이지네이션용)
   useEffect(() => {
-    if (!isInitializingRef.current) {
-      fetchClasses();
-    }
-  }, [statusFilter, searchQuery, categoryFilter, instructorFilter, offset]);
+    // 필터가 변경되어 offset이 0으로 리셋된 경우는 위의 useEffect에서 이미 fetch했으므로 스킵
+    if (offset === 0) return;
+    fetchClasses();
+  }, [offset]);
 
   const fetchClasses = async () => {
     setIsLoading(true);

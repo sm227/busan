@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
       status: searchParams.get('status') || undefined,
       search: searchParams.get('search') || undefined,
       category: searchParams.get('category') || undefined,
+      instructorId: searchParams.get('instructorId') || undefined,
       sortBy: searchParams.get('sortBy') || 'createdAt',
       sortOrder: (searchParams.get('sortOrder') || 'DESC') as 'ASC' | 'DESC',
       limit: parseInt(searchParams.get('limit') || '20'),

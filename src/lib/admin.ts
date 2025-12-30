@@ -74,6 +74,7 @@ export async function getClassesByStatus(options: {
   sortOrder?: 'ASC' | 'DESC';
   search?: string;
   category?: string;
+  instructorId?: string;
 }) {
   const {
     status,
@@ -82,7 +83,8 @@ export async function getClassesByStatus(options: {
     sortBy = 'createdAt',
     sortOrder = 'DESC',
     search,
-    category
+    category,
+    instructorId
   } = options;
 
   const where: any = {};
@@ -100,6 +102,10 @@ export async function getClassesByStatus(options: {
 
   if (category && category !== 'all') {
     where.category = category;
+  }
+
+  if (instructorId) {
+    where.instructorId = parseInt(instructorId);
   }
 
   const orderBy: any = {};
@@ -273,14 +279,28 @@ export async function updateClassStatus(
  */
 export async function getAdminStats() {
   const [
+    // 클래스 통계
     pendingCount,
     approvedCount,
     rejectedCount,
     activeCount,
     totalInstructors,
     totalEnrollments,
-    totalRevenue
+    totalRevenue,
+    // 회원 통계
+    totalUsers,
+    userRoleCount,
+    instructorRoleCount,
+    // 매물 통계
+    activePropertiesCount,
+    inactivePropertiesCount,
+    soldPropertiesCount,
+    totalProperties,
+    // 커뮤니티 통계
+    totalGuestbooks,
+    totalComments
   ] = await Promise.all([
+    // 클래스
     prisma.oneDayClass.count({ where: { status: 'pending' } }),
     prisma.oneDayClass.count({ where: { status: 'approved' } }),
     prisma.oneDayClass.count({ where: { status: 'rejected' } }),
@@ -293,7 +313,19 @@ export async function getAdminStats() {
     prisma.classEnrollment.aggregate({
       where: { status: 'confirmed' },
       _sum: { paidAmount: true }
-    }).then(result => result._sum.paidAmount || 0)
+    }).then(result => result._sum.paidAmount || 0),
+    // 회원
+    prisma.user.count(),
+    prisma.user.count({ where: { role: 'user' } }),
+    prisma.user.count({ where: { role: 'instructor' } }),
+    // 매물
+    prisma.userProperty.count({ where: { status: 'active' } }),
+    prisma.userProperty.count({ where: { status: 'inactive' } }),
+    prisma.userProperty.count({ where: { status: 'sold' } }),
+    prisma.userProperty.count(),
+    // 커뮤니티
+    prisma.guestbook.count(),
+    prisma.comment.count()
   ]);
 
   return {
@@ -306,7 +338,22 @@ export async function getAdminStats() {
     },
     instructors: totalInstructors,
     enrollments: totalEnrollments,
-    revenue: totalRevenue
+    revenue: totalRevenue,
+    users: {
+      total: totalUsers,
+      user: userRoleCount,
+      instructor: instructorRoleCount
+    },
+    properties: {
+      active: activePropertiesCount,
+      inactive: inactivePropertiesCount,
+      sold: soldPropertiesCount,
+      total: totalProperties
+    },
+    community: {
+      guestbooks: totalGuestbooks,
+      comments: totalComments
+    }
   };
 }
 

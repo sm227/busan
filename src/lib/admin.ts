@@ -74,6 +74,7 @@ export async function getClassesByStatus(options: {
   sortOrder?: 'ASC' | 'DESC';
   search?: string;
   category?: string;
+  instructorId?: string;
 }) {
   const {
     status,
@@ -82,7 +83,8 @@ export async function getClassesByStatus(options: {
     sortBy = 'createdAt',
     sortOrder = 'DESC',
     search,
-    category
+    category,
+    instructorId
   } = options;
 
   const where: any = {};
@@ -100,6 +102,10 @@ export async function getClassesByStatus(options: {
 
   if (category && category !== 'all') {
     where.category = category;
+  }
+
+  if (instructorId) {
+    where.instructorId = parseInt(instructorId);
   }
 
   const orderBy: any = {};
@@ -273,14 +279,28 @@ export async function updateClassStatus(
  */
 export async function getAdminStats() {
   const [
+    // 클래스 통계
     pendingCount,
     approvedCount,
     rejectedCount,
     activeCount,
     totalInstructors,
     totalEnrollments,
-    totalRevenue
+    totalRevenue,
+    // 회원 통계
+    totalUsers,
+    userRoleCount,
+    instructorRoleCount,
+    // 매물 통계
+    activePropertiesCount,
+    inactivePropertiesCount,
+    soldPropertiesCount,
+    totalProperties,
+    // 커뮤니티 통계
+    totalGuestbooks,
+    totalComments
   ] = await Promise.all([
+    // 클래스
     prisma.oneDayClass.count({ where: { status: 'pending' } }),
     prisma.oneDayClass.count({ where: { status: 'approved' } }),
     prisma.oneDayClass.count({ where: { status: 'rejected' } }),
@@ -293,7 +313,19 @@ export async function getAdminStats() {
     prisma.classEnrollment.aggregate({
       where: { status: 'confirmed' },
       _sum: { paidAmount: true }
-    }).then(result => result._sum.paidAmount || 0)
+    }).then(result => result._sum.paidAmount || 0),
+    // 회원
+    prisma.user.count(),
+    prisma.user.count({ where: { role: 'user' } }),
+    prisma.user.count({ where: { role: 'instructor' } }),
+    // 매물
+    prisma.userProperty.count({ where: { status: 'active' } }),
+    prisma.userProperty.count({ where: { status: 'inactive' } }),
+    prisma.userProperty.count({ where: { status: 'sold' } }),
+    prisma.userProperty.count(),
+    // 커뮤니티
+    prisma.guestbook.count(),
+    prisma.comment.count()
   ]);
 
   return {
@@ -306,7 +338,22 @@ export async function getAdminStats() {
     },
     instructors: totalInstructors,
     enrollments: totalEnrollments,
-    revenue: totalRevenue
+    revenue: totalRevenue,
+    users: {
+      total: totalUsers,
+      user: userRoleCount,
+      instructor: instructorRoleCount
+    },
+    properties: {
+      active: activePropertiesCount,
+      inactive: inactivePropertiesCount,
+      sold: soldPropertiesCount,
+      total: totalProperties
+    },
+    community: {
+      guestbooks: totalGuestbooks,
+      comments: totalComments
+    }
   };
 }
 
@@ -365,4 +412,149 @@ export async function getRecentActivity(limit: number = 20) {
     enrollments: recentEnrollments,
     reviews: recentReviews
   };
+}
+
+/**
+ * 빈집 매물 목록 조회 (관리자용)
+ */
+export async function getPropertiesForAdmin(options: {
+  status?: string;
+  limit?: number;
+  offset?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  search?: string;
+  district?: string;
+  city?: string;
+  type?: string;
+  userId?: string;
+}) {
+  const {
+    status,
+    limit = 20,
+    offset = 0,
+    sortBy = 'createdAt',
+    sortOrder = 'DESC',
+    search,
+    district,
+    city,
+    type,
+    userId: ownerId
+  } = options;
+
+  const where: any = {};
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+      { address: { contains: search, mode: 'insensitive' } }
+    ];
+  }
+
+  if (district && district !== 'all') {
+    where.district = district;
+  }
+
+  if (city && city !== 'all') {
+    where.city = city;
+  }
+
+  if (type && type !== 'all') {
+    where.type = type;
+  }
+
+  if (ownerId) {
+    where.userId = parseInt(ownerId);
+  }
+
+  const orderBy: any = {};
+  orderBy[sortBy] = sortOrder.toLowerCase();
+
+  const [properties, total] = await Promise.all([
+    prisma.userProperty.findMany({
+      where,
+      include: {
+        user: {
+          select: { id: true, nickname: true }
+        },
+        images: {
+          orderBy: { order: 'asc' },
+          take: 1
+        }
+      },
+      orderBy,
+      take: limit,
+      skip: offset
+    }),
+    prisma.userProperty.count({ where })
+  ]);
+
+  return { properties, total };
+}
+
+/**
+ * 빈집 매물 상세 정보 조회 (관리자용)
+ */
+export async function getPropertyDetailForAdmin(propertyId: string) {
+  const property = await prisma.userProperty.findUnique({
+    where: { id: propertyId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          nickname: true,
+          role: true,
+          createdAt: true,
+          _count: {
+            select: {
+              userProperties: true
+            }
+          }
+        }
+      },
+      images: {
+        orderBy: { order: 'asc' }
+      }
+    }
+  });
+
+  return property;
+}
+
+/**
+ * 빈집 매물 상태 변경
+ */
+export async function updatePropertyStatus(
+  propertyId: string,
+  adminId: number,
+  newStatus: 'active' | 'inactive' | 'sold' | 'deleted'
+) {
+  await requireAdmin(adminId);
+
+  const updated = await prisma.userProperty.update({
+    where: { id: propertyId },
+    data: { status: newStatus, updatedAt: new Date() }
+  });
+
+  return updated;
+}
+
+/**
+ * 빈집 매물 삭제
+ */
+export async function deleteProperty(propertyId: string, adminId: number) {
+  await requireAdmin(adminId);
+
+  // 소프트 삭제 (상태를 deleted로 변경)
+  const deleted = await prisma.userProperty.update({
+    where: { id: propertyId },
+    data: { status: 'deleted', updatedAt: new Date() }
+  });
+
+  return deleted;
 }

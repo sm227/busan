@@ -66,7 +66,7 @@ export async function authenticateUser(nickname: string, password: string) {
     return null;
   }
 
-  return { id: user.id, nickname: user.nickname };
+  return { id: user.id, nickname: user.nickname, role: user.role };
 }
 
 // ==================== 설문 결과 ====================

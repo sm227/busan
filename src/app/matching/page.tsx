@@ -84,8 +84,8 @@ export default function MatchingPage() {
   };
 
   return (
-    <div className="h-screen bg-[#F5F5F0] overflow-hidden font-sans text-stone-800">
-      <div className="max-w-md mx-auto bg-white h-screen relative shadow-xl flex flex-col">
+    <div className="min-h-screen bg-[#F5F5F0] overflow-hidden font-sans text-stone-800" style={{ height: '100dvh' }}>
+      <div className="max-w-md mx-auto bg-white relative shadow-xl flex flex-col" style={{ height: '100dvh' }}>
         
         {/* 헤더 */}
         <div className="px-6 py-4 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
@@ -100,8 +100,8 @@ export default function MatchingPage() {
         </div>
 
         {/* 메인 콘텐츠 */}
-        <div className="flex-1 flex flex-col px-6 py-4 overflow-hidden">
-          <div className="text-center mb-8 mt-2 space-y-2">
+        <div className="flex-1 flex flex-col px-6 overflow-hidden">
+          <div className="text-center mb-4 mt-2 space-y-1">
             <h2 className="text-2xl font-serif font-bold text-stone-800">
               당신의 취향인가요?
             </h2>
@@ -111,7 +111,7 @@ export default function MatchingPage() {
           </div>
 
           {/* 스와이프 영역 */}
-          <div className="flex-1 relative flex items-center justify-center min-h-[400px]">
+          <div className="flex-1 relative flex items-start justify-center pt-2" style={{ maxHeight: 'calc(100dvh - 260px)' }}>
             <div className="absolute w-64 h-64 bg-stone-100 rounded-full blur-3xl opacity-60" />
             
             <SwipeStack
@@ -128,7 +128,7 @@ export default function MatchingPage() {
           </div>
 
           {/* 하단 컨트롤 가이드 (버튼 기능 활성화) */}
-          <div className="mt-auto pt-4 pb-8 flex justify-center items-center gap-12">
+          <div className="pt-4 flex justify-center items-center gap-12" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
             {/* NOPE 버튼 */}
             <button 
               onClick={() => stackRef.current?.triggerSwipe('left')} // 3. 클릭 시 왼쪽 스와이프 트리거

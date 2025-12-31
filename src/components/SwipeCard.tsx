@@ -185,7 +185,7 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
             </div>
           )}
         
-        <div className="relative h-[35%] shrink-0 bg-stone-100">
+        <div className="relative h-[32%] shrink-0 bg-stone-100">
           <img 
             src={property.images[0]} 
             alt={property.title}
@@ -224,16 +224,16 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
           </motion.div>
         </div>
 
-        <div className="flex-1 p-6 flex flex-col bg-white">
-          <div className="mb-4">
-            <h3 className="text-2xl font-serif font-bold text-stone-800 leading-snug mb-1">
+        <div className="flex-1 p-5 flex flex-col bg-white">
+          <div className="mb-3">
+            <h3 className="text-xl font-serif font-bold text-stone-800 leading-snug mb-1">
               {property.title}
             </h3>
-            <div className="flex items-center gap-1 text-stone-500 text-sm mb-3">
-              <MapPin size={14} />
+            <div className="flex items-center gap-1 text-stone-500 text-xs mb-2">
+              <MapPin size={12} />
               <span>{property.location.district}, {property.location.city}</span>
             </div>
-            <div className="text-xl font-bold text-orange-600">
+            <div className="text-lg font-bold text-orange-600">
               {purchaseType === 'sale' ? (
                 <>
                   {property.price.sale
@@ -253,37 +253,37 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-5 text-xs text-stone-600 font-medium">
-              <div className="px-3 py-1.5 bg-stone-50 rounded-lg border border-stone-100">
+          <div className="flex items-center gap-2 mb-3 text-xs text-stone-600 font-medium">
+              <div className="px-2.5 py-1 bg-stone-50 rounded-lg border border-stone-100">
                 {property.details.rooms}룸
               </div>
-              <div className="px-3 py-1.5 bg-stone-50 rounded-lg border border-stone-100">
+              <div className="px-2.5 py-1 bg-stone-50 rounded-lg border border-stone-100">
                 {property.details.size}평
               </div>
-              <div className="px-3 py-1.5 bg-stone-50 rounded-lg border border-stone-100 flex items-center gap-1">
-                <Users size={12} /> {property.communityInfo.population}명
+              <div className="px-2.5 py-1 bg-stone-50 rounded-lg border border-stone-100 flex items-center gap-1">
+                <Users size={11} /> {property.communityInfo.population}명
               </div>
           </div>
 
-          <div className="relative bg-stone-50 rounded-xl p-4 border border-stone-100 mb-auto">
-            <Quote className="absolute top-3 left-3 w-3 h-3 text-stone-300 fill-stone-300" />
-            <p className="text-stone-600 text-sm leading-relaxed pl-4 italic line-clamp-3">
+          <div className="relative bg-stone-50 rounded-xl p-3 border border-stone-100 mb-auto">
+            <Quote className="absolute top-2.5 left-2.5 w-3 h-3 text-stone-300 fill-stone-300" />
+            <p className="text-stone-600 text-xs leading-relaxed pl-3.5 italic line-clamp-2">
               {story.story}
             </p>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-1.5">
-            {property.features.slice(0, 5).map((feature, index) => (
-              <span 
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {property.features.slice(0, 4).map((feature, index) => (
+              <span
                 key={index}
-                className="px-2.5 py-1 bg-white border border-stone-200 rounded-full text-[11px] text-stone-600 font-medium"
+                className="px-2 py-0.5 bg-white border border-stone-200 rounded-full text-[10px] text-stone-600 font-medium"
               >
                 #{feature}
               </span>
             ))}
-            {property.features.length > 5 && (
-               <span className="px-2.5 py-1 bg-stone-50 border border-stone-100 rounded-full text-[11px] text-stone-400">
-                 +{property.features.length - 5}
+            {property.features.length > 4 && (
+               <span className="px-2 py-0.5 bg-stone-50 border border-stone-100 rounded-full text-[10px] text-stone-400">
+                 +{property.features.length - 4}
                </span>
             )}
           </div>

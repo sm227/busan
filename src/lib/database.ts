@@ -66,7 +66,7 @@ export async function authenticateUser(nickname: string, password: string) {
     return null;
   }
 
-  return { id: user.id, nickname: user.nickname };
+  return { id: user.id, nickname: user.nickname, role: user.role };
 }
 
 // ==================== 설문 결과 ====================
@@ -879,6 +879,581 @@ export async function hasUserBadge(userId: number, badgeId: string) {
   });
 
   return !!userBadge;
+}
+
+// ==================== 원데이 클래스 ====================
+
+export async function getOneDayClasses(filters: {
+  search?: string;
+  category?: string;
+  province?: string;
+  city?: string;
+  difficulty?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  startDate?: string;
+  endDate?: string;
+  minRating?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+  limit?: number;
+  offset?: number;
+  userId?: number;
+}) {
+  const where: any = { status: { in: ['approved', 'active'] } };
+
+  if (filters.search) {
+    where.OR = [
+      { title: { contains: filters.search, mode: 'insensitive' } },
+      { description: { contains: filters.search, mode: 'insensitive' } }
+    ];
+  }
+
+  if (filters.category && filters.category !== 'all') {
+    where.category = filters.category;
+  }
+
+  if (filters.province) {
+    where.province = filters.province;
+  }
+
+  if (filters.city) {
+    where.city = filters.city;
+  }
+
+  if (filters.difficulty && filters.difficulty !== 'all') {
+    where.difficulty = filters.difficulty;
+  }
+
+  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+    where.price = {};
+    if (filters.minPrice !== undefined) where.price.gte = filters.minPrice;
+    if (filters.maxPrice !== undefined) where.price.lte = filters.maxPrice;
+  }
+
+  if (filters.minRating) {
+    where.averageRating = { gte: filters.minRating };
+  }
+
+  const orderBy: any = {};
+  const sortBy = filters.sortBy || 'createdAt';
+  const sortOrder = (filters.sortOrder || 'DESC').toLowerCase();
+  orderBy[sortBy] = sortOrder;
+
+  const classes = await prisma.oneDayClass.findMany({
+    where,
+    include: {
+      instructor: {
+        select: { id: true, nickname: true }
+      },
+      sessions: {
+        where: {
+          sessionDate: { gte: new Date() },
+          status: 'open'
+        },
+        orderBy: { sessionDate: 'asc' },
+        take: 3
+      }
+    },
+    orderBy,
+    take: filters.limit || 20,
+    skip: filters.offset || 0
+  });
+
+  // 사용자별 좋아요/북마크 상태 추가
+  if (filters.userId) {
+    const userId = filters.userId;
+    const classIds = classes.map(c => c.id);
+
+    const [likes, bookmarks] = await Promise.all([
+      prisma.classLike.findMany({
+        where: { userId, classId: { in: classIds } },
+        select: { classId: true }
+      }),
+      prisma.classBookmark.findMany({
+        where: { userId, classId: { in: classIds } },
+        select: { classId: true }
+      })
+    ]);
+
+    const likedSet = new Set(likes.map(l => l.classId));
+    const bookmarkedSet = new Set(bookmarks.map(b => b.classId));
+
+    return classes.map(classItem => ({
+      ...classItem,
+      isLiked: likedSet.has(classItem.id),
+      isBookmarked: bookmarkedSet.has(classItem.id)
+    }));
+  }
+
+  return classes;
+}
+
+export async function getOneDayClass(classId: string, userId?: number) {
+  const classData = await prisma.oneDayClass.findUnique({
+    where: { id: classId },
+    include: {
+      instructor: {
+        select: { id: true, nickname: true }
+      },
+      sessions: {
+        where: {
+          sessionDate: { gte: new Date() }
+        },
+        orderBy: { sessionDate: 'asc' }
+      }
+    }
+  });
+
+  if (!classData) return null;
+
+  let isLiked = false;
+  let isBookmarked = false;
+  let userEnrollment = null;
+
+  if (userId) {
+    isLiked = !!(await prisma.classLike.findUnique({
+      where: { userId_classId: { userId, classId } }
+    }));
+
+    isBookmarked = !!(await prisma.classBookmark.findUnique({
+      where: { userId_classId: { userId, classId } }
+    }));
+
+    userEnrollment = await prisma.classEnrollment.findFirst({
+      where: { userId, classId, status: { in: ['confirmed', 'completed'] } },
+      include: { session: true, review: true }
+    });
+  }
+
+  return {
+    ...classData,
+    isLiked,
+    isBookmarked,
+    userEnrollment
+  };
+}
+
+export async function createOneDayClass(instructorId: number, data: any) {
+  try {
+    const classData = await prisma.oneDayClass.create({
+      data: {
+        instructorId,
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        subCategory: data.subCategory,
+        province: data.province,
+        city: data.city,
+        district: data.district,
+        address: data.address,
+        locationDetail: data.locationDetail,
+        difficulty: data.difficulty,
+        minAge: data.minAge,
+        maxAge: data.maxAge,
+        targetAudience: data.targetAudience,
+        price: data.price,
+        originalPrice: data.originalPrice,
+        thumbnailUrl: data.thumbnailUrl,
+        imageUrls: data.imageUrls || [],
+        duration: data.duration,
+        materials: data.materials || [],
+        includes: data.includes || [],
+        excludes: data.excludes || [],
+        prerequisites: data.prerequisites
+      }
+    });
+
+    return { success: true, classId: classData.id };
+  } catch (error) {
+    console.error('Class creation error:', error);
+    return { success: false, error: '클래스 생성에 실패했습니다.' };
+  }
+}
+
+export async function createClassSession(classId: string, data: any) {
+  try {
+    const session = await prisma.classSession.create({
+      data: {
+        classId,
+        sessionDate: new Date(data.sessionDate),
+        startTime: data.startTime,
+        endTime: data.endTime,
+        maxCapacity: data.maxCapacity,
+        notes: data.notes
+      }
+    });
+
+    return { success: true, sessionId: session.id };
+  } catch (error) {
+    return { success: false, error: '세션 생성에 실패했습니다.' };
+  }
+}
+
+export async function enrollInClass(userId: number, sessionId: string, data: any) {
+  try {
+    const session = await prisma.classSession.findUnique({
+      where: { id: sessionId },
+      include: { class: true }
+    });
+
+    if (!session) {
+      return { success: false, error: '세션을 찾을 수 없습니다.' };
+    }
+
+    if (session.status !== 'open') {
+      return { success: false, error: '신청할 수 없는 세션입니다.' };
+    }
+
+    if (session.currentEnrolled >= session.maxCapacity) {
+      return { success: false, error: '정원이 마감되었습니다.' };
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.coinBalance < session.class.price) {
+      return { success: false, error: '코인이 부족합니다.' };
+    }
+
+    // Transaction: Deduct coins, create enrollment, update session
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create coin transaction
+      const coinTx = await tx.coinTransaction.create({
+        data: {
+          userId,
+          amount: -session.class.price,
+          type: 'usage',
+          description: `원데이 클래스 수강신청: ${session.class.title}`,
+          relatedId: session.class.id,
+          balanceBefore: user.coinBalance,
+          balanceAfter: user.coinBalance - session.class.price
+        }
+      });
+
+      // 2. Update user balance
+      await tx.user.update({
+        where: { id: userId },
+        data: { coinBalance: { decrement: session.class.price } }
+      });
+
+      // 3. Create enrollment
+      const enrollment = await tx.classEnrollment.create({
+        data: {
+          userId,
+          classId: session.class.id,
+          sessionId: session.id,
+          paidAmount: session.class.price,
+          transactionId: coinTx.id,
+          participants: data.participants || 1,
+          specialRequests: data.specialRequests
+        }
+      });
+
+      // 4. Update session count
+      await tx.classSession.update({
+        where: { id: sessionId },
+        data: {
+          currentEnrolled: { increment: 1 },
+          status: session.currentEnrolled + 1 >= session.maxCapacity ? 'full' : 'open'
+        }
+      });
+
+      // 5. Update class stats
+      await tx.oneDayClass.update({
+        where: { id: session.class.id },
+        data: { enrollmentsCount: { increment: 1 } }
+      });
+
+      return enrollment;
+    });
+
+    return { success: true, enrollmentId: result.id };
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      return { success: false, error: '이미 신청한 세션입니다.' };
+    }
+    console.error('Enrollment error:', error);
+    return { success: false, error: '수강 신청에 실패했습니다.' };
+  }
+}
+
+export async function cancelEnrollment(enrollmentId: string, userId: number) {
+  try {
+    const enrollment = await prisma.classEnrollment.findUnique({
+      where: { id: enrollmentId },
+      include: { session: true, class: true }
+    });
+
+    if (!enrollment || enrollment.userId !== userId) {
+      return { success: false, error: '권한이 없습니다.' };
+    }
+
+    if (enrollment.status === 'cancelled') {
+      return { success: false, error: '이미 취소된 신청입니다.' };
+    }
+
+    if (enrollment.status === 'completed') {
+      return { success: false, error: '완료된 수업은 취소할 수 없습니다.' };
+    }
+
+    // Check if session is within 24 hours
+    const sessionDate = new Date(enrollment.session.sessionDate);
+    const now = new Date();
+    const hoursDiff = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (hoursDiff < 24) {
+      return { success: false, error: '수업 24시간 전까지만 취소 가능합니다.' };
+    }
+
+    const refundAmount = Math.floor(enrollment.paidAmount * 0.9); // 90% refund
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Refund coins
+      const user = await tx.user.findUnique({ where: { id: userId } });
+      if (!user) throw new Error('User not found');
+
+      await tx.coinTransaction.create({
+        data: {
+          userId,
+          amount: refundAmount,
+          type: 'refund',
+          description: `원데이 클래스 취소 환불: ${enrollment.class.title}`,
+          relatedId: enrollment.classId,
+          balanceBefore: user.coinBalance,
+          balanceAfter: user.coinBalance + refundAmount
+        }
+      });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { coinBalance: { increment: refundAmount } }
+      });
+
+      // 2. Update enrollment
+      await tx.classEnrollment.update({
+        where: { id: enrollmentId },
+        data: {
+          status: 'cancelled',
+          cancelledAt: new Date()
+        }
+      });
+
+      // 3. Update session
+      await tx.classSession.update({
+        where: { id: enrollment.sessionId },
+        data: {
+          currentEnrolled: { decrement: 1 },
+          status: 'open'
+        }
+      });
+
+      // 4. Update class stats
+      await tx.oneDayClass.update({
+        where: { id: enrollment.classId },
+        data: { enrollmentsCount: { decrement: 1 } }
+      });
+    });
+
+    return { success: true, refundAmount };
+  } catch (error) {
+    console.error('Cancellation error:', error);
+    return { success: false, error: '취소 처리에 실패했습니다.' };
+  }
+}
+
+export async function toggleClassLike(userId: number, classId: string) {
+  try {
+    const existing = await prisma.classLike.findUnique({
+      where: { userId_classId: { userId, classId } }
+    });
+
+    if (existing) {
+      await prisma.$transaction([
+        prisma.classLike.delete({ where: { id: existing.id } }),
+        prisma.oneDayClass.update({
+          where: { id: classId },
+          data: { likesCount: { decrement: 1 } }
+        })
+      ]);
+      return { success: true, liked: false };
+    } else {
+      await prisma.$transaction([
+        prisma.classLike.create({ data: { userId, classId } }),
+        prisma.oneDayClass.update({
+          where: { id: classId },
+          data: { likesCount: { increment: 1 } }
+        })
+      ]);
+      return { success: true, liked: true };
+    }
+  } catch (error) {
+    return { success: false, error: '좋아요 처리에 실패했습니다.' };
+  }
+}
+
+export async function toggleClassBookmark(userId: number, classId: string) {
+  try {
+    const existing = await prisma.classBookmark.findUnique({
+      where: { userId_classId: { userId, classId } }
+    });
+
+    if (existing) {
+      await prisma.$transaction([
+        prisma.classBookmark.delete({ where: { id: existing.id } }),
+        prisma.oneDayClass.update({
+          where: { id: classId },
+          data: { bookmarksCount: { decrement: 1 } }
+        })
+      ]);
+      return { success: true, bookmarked: false };
+    } else {
+      await prisma.$transaction([
+        prisma.classBookmark.create({ data: { userId, classId } }),
+        prisma.oneDayClass.update({
+          where: { id: classId },
+          data: { bookmarksCount: { increment: 1 } }
+        })
+      ]);
+      return { success: true, bookmarked: true };
+    }
+  } catch (error) {
+    return { success: false, error: '북마크 처리에 실패했습니다.' };
+  }
+}
+
+export async function createClassReview(enrollmentId: string, userId: number, data: any) {
+  try {
+    const enrollment = await prisma.classEnrollment.findUnique({
+      where: { id: enrollmentId },
+      include: { review: true }
+    });
+
+    if (!enrollment || enrollment.userId !== userId) {
+      return { success: false, error: '권한이 없습니다.' };
+    }
+
+    if (enrollment.status !== 'completed') {
+      return { success: false, error: '완료된 수업만 리뷰를 작성할 수 있습니다.' };
+    }
+
+    if (enrollment.review) {
+      return { success: false, error: '이미 리뷰를 작성했습니다.' };
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const review = await tx.classReview.create({
+        data: {
+          enrollmentId,
+          userId,
+          classId: enrollment.classId,
+          rating: data.rating,
+          title: data.title,
+          content: data.content,
+          images: data.images || [],
+          instructorRating: data.instructorRating,
+          contentRating: data.contentRating,
+          facilityRating: data.facilityRating,
+          valueRating: data.valueRating,
+          tags: data.tags || []
+        }
+      });
+
+      // Update class rating
+      const avgRating = await tx.classReview.aggregate({
+        where: { classId: enrollment.classId },
+        _avg: { rating: true },
+        _count: true
+      });
+
+      await tx.oneDayClass.update({
+        where: { id: enrollment.classId },
+        data: {
+          averageRating: avgRating._avg.rating || 0,
+          reviewsCount: avgRating._count
+        }
+      });
+
+      return review;
+    });
+
+    return { success: true, reviewId: result.id };
+  } catch (error) {
+    console.error('Review creation error:', error);
+    return { success: false, error: '리뷰 작성에 실패했습니다.' };
+  }
+}
+
+export async function getClassReviews(classId: string, options?: {
+  sortBy?: 'createdAt' | 'rating' | 'helpfulCount';
+  sortOrder?: 'ASC' | 'DESC';
+  limit?: number;
+  offset?: number;
+}) {
+  const reviews = await prisma.classReview.findMany({
+    where: { classId },
+    include: {
+      user: {
+        select: { id: true, nickname: true }
+      }
+    },
+    orderBy: {
+      [options?.sortBy || 'createdAt']: options?.sortOrder?.toLowerCase() || 'desc'
+    },
+    take: options?.limit || 20,
+    skip: options?.offset || 0
+  });
+
+  return reviews;
+}
+
+export async function getUserEnrollments(userId: number, status?: string[]) {
+  const where: any = { userId };
+  if (status) {
+    where.status = { in: status };
+  }
+
+  const enrollments = await prisma.classEnrollment.findMany({
+    where,
+    include: {
+      class: {
+        include: {
+          instructor: {
+            select: { id: true, nickname: true }
+          }
+        }
+      },
+      session: true,
+      review: true
+    },
+    orderBy: { enrolledAt: 'desc' }
+  });
+
+  return enrollments;
+}
+
+export async function getUserClassBookmarks(userId: number) {
+  const bookmarks = await prisma.classBookmark.findMany({
+    where: { userId },
+    include: {
+      class: {
+        include: {
+          instructor: {
+            select: { id: true, nickname: true }
+          },
+          sessions: {
+            where: {
+              sessionDate: { gte: new Date() },
+              status: 'open'
+            },
+            orderBy: { sessionDate: 'asc' },
+            take: 1
+          }
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  return bookmarks.map(b => b.class);
 }
 
 // ==================== 유틸리티 ====================

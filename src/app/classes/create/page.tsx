@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Upload, X, Plus } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 
 export default function CreateClassPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { currentUser } = useApp();
   const [loading, setLoading] = useState(false);
+
+  // Edit mode
+  const editClassId = searchParams?.get('edit');
+  const isEditMode = !!editClassId;
 
   // 기본 정보
   const [title, setTitle] = useState("");
@@ -27,6 +32,8 @@ export default function CreateClassPage() {
 
   // 추가 정보
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
   const [materials, setMaterials] = useState<string[]>([]);
   const [materialInput, setMaterialInput] = useState("");
   const [includes, setIncludes] = useState<string[]>([]);
@@ -90,6 +97,83 @@ export default function CreateClassPage() {
     setIncludes(includes.filter((_, i) => i !== index));
   };
 
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 파일 크기 제한 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("이미지 파일은 5MB 이하로 업로드해주세요.");
+      return;
+    }
+
+    // 이미지 파일 타입 체크
+    if (!file.type.startsWith("image/")) {
+      alert("이미지 파일만 업로드 가능합니다.");
+      return;
+    }
+
+    setThumbnailFile(file);
+
+    // 미리보기 생성
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setThumbnailPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeThumbnail = () => {
+    setThumbnailFile(null);
+    setThumbnailPreview("");
+    setThumbnailUrl("");
+  };
+
+  // Load class data for edit mode
+  useEffect(() => {
+    if (isEditMode && editClassId && currentUser) {
+      loadClassData();
+    }
+  }, [editClassId, currentUser]);
+
+  const loadClassData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/classes?classId=${editClassId}&userId=${currentUser?.id}`);
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        const cls = data.data;
+        setTitle(cls.title || "");
+        setDescription(cls.description || "");
+        setCategory(cls.category || "farming");
+        setDifficulty(cls.difficulty || "beginner");
+        setPrice(cls.price ? cls.price.toString() : "");
+        setDuration(cls.duration ? cls.duration.toString() : "");
+        setProvince(cls.province || "부산광역시");
+        setCity(cls.city || "");
+        setDistrict(cls.district || "");
+        setAddress(cls.address || "");
+        setLocationDetail(cls.locationDetail || "");
+        setThumbnailUrl(cls.thumbnailUrl || "");
+        setThumbnailPreview(cls.thumbnailUrl || "");
+        setMaterials(cls.materials || []);
+        setIncludes(cls.includes || []);
+        setMinAge(cls.minAge ? cls.minAge.toString() : "");
+        setMaxAge(cls.maxAge ? cls.maxAge.toString() : "");
+      } else {
+        alert("클래스 정보를 불러올 수 없습니다.");
+        router.back();
+      }
+    } catch (error) {
+      console.error("Load class data failed:", error);
+      alert("데이터 로딩에 실패했습니다.");
+      router.back();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!currentUser) {
       alert("로그인이 필요합니다.");
@@ -103,8 +187,37 @@ export default function CreateClassPage() {
 
     try {
       setLoading(true);
-      const response = await fetch("/api/classes", {
-        method: "POST",
+
+      let finalThumbnailUrl = thumbnailUrl;
+
+      // 새로운 파일이 업로드된 경우
+      if (thumbnailFile) {
+        const formData = new FormData();
+        formData.append("file", thumbnailFile);
+
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+
+        if (uploadData.success) {
+          finalThumbnailUrl = uploadData.url;
+          console.log("업로드된 썸네일 URL:", finalThumbnailUrl);
+        } else {
+          alert("이미지 업로드에 실패했습니다.");
+          return;
+        }
+      }
+
+      console.log("전송할 썸네일 URL:", finalThumbnailUrl);
+
+      const url = isEditMode ? `/api/classes/${editClassId}` : '/api/classes';
+      const method = isEditMode ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: currentUser.id,
@@ -119,7 +232,7 @@ export default function CreateClassPage() {
           district: district.trim(),
           address: address.trim(),
           locationDetail: locationDetail.trim(),
-          thumbnailUrl: thumbnailUrl.trim() || null,
+          thumbnailUrl: finalThumbnailUrl.trim() || null,
           materials,
           includes,
           minAge: minAge ? parseInt(minAge) : null,
@@ -130,14 +243,14 @@ export default function CreateClassPage() {
       const data = await response.json();
 
       if (data.success) {
-        alert("클래스가 등록되었습니다!");
+        alert(isEditMode ? '클래스가 수정되었습니다!' : '클래스가 등록되었습니다!');
         router.push(`/classes/${data.classId}`);
       } else {
-        alert(data.error || "클래스 등록에 실패했습니다.");
+        alert(data.error || (isEditMode ? '클래스 수정에 실패했습니다.' : '클래스 등록에 실패했습니다.'));
       }
     } catch (error) {
-      console.error("클래스 등록 실패:", error);
-      alert("클래스 등록 중 오류가 발생했습니다.");
+      console.error(isEditMode ? '클래스 수정 실패:' : '클래스 등록 실패:', error);
+      alert(isEditMode ? '클래스 수정 중 오류가 발생했습니다.' : '클래스 등록 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -171,7 +284,7 @@ export default function CreateClassPage() {
             >
               <ArrowLeft className="w-6 h-6 text-stone-500" />
             </button>
-            <span className="font-bold text-lg">클래스 등록</span>
+            <span className="font-bold text-lg">{isEditMode ? '클래스 수정' : '클래스 등록'}</span>
             <div className="w-10" />
           </div>
         </div>
@@ -355,15 +468,42 @@ export default function CreateClassPage() {
 
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-2">
-                썸네일 이미지 URL
+                썸네일 이미지
               </label>
-              <input
-                type="url"
-                value={thumbnailUrl}
-                onChange={(e) => setThumbnailUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-                className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone-300"
-              />
+
+              {thumbnailPreview ? (
+                <div className="relative">
+                  <img
+                    src={thumbnailPreview}
+                    alt="썸네일 미리보기"
+                    className="w-full h-48 object-cover rounded-xl"
+                  />
+                  <button
+                    onClick={removeThumbnail}
+                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-stone-300 rounded-xl cursor-pointer hover:border-stone-400 transition-colors bg-stone-50">
+                  <div className="flex flex-col items-center justify-center py-6">
+                    <Upload className="w-12 h-12 text-stone-400 mb-3" />
+                    <p className="text-sm text-stone-600 font-medium mb-1">
+                      클릭하여 이미지 업로드
+                    </p>
+                    <p className="text-xs text-stone-500">
+                      PNG, JPG, GIF (최대 5MB)
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -483,7 +623,10 @@ export default function CreateClassPage() {
             disabled={loading}
             className="w-full py-4 bg-stone-800 text-white rounded-xl font-bold hover:bg-stone-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "등록 중..." : "클래스 등록하기"}
+            {loading
+              ? (isEditMode ? "수정 중..." : "등록 중...")
+              : (isEditMode ? "클래스 수정하기" : "클래스 등록하기")
+            }
           </button>
         </div>
       </div>

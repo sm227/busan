@@ -4,6 +4,36 @@ import { sampleUsersData } from '@/data/sampleUsersData';
 
 // 샘플 사용자 자동 생성 (앱 시작 시)
 let sampleUsersInitialized = false;
+let badgesInitialized = false;
+
+async function initializeBadges() {
+  if (badgesInitialized) return;
+
+  try {
+    for (const badgeData of badgesData) {
+      const existing = await prisma.badge.findUnique({
+        where: { id: badgeData.id }
+      });
+
+      if (!existing) {
+        await prisma.badge.create({
+          data: {
+            id: badgeData.id,
+            name: badgeData.name,
+            description: badgeData.description,
+            icon: badgeData.icon,
+            category: badgeData.category,
+            conditionType: badgeData.conditionType,
+            conditionValue: badgeData.conditionValue
+          }
+        });
+      }
+    }
+    badgesInitialized = true;
+  } catch (error) {
+    console.error('배지 초기화 실패:', error);
+  }
+}
 
 async function initializeSampleUsers() {
   if (sampleUsersInitialized) return;
@@ -30,6 +60,7 @@ async function initializeSampleUsers() {
 }
 
 // 모듈 로드 시 자동 실행
+initializeBadges();
 initializeSampleUsers();
 
 // ==================== 사용자 인증 ====================
@@ -864,8 +895,11 @@ export async function getUserBadges(userId: number) {
 }
 
 export async function getAllBadges() {
-  // JSON 데이터에서 뱃지 목록 반환
-  return badgesData.sort((a, b) => a.category.localeCompare(b.category));
+  // 데이터베이스에서 배지 목록 조회
+  const badges = await prisma.badge.findMany({
+    orderBy: { category: 'asc' }
+  });
+  return badges;
 }
 
 export async function hasUserBadge(userId: number, badgeId: string) {
@@ -1071,6 +1105,67 @@ export async function createOneDayClass(instructorId: number, data: any) {
   }
 }
 
+export async function updateOneDayClass(classId: string, instructorId: number, data: any) {
+  try {
+    // 1. 클래스 조회 및 권한 확인
+    const classData = await prisma.oneDayClass.findUnique({
+      where: { id: classId },
+      select: { instructorId: true, status: true }
+    });
+
+    if (!classData) {
+      return { success: false, error: '클래스를 찾을 수 없습니다.' };
+    }
+
+    // 2. instructorId 일치 확인
+    if (classData.instructorId !== instructorId) {
+      return { success: false, error: '권한이 없습니다.' };
+    }
+
+    // 3. status가 pending 또는 rejected인지 확인
+    if (classData.status !== 'pending' && classData.status !== 'rejected') {
+      return { success: false, error: '승인 대기 중이거나 거부된 클래스만 수정할 수 있습니다.' };
+    }
+
+    // 4. 업데이트 실행 (status를 'pending'으로 초기화)
+    const updated = await prisma.oneDayClass.update({
+      where: { id: classId },
+      data: {
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        subCategory: data.subCategory || null,
+        province: data.province,
+        city: data.city,
+        district: data.district || null,
+        address: data.address || null,
+        locationDetail: data.locationDetail || null,
+        difficulty: data.difficulty,
+        minAge: data.minAge || null,
+        maxAge: data.maxAge || null,
+        targetAudience: data.targetAudience || null,
+        price: data.price,
+        originalPrice: data.originalPrice || null,
+        thumbnailUrl: data.thumbnailUrl || null,
+        imageUrls: data.imageUrls || [],
+        duration: data.duration,
+        materials: data.materials || [],
+        includes: data.includes || [],
+        excludes: data.excludes || [],
+        prerequisites: data.prerequisites || null,
+        // 재신청 시 상태 초기화
+        status: 'pending',
+        rejectionReason: null
+      }
+    });
+
+    return { success: true, classId: updated.id };
+  } catch (error) {
+    console.error('Update class error:', error);
+    return { success: false, error: '클래스 수정에 실패했습니다.' };
+  }
+}
+
 export async function createClassSession(classId: string, data: any) {
   try {
     const session = await prisma.classSession.create({
@@ -1087,6 +1182,79 @@ export async function createClassSession(classId: string, data: any) {
     return { success: true, sessionId: session.id };
   } catch (error) {
     return { success: false, error: '세션 생성에 실패했습니다.' };
+  }
+}
+
+export async function updateClassSession(
+  sessionId: string,
+  instructorId: number,
+  data: any
+) {
+  try {
+    const session = await prisma.classSession.findUnique({
+      where: { id: sessionId },
+      include: { class: true }
+    });
+
+    if (!session) {
+      return { success: false, error: '세션을 찾을 수 없습니다.' };
+    }
+
+    // 강사 권한 확인
+    if (session.class.instructorId !== instructorId) {
+      return { success: false, error: '권한이 없습니다.' };
+    }
+
+    // 수강생이 있으면 수정 불가
+    if (session.currentEnrolled > 0) {
+      return { success: false, error: '수강생이 있는 세션은 수정할 수 없습니다.' };
+    }
+
+    const updated = await prisma.classSession.update({
+      where: { id: sessionId },
+      data: {
+        sessionDate: data.sessionDate ? new Date(data.sessionDate) : undefined,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        maxCapacity: data.maxCapacity,
+        notes: data.notes
+      }
+    });
+
+    return { success: true, sessionId: updated.id };
+  } catch (error) {
+    console.error('Update session error:', error);
+    return { success: false, error: '세션 수정에 실패했습니다.' };
+  }
+}
+
+export async function deleteClassSession(sessionId: string, instructorId: number) {
+  try {
+    const session = await prisma.classSession.findUnique({
+      where: { id: sessionId },
+      include: { class: true }
+    });
+
+    if (!session) {
+      return { success: false, error: '세션을 찾을 수 없습니다.' };
+    }
+
+    if (session.class.instructorId !== instructorId) {
+      return { success: false, error: '권한이 없습니다.' };
+    }
+
+    if (session.currentEnrolled > 0) {
+      return { success: false, error: '수강생이 있는 세션은 삭제할 수 없습니다.' };
+    }
+
+    await prisma.classSession.delete({
+      where: { id: sessionId }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Delete session error:', error);
+    return { success: false, error: '세션 삭제에 실패했습니다.' };
   }
 }
 
@@ -1428,6 +1596,51 @@ export async function getUserEnrollments(userId: number, status?: string[]) {
   });
 
   return enrollments;
+}
+
+export async function getClassEnrollments(classId: string, instructorId?: number) {
+  try {
+    // 강사 권한 확인 (instructorId가 제공된 경우)
+    if (instructorId) {
+      const classData = await prisma.oneDayClass.findUnique({
+        where: { id: classId },
+        select: { instructorId: true }
+      });
+
+      if (!classData || classData.instructorId !== instructorId) {
+        return { success: false, error: '권한이 없습니다.' };
+      }
+    }
+
+    const enrollments = await prisma.classEnrollment.findMany({
+      where: {
+        classId,
+        status: { in: ['confirmed', 'completed'] } // 취소된 건 제외
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            nickname: true
+          }
+        },
+        session: {
+          select: {
+            id: true,
+            sessionDate: true,
+            startTime: true,
+            endTime: true
+          }
+        }
+      },
+      orderBy: { enrolledAt: 'desc' }
+    });
+
+    return { success: true, data: enrollments };
+  } catch (error) {
+    console.error('Get class enrollments error:', error);
+    return { success: false, error: '수강생 목록 조회에 실패했습니다.' };
+  }
 }
 
 export async function getUserClassBookmarks(userId: number) {

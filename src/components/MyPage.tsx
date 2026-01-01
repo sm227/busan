@@ -91,13 +91,16 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
       
       const badgesData = await badgesResponse.json();
       const statsData = await statsResponse.json();
-      
+
       if (badgesData.success && statsData.success) {
         setUserBadges(badgesData.data.userBadges || []);
         setAllBadges(badgesData.data.badges || []);
         setUserStats(statsData.data);
 
         console.log('📊 Stats Data:', statsData.data);
+        console.log('🏆 Badges Data:', badgesData.data);
+        console.log('🎖️ User Badges:', badgesData.data.userBadges);
+        console.log('📋 All Badges:', badgesData.data.badges);
         console.log('찜한 시골집 (API):', statsData.data.propertyLikedCount);
         console.log('찜한 시골집 (Context):', likedProperties.length);
         console.log('작성한 방명록:', statsData.data.guestbookCount);
@@ -411,12 +414,12 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
                         {/* 1. 획득한 배지 */}
                         <div>
                            <span className="text-xs font-bold text-stone-400 mb-3 block px-1">MY BADGES</span>
-                           {userBadges.length > 0 ? (
+                           {allBadges.filter(b => b.earned).length > 0 ? (
                              <div className="grid grid-cols-4 gap-3">
-                                {userBadges.map((badge) => (
+                                {allBadges.filter(b => b.earned).map((badge) => (
                                   <button
                                     key={badge.id}
-                                    onClick={() => setSelectedBadge(badge)}
+                                    onClick={() => setSelectedBadge({...badge, earned: true})}
                                     className="aspect-square bg-white rounded-2xl border border-orange-100 flex flex-col items-center justify-center p-1 text-center relative overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                                   >
                                      <div className="absolute top-0 right-0 w-3 h-3 bg-orange-500 rounded-bl-lg flex items-center justify-center">
@@ -435,18 +438,22 @@ export default function MyPage({ onBack, currentUser, onLogout, onNavigateToResu
                         {/* 2. 도전 과제 (미획득 배지) */}
                         <div>
                            <span className="text-xs font-bold text-stone-400 mb-3 block px-1">CHALLENGES</span>
-                           <div className="grid grid-cols-4 gap-3">
-                              {allBadges.filter(b => !b.earned).map((badge) => (
-                                <button
-                                  key={badge.id}
-                                  onClick={() => setSelectedBadge(badge)}
-                                  className="aspect-square bg-stone-50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center p-1 text-center opacity-70 hover:opacity-90 transition-opacity"
-                                >
-                                   <div className="text-2xl mb-1 grayscale opacity-50">{badge.icon}</div>
-                                   <span className="text-[10px] font-medium text-stone-400 truncate w-full px-1">{badge.name}</span>
-                                </button>
-                              ))}
-                           </div>
+                           {allBadges.filter(b => !b.earned).length > 0 ? (
+                             <div className="grid grid-cols-4 gap-3">
+                                {allBadges.filter(b => !b.earned).map((badge) => (
+                                  <button
+                                    key={badge.id}
+                                    onClick={() => setSelectedBadge({...badge, earned: false})}
+                                    className="aspect-square bg-stone-50 rounded-2xl border border-stone-100 flex flex-col items-center justify-center p-1 text-center opacity-70 hover:opacity-90 transition-opacity"
+                                  >
+                                     <div className="text-2xl mb-1 grayscale opacity-50">{badge.icon}</div>
+                                     <span className="text-[10px] font-medium text-stone-400 truncate w-full px-1">{badge.name}</span>
+                                  </button>
+                                ))}
+                             </div>
+                           ) : (
+                             <div className="text-center py-4 text-stone-400 text-xs bg-stone-50 rounded-xl">모든 배지를 획득했습니다!</div>
+                           )}
                         </div>
                     </div>
                   </motion.div>

@@ -55,8 +55,12 @@ interface ClassDetail extends ClassItem {
       nickname: string;
     };
     status: string;
+    attendanceStatus: string | null;
     paidAmount: number;
     enrolledAt: string;
+    session: {
+      sessionDate: string;
+    };
   }>;
   reviews: Array<{
     id: string;
@@ -214,6 +218,38 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
     }
   };
 
+  const handleAttendance = async (enrollmentId: string, attendanceStatus: 'attended' | 'late' | 'absent') => {
+    if (!confirm(`출석 상태를 '${attendanceStatus === 'attended' ? '출석' : attendanceStatus === 'late' ? '지각' : '결석'}'으로 변경하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/classes/enrollments/${enrollmentId}/attendance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instructorId: userId,
+          attendanceStatus,
+          isAdmin: true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || '출석 체크에 실패했습니다.');
+      }
+
+      alert('출석 체크가 완료되었습니다.');
+      // 상세 정보 다시 로드
+      if (selectedClass) {
+        loadClassDetail(selectedClass.id);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '출석 체크 중 오류가 발생했습니다.');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       pending: 'bg-yellow-900 text-yellow-400 border-yellow-700',
@@ -221,6 +257,9 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
       rejected: 'bg-red-900 text-red-400 border-red-700',
       active: 'bg-blue-900 text-blue-400 border-blue-700',
       inactive: 'bg-gray-700 text-gray-400 border-gray-600',
+      confirmed: 'bg-blue-900 text-blue-400 border-blue-700',
+      completed: 'bg-green-900 text-green-400 border-green-700',
+      cancelled: 'bg-red-900 text-red-400 border-red-700',
     };
 
     const labels: Record<string, string> = {
@@ -229,11 +268,36 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
       rejected: '거부됨',
       active: '활성화',
       inactive: '비활성화',
+      confirmed: '수강중',
+      completed: '완료',
+      cancelled: '취소',
     };
 
     return (
       <span className={`px-2 py-1 text-xs border ${styles[status] || ''}`}>
         {labels[status] || status}
+      </span>
+    );
+  };
+
+  const getAttendanceBadge = (attendanceStatus: string | null) => {
+    if (!attendanceStatus) return null;
+
+    const styles: Record<string, string> = {
+      attended: 'bg-green-900 text-green-400 border-green-700',
+      late: 'bg-orange-900 text-orange-400 border-orange-700',
+      absent: 'bg-red-900 text-red-400 border-red-700',
+    };
+
+    const labels: Record<string, string> = {
+      attended: '출석',
+      late: '지각',
+      absent: '결석',
+    };
+
+    return (
+      <span className={`px-2 py-1 text-xs border ${styles[attendanceStatus] || ''}`}>
+        {labels[attendanceStatus] || attendanceStatus}
       </span>
     );
   };
@@ -466,6 +530,16 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
 
             {/* Modal Body */}
             <div className="p-6 space-y-6">
+              {isLoadingDetail ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">로딩 중...</p>
+                </div>
+              ) : !selectedClass ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">데이터를 불러올 수 없습니다.</p>
+                </div>
+              ) : (
+                <>
               {/* Basic Info */}
               <div>
                 <h3 className="text-lg font-bold text-gray-100 mb-3">기본 정보</h3>
@@ -532,7 +606,7 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
               </div>
 
               {/* Sessions */}
-              {selectedClass.sessions && selectedClass.sessions.length > 0 && (
+              {selectedClass?.sessions && selectedClass.sessions.length > 0 && (
                 <div>
                   <h3 className="text-lg font-bold text-gray-100 mb-3">세션 일정</h3>
                   <div className="bg-gray-750 border border-gray-700">
@@ -554,7 +628,7 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
                               {session.startTime} - {session.endTime}
                             </td>
                             <td className="px-4 py-2 text-gray-300">
-                              {session._count.enrollments} / {session.availableSlots}
+                              {session._count?.enrollments || 0} / {session.availableSlots}
                             </td>
                           </tr>
                         ))}
@@ -565,7 +639,7 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
               )}
 
               {/* Enrollments */}
-              {selectedClass.enrollments && selectedClass.enrollments.length > 0 && (
+              {selectedClass?.enrollments && selectedClass.enrollments.length > 0 && (
                 <div>
                   <h3 className="text-lg font-bold text-gray-100 mb-3">수강생 목록</h3>
                   <div className="bg-gray-750 border border-gray-700">
@@ -573,26 +647,69 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
                       <thead className="bg-gray-700 border-b border-gray-600">
                         <tr>
                           <th className="px-4 py-2 text-left text-xs text-gray-400">수강생</th>
+                          <th className="px-4 py-2 text-left text-xs text-gray-400">수강날짜</th>
                           <th className="px-4 py-2 text-left text-xs text-gray-400">상태</th>
+                          <th className="px-4 py-2 text-left text-xs text-gray-400">출석</th>
                           <th className="px-4 py-2 text-left text-xs text-gray-400">결제금액</th>
-                          <th className="px-4 py-2 text-left text-xs text-gray-400">신청일</th>
+                          <th className="px-4 py-2 text-left text-xs text-gray-400">출석관리</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-700">
-                        {selectedClass.enrollments.map((enrollment) => (
-                          <tr key={enrollment.id}>
-                            <td className="px-4 py-2 text-gray-300">
-                              {enrollment.user.nickname}
-                            </td>
-                            <td className="px-4 py-2 text-gray-300">{enrollment.status}</td>
-                            <td className="px-4 py-2 text-gray-300">
-                              {enrollment.paidAmount.toLocaleString()}원
-                            </td>
-                            <td className="px-4 py-2 text-gray-300">
-                              {new Date(enrollment.enrolledAt).toLocaleDateString('ko-KR')}
-                            </td>
-                          </tr>
-                        ))}
+                        {selectedClass.enrollments.map((enrollment) => {
+                          const sessionDate = new Date(enrollment.session.sessionDate);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          sessionDate.setHours(0, 0, 0, 0);
+                          const isPastSession = sessionDate <= today;
+
+                          return (
+                            <tr key={enrollment.id}>
+                              <td className="px-4 py-2 text-gray-300">
+                                {enrollment.user.nickname}
+                              </td>
+                              <td className="px-4 py-2 text-gray-300">
+                                {new Date(enrollment.session.sessionDate).toLocaleDateString('ko-KR')}
+                              </td>
+                              <td className="px-4 py-2">{getStatusBadge(enrollment.status)}</td>
+                              <td className="px-4 py-2">
+                                {enrollment.attendanceStatus ? (
+                                  getAttendanceBadge(enrollment.attendanceStatus)
+                                ) : (
+                                  <span className="text-gray-500 text-xs">-</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-2 text-gray-300">
+                                {enrollment.paidAmount.toLocaleString()}원
+                              </td>
+                              <td className="px-4 py-2">
+                                {enrollment.status === 'confirmed' && !enrollment.attendanceStatus && isPastSession ? (
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() => handleAttendance(enrollment.id, 'attended')}
+                                      className="px-2 py-1 text-xs bg-green-900 text-green-400 border border-green-700 hover:bg-green-800"
+                                    >
+                                      출석
+                                    </button>
+                                    <button
+                                      onClick={() => handleAttendance(enrollment.id, 'late')}
+                                      className="px-2 py-1 text-xs bg-orange-900 text-orange-400 border border-orange-700 hover:bg-orange-800"
+                                    >
+                                      지각
+                                    </button>
+                                    <button
+                                      onClick={() => handleAttendance(enrollment.id, 'absent')}
+                                      className="px-2 py-1 text-xs bg-red-900 text-red-400 border border-red-700 hover:bg-red-800"
+                                    >
+                                      결석
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-500 text-xs">-</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -600,7 +717,7 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
               )}
 
               {/* Reviews */}
-              {selectedClass.reviews && selectedClass.reviews.length > 0 && (
+              {selectedClass?.reviews && selectedClass.reviews.length > 0 && (
                 <div>
                   <h3 className="text-lg font-bold text-gray-100 mb-3">리뷰</h3>
                   <div className="space-y-3">
@@ -621,9 +738,12 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
                   </div>
                 </div>
               )}
+                </>
+              )}
             </div>
 
             {/* Modal Footer */}
+            {selectedClass && (
             <div className="sticky bottom-0 bg-gray-800 border-t border-gray-700 px-6 py-4 flex items-center justify-end gap-3">
               {selectedClass.status === 'pending' && (
                 <>
@@ -657,6 +777,7 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
                 닫기
               </button>
             </div>
+            )}
           </div>
         </div>
       )}

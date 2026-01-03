@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { existsSync } from "fs";
+import { uploadFileToS3 } from "@/lib/s3-upload";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
     // 다중 파일 업로드 (properties용)
     const files = formData.getAll("images") as File[];
 
-    // 단일 파일 업로드 처리
+    // 단일 파일 업로드 처리 (썸네일용 - S3 사용)
     if (file) {
       // 파일 검증
       if (!file.type.startsWith("image/")) {
@@ -31,33 +32,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // 업로드 디렉토리 설정
-      const uploadDir = path.join(process.cwd(), "public", "uploads", "classes");
+      // S3에 업로드
+      const uploadResult = await uploadFileToS3(file, "classes");
 
-      // 디렉토리가 없으면 생성
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
+      if (!uploadResult.success) {
+        return NextResponse.json(
+          { success: false, error: uploadResult.error || "S3 업로드 실패" },
+          { status: 500 }
+        );
       }
-
-      // 고유한 파일명 생성
-      const timestamp = Date.now();
-      const randomStr = Math.random().toString(36).substring(7);
-      const ext = path.extname(file.name);
-      const filename = `${timestamp}_${randomStr}${ext}`;
-
-      // 파일 저장
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filepath = path.join(uploadDir, filename);
-      await writeFile(filepath, buffer);
-
-      // URL 생성
-      const url = `/uploads/classes/${filename}`;
 
       return NextResponse.json({
         success: true,
-        url,
-        filename,
+        url: uploadResult.url,
+        filename: uploadResult.filename,
       });
     }
 

@@ -8,7 +8,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { instructorId, attendanceStatus } = body;
+    const { instructorId, attendanceStatus, isAdmin } = body;
 
     if (!instructorId) {
       return NextResponse.json(
@@ -44,8 +44,8 @@ export async function PATCH(
       );
     }
 
-    // 강사 권한 확인
-    if (enrollment.class.instructorId !== instructorId) {
+    // 강사 권한 확인 (Admin은 모든 권한 가짐)
+    if (!isAdmin && enrollment.class.instructorId !== instructorId) {
       return NextResponse.json(
         { success: false, error: '권한이 없습니다.' },
         { status: 403 }

@@ -79,8 +79,8 @@ export default function WriteReviewPage() {
     if (!currentUser || !enrollmentId) return;
 
     // Validation
-    if (content.length < 10) {
-      alert("리뷰는 최소 10자 이상 작성해주세요.");
+    if (content.trim().length < 10) {
+      alert("리뷰 내용을 최소 10자 이상 작성해주세요.");
       return;
     }
 
@@ -334,7 +334,7 @@ export default function WriteReviewPage() {
           {/* Submit Button */}
           <button
             onClick={handleSubmit}
-            disabled={submitting || content.length < 10}
+            disabled={submitting}
             className="w-full py-4 bg-stone-800 text-white rounded-xl font-bold hover:bg-stone-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? "등록 중..." : "리뷰 등록하기"}

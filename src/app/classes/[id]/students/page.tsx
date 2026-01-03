@@ -144,6 +144,7 @@ export default function ManageStudentsPage() {
               // Grouped by session
               Object.entries(groupedBySession).map(([sessionId, sessionEnrollments]) => {
                 const session = sessions.find((s: any) => s.id === sessionId);
+                const enrollmentsArray = sessionEnrollments as any[];
                 return (
                   <div key={sessionId} className="space-y-3">
                     <div className="flex items-center gap-2 text-stone-700">
@@ -155,11 +156,11 @@ export default function ManageStudentsPage() {
                         }
                       </span>
                       <span className="text-sm text-stone-500">
-                        ({sessionEnrollments.length}명)
+                        ({enrollmentsArray.length}명)
                       </span>
                     </div>
 
-                    {sessionEnrollments.map((enrollment) => (
+                    {enrollmentsArray.map((enrollment) => (
                       <EnrollmentCard
                         key={enrollment.id}
                         enrollment={enrollment}

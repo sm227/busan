@@ -243,7 +243,7 @@ export function ClassesManagement({ userId, onNavigateToUser, initialInstructorI
       alert('출석 체크가 완료되었습니다.');
       // 상세 정보 다시 로드
       if (selectedClass) {
-        loadClassDetail(selectedClass.id);
+        fetchClassDetail(selectedClass.id);
       }
     } catch (err) {
       alert(err instanceof Error ? err.message : '출석 체크 중 오류가 발생했습니다.');

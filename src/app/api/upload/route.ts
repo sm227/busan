@@ -2,12 +2,54 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { existsSync } from "fs";
+import { uploadFileToS3 } from "@/lib/s3-upload";
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
+
+    // 단일 파일 업로드 (썸네일용)
+    const file = formData.get("file") as File | null;
+
+    // 다중 파일 업로드 (properties용)
     const files = formData.getAll("images") as File[];
 
+    // 단일 파일 업로드 처리 (썸네일용 - S3 사용)
+    if (file) {
+      // 파일 검증
+      if (!file.type.startsWith("image/")) {
+        return NextResponse.json(
+          { success: false, error: "이미지 파일만 업로드 가능합니다" },
+          { status: 400 }
+        );
+      }
+
+      // 파일 크기 제한 (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        return NextResponse.json(
+          { success: false, error: "파일 크기는 5MB 이하여야 합니다" },
+          { status: 400 }
+        );
+      }
+
+      // S3에 업로드
+      const uploadResult = await uploadFileToS3(file, "classes");
+
+      if (!uploadResult.success) {
+        return NextResponse.json(
+          { success: false, error: uploadResult.error || "S3 업로드 실패" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        url: uploadResult.url,
+        filename: uploadResult.filename,
+      });
+    }
+
+    // 다중 파일 업로드 처리 (기존 로직)
     if (!files || files.length === 0) {
       return NextResponse.json(
         { success: false, error: "파일이 없습니다" },

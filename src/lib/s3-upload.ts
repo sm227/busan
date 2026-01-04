@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import path from "path";
 
 // S3 클라이언트 초기화 (S3 전용 계정 사용)
@@ -78,4 +78,49 @@ export async function uploadFileToS3(
       error: errorMessage,
     };
   }
+}
+
+/**
+ * S3에서 파일 다운로드
+ * @param key - S3 객체 키 (예: "glue-output/analytics/latest.json")
+ * @returns 파일 내용 (string)
+ */
+export async function downloadFileFromS3(key: string): Promise<string> {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET_NAME || "binjib-dabang",
+      Key: key,
+    });
+
+    const response = await s3Client.send(command);
+
+    // Stream을 문자열로 변환
+    const str = await response.Body?.transformToString();
+
+    if (!str) {
+      throw new Error("Empty file content");
+    }
+
+    return str;
+  } catch (error: any) {
+    console.error("S3 download error:", error);
+
+    if (error.name === "NoSuchKey") {
+      throw new Error("파일을 찾을 수 없습니다.");
+    } else if (error.name === "AccessDenied") {
+      throw new Error("S3 접근 권한이 없습니다.");
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * S3에서 JSON 파일 다운로드 및 파싱
+ * @param key - S3 객체 키
+ * @returns 파싱된 JSON 객체
+ */
+export async function downloadJsonFromS3<T = any>(key: string): Promise<T> {
+  const content = await downloadFileFromS3(key);
+  return JSON.parse(content);
 }

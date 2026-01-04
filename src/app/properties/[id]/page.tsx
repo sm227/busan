@@ -6,12 +6,15 @@ import { ArrowLeft, MapPin, Phone, Home as HomeIcon, ChevronDown, Sparkles, Coin
 import { RuralProperty } from "@/types";
 import { SupportProgram, SupportData } from "@/types/support";
 import helpDataRaw from "../../../../help.json";
+import { BlurredImage } from "@/components/BlurredImage";
+import { useApp } from "@/contexts/AppContext";
 
 const helpData = helpDataRaw as SupportData;
 
 export default function PropertyDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { currentUser } = useApp();
   const [property, setProperty] = useState<RuralProperty | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedProgram, setExpandedProgram] = useState<string | null>(null);
@@ -127,10 +130,11 @@ export default function PropertyDetailPage() {
 
           {/* 1. 이미지 영역 */}
           <div className="relative h-64 bg-stone-200">
-             <img
+             <BlurredImage
                src={property.images?.[0] || "/placeholder.jpg"}
                alt={property.title}
                className="w-full h-full object-cover"
+               blurWhenLoggedOut={true}
              />
           </div>
 
@@ -186,9 +190,19 @@ export default function PropertyDetailPage() {
                     <Sparkles className="w-4 h-4 text-orange-500 fill-orange-500" />
                     <h3 className="font-bold text-stone-800 text-sm">AI 추천 포인트</h3>
                   </div>
-                  <p className="text-stone-600 text-sm leading-relaxed">
+                  <p className={`text-stone-600 text-sm leading-relaxed ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
                     {property.aiReason}
                   </p>
+                  {!currentUser && (
+                    <div
+                      onClick={() => router.push('/login')}
+                      className="absolute inset-0 flex items-center justify-center bg-stone-50/60 cursor-pointer hover:bg-stone-50/70 transition-colors rounded-2xl"
+                    >
+                      <div className="text-stone-800 text-xs font-bold bg-white px-3 py-2 rounded-full shadow-lg pointer-events-none">
+                        로그인하고 전체 보기 →
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

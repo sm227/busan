@@ -65,12 +65,6 @@ export default function Home() {
   }, []);
   // ---------------------------
 
-  useEffect(() => {
-    if (isInitialized && !currentUser) {
-      router.push("/welcome");
-    }
-  }, [isInitialized, currentUser, router]);
-
   // 코인 잔액 가져오기
   useEffect(() => {
     const fetchCoinBalance = async () => {
@@ -91,6 +85,11 @@ export default function Home() {
   }, [currentUser]);
 
   const startMatching = async () => {
+    if (!currentUser) {
+      router.push("/login");
+      return;
+    }
+
     if (Object.keys(userPreferences).length < 6) {
       router.push("/questionnaire");
       return;
@@ -249,10 +248,6 @@ export default function Home() {
         <div className="w-8 h-8 border-2 border-stone-800 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
-  }
-
-  if (!currentUser) {
-    return null;
   }
 
   return (

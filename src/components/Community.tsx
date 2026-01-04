@@ -862,8 +862,8 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                  {activeTab === 'group' && '해당하는 글이 없습니다.'}
               </div>
            ) : (
-              <div className="px-6 py-6">
-                <div className="space-y-4">
+              <div className="px-6 py-6 relative">
+                <div className={`space-y-4 ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
                    {entries.map((entry, idx) => {
                       const isLiked = likedEntries.has(entry.id);
                       const isBookmarked = bookmarkedEntries.has(entry.id);
@@ -877,77 +877,91 @@ export default function Community({ onBack, currentUser }: CommunityProps) {
                       onClick={() => setSelectedEntry(entry)}
                       className="bg-white p-5 rounded-2xl border border-stone-100 shadow-sm active:scale-[0.99] transition-transform cursor-pointer"
                     >
-                       {/* Card Header */}
-                       <div className="flex justify-between items-start mb-3">
-                          <div className="flex gap-2 items-center">
-                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                                entry.category === 'question' ? 'bg-red-50 text-red-600 border-red-100' :
-                                entry.category === 'tip' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                'bg-stone-50 text-stone-600 border-stone-100'
-                             }`}>
-                                {getCategoryName(entry.category, entry)}
-                             </span>
-                             {entry.location && (
-                                <span className="flex items-center gap-0.5 text-[10px] text-stone-400">
-                                   <MapPin className="w-3 h-3" /> {entry.location}
-                                </span>
-                             )}
-                             {entry.activity_type && getActivityBadge(entry.activity_type)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-stone-400">{formatDate(entry.created_at)}</span>
-                            {currentUser && (
-                              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleBookmark(entry.id);
-                                  }}
-                                  className={`p-1 rounded transition-colors ${
-                                    isBookmarked ? 'text-yellow-600' : 'text-stone-300 hover:text-yellow-600'
-                                  }`}
-                                >
-                                  {isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                       </div>
+                       <div>
+                         {/* Card Header */}
+                         <div className="flex justify-between items-start mb-3">
+                            <div className="flex gap-2 items-center">
+                               <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                  entry.category === 'question' ? 'bg-red-50 text-red-600 border-red-100' :
+                                  entry.category === 'tip' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                  'bg-stone-50 text-stone-600 border-stone-100'
+                               }`}>
+                                  {getCategoryName(entry.category, entry)}
+                               </span>
+                               {entry.location && (
+                                  <span className="flex items-center gap-0.5 text-[10px] text-stone-400">
+                                     <MapPin className="w-3 h-3" /> {entry.location}
+                                  </span>
+                               )}
+                               {entry.activity_type && getActivityBadge(entry.activity_type)}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-stone-400">{formatDate(entry.created_at)}</span>
+                              {currentUser && (
+                                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleBookmark(entry.id);
+                                    }}
+                                    className={`p-1 rounded transition-colors ${
+                                      isBookmarked ? 'text-yellow-600' : 'text-stone-300 hover:text-yellow-600'
+                                    }`}
+                                  >
+                                    {isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                         </div>
 
-                       {/* Title & Content */}
-                       <h3 className="font-bold text-stone-800 text-base mb-1 line-clamp-1">{entry.title}</h3>
-                       <p className="text-xs text-stone-500 line-clamp-2 mb-4 leading-relaxed">{entry.content}</p>
+                         {/* Title & Content */}
+                         <h3 className="font-bold text-stone-800 text-base mb-1 line-clamp-1">{entry.title}</h3>
+                         <p className="text-xs text-stone-500 line-clamp-2 mb-4 leading-relaxed">{entry.content}</p>
 
-                       {/* Footer Info */}
-                       <div className="flex items-center justify-between pt-3 border-t border-stone-50">
-                          <div className="flex items-center gap-2 text-xs text-stone-500">
-                             <div className="w-5 h-5 rounded-full bg-stone-100 flex items-center justify-center">
-                                <User className="w-3 h-3 text-stone-400" />
-                             </div>
-                             <span>{entry.author_nickname}</span>
-                          </div>
-                          <div className="flex gap-3 text-xs text-stone-400">
-                             {currentUser ? (
-                               <button
-                                 onClick={(e) => {
-                                   e.stopPropagation();
-                                   handleLike(entry.id);
-                                 }}
-                                 className={`flex items-center gap-1 transition-colors ${
-                                   isLiked ? 'text-red-500' : 'text-stone-400 hover:text-red-500'
-                                 }`}
-                               >
-                                 <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} /> {entry.likes_count}
-                               </button>
-                             ) : (
-                               <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> {entry.likes_count}</span>
-                             )}
-                             <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {entry.comments_count || 0}</span>
-                          </div>
+                         {/* Footer Info */}
+                         <div className="flex items-center justify-between pt-3 border-t border-stone-50">
+                            <div className="flex items-center gap-2 text-xs text-stone-500">
+                               <div className="w-5 h-5 rounded-full bg-stone-100 flex items-center justify-center">
+                                  <User className="w-3 h-3 text-stone-400" />
+                               </div>
+                               <span>{entry.author_nickname}</span>
+                            </div>
+                            <div className="flex gap-3 text-xs text-stone-400">
+                               {currentUser ? (
+                                 <button
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     handleLike(entry.id);
+                                   }}
+                                   className={`flex items-center gap-1 transition-colors ${
+                                     isLiked ? 'text-red-500' : 'text-stone-400 hover:text-red-500'
+                                   }`}
+                                 >
+                                   <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current' : ''}`} /> {entry.likes_count}
+                                 </button>
+                               ) : (
+                                 <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> {entry.likes_count}</span>
+                               )}
+                               <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> {entry.comments_count || 0}</span>
+                            </div>
+                         </div>
                        </div>
                     </motion.div>
                  )})}
                 </div>
+
+                {/* 비로그인 사용자 오버레이 - 전체 리스트에 하나만 */}
+                {!currentUser && (
+                  <div
+                    onClick={() => router.push('/login')}
+                    className="absolute inset-0 flex items-start justify-center pt-16 bg-white/30 cursor-pointer hover:bg-white/40 transition-colors z-10"
+                  >
+                    <div className="text-stone-800 text-sm font-bold bg-white px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                      로그인하고 전체 보기 →
+                    </div>
+                  </div>
+                )}
               </div>
            )}
         </div>

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, MapPin, Phone, Home as HomeIcon, User, Calendar, Sparkles } from "lucide-react";
+import { useApp } from "@/contexts/AppContext";
+import { BlurredImage } from "@/components/BlurredImage";
 
 interface PropertyImage {
   id: string;
@@ -42,6 +44,7 @@ interface UserProperty {
 export default function TradeDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { currentUser } = useApp();
   const [property, setProperty] = useState<UserProperty | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -121,10 +124,11 @@ export default function TradeDetailPage() {
           <div className="relative h-64 bg-stone-200">
             {property.images && property.images.length > 0 ? (
               <>
-                <img
+                <BlurredImage
                   src={property.images[currentImageIndex].url}
                   alt={property.title}
                   className="w-full h-full object-cover"
+                  blurWhenLoggedOut={true}
                 />
                 {property.images.length > 1 && (
                   <>
@@ -168,36 +172,48 @@ export default function TradeDetailPage() {
           <div className="space-y-6">
 
             {/* 1.5. 제목 & 가격 정보 */}
-            <div className="px-6 pt-6 pb-5 border-b border-stone-100 bg-white">
-              <h1 className="text-2xl font-bold text-stone-900 mb-3">{property.title}</h1>
-              <div className="flex items-center gap-2 text-stone-500 text-sm mb-2">
-                <MapPin className="w-4 h-4 flex-shrink-0" />
-                <span>
-                  {property.district} {property.city} {property.region || ''}
-                  {property.address && <span className="text-stone-400"> · {property.address}</span>}
-                </span>
+            <div className="px-6 pt-6 pb-5 border-b border-stone-100 bg-white relative">
+              <div className={!currentUser ? 'filter blur-sm select-none' : ''}>
+                <h1 className="text-2xl font-bold text-stone-900 mb-3">{property.title}</h1>
+                <div className="flex items-center gap-2 text-stone-500 text-sm mb-2">
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span>
+                    {property.district} {property.city} {property.region || ''}
+                    {property.address && <span className="text-stone-400"> · {property.address}</span>}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-stone-500 text-sm mb-4">
+                  <User className="w-4 h-4 flex-shrink-0" />
+                  <span>{property.user.nickname}</span>
+                </div>
+                <div className="space-y-2">
+                  {property.sale && (
+                    <div className="text-3xl font-bold text-orange-600">
+                      매매 {property.sale.toLocaleString()}만원
+                    </div>
+                  )}
+                  {property.rent && (
+                    <div className={property.sale ? "text-xl font-bold text-stone-400" : "text-3xl font-bold text-blue-600"}>
+                      월세 {property.rent.toLocaleString()}만원
+                    </div>
+                  )}
+                  {property.deposit && (
+                    <div className="text-sm text-stone-400">
+                      보증금 {property.deposit.toLocaleString()}만원
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-stone-500 text-sm mb-4">
-                <User className="w-4 h-4 flex-shrink-0" />
-                <span>{property.user.nickname}</span>
-              </div>
-              <div className="space-y-2">
-                {property.sale && (
-                  <div className="text-3xl font-bold text-orange-600">
-                    매매 {property.sale.toLocaleString()}만원
+              {!currentUser && (
+                <div
+                  onClick={() => router.push('/login')}
+                  className="absolute inset-0 flex items-center justify-center bg-white/30 cursor-pointer hover:bg-white/40 transition-colors"
+                >
+                  <div className="text-stone-800 text-sm font-bold bg-white/90 px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                    로그인하고 전체 보기 →
                   </div>
-                )}
-                {property.rent && (
-                  <div className={property.sale ? "text-xl font-bold text-stone-400" : "text-3xl font-bold text-blue-600"}>
-                    월세 {property.rent.toLocaleString()}만원
-                  </div>
-                )}
-                {property.deposit && (
-                  <div className="text-sm text-stone-400">
-                    보증금 {property.deposit.toLocaleString()}만원
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             <div className="px-6 space-y-6">
@@ -220,12 +236,22 @@ export default function TradeDetailPage() {
 
             {/* 3. 상세 설명 */}
             {property.description && (
-              <div>
+              <div className="relative">
                 <h3 className="font-bold text-stone-800 mb-3 text-lg">상세 설명</h3>
-                <div className="bg-white border border-stone-200 rounded-2xl p-5">
-                  <p className="text-stone-600 text-sm leading-relaxed whitespace-pre-wrap">
+                <div className="bg-white border border-stone-200 rounded-2xl p-5 relative">
+                  <p className={`text-stone-600 text-sm leading-relaxed whitespace-pre-wrap ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
                     {property.description}
                   </p>
+                  {!currentUser && (
+                    <div
+                      onClick={() => router.push('/login')}
+                      className="absolute inset-0 flex items-center justify-center bg-white/30 cursor-pointer hover:bg-white/40 transition-colors rounded-2xl"
+                    >
+                      <div className="text-stone-800 text-xs font-bold bg-white px-3 py-2 rounded-full shadow-lg pointer-events-none">
+                        로그인하고 전체 보기 →
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

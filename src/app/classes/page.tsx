@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Search, MapPin, Clock, Users, Star, Bookmark, Plus } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
+import { BlurredImage } from "@/components/BlurredImage";
 
 export default function ClassesPage() {
   const router = useRouter();
@@ -162,13 +163,15 @@ export default function ClassesPage() {
         </div>
 
         {/* Class List */}
-        <div className="px-6 py-4 pb-24 space-y-4">
+        <div className="px-6 py-4 pb-24 space-y-4 relative">
           {loading ? (
             <div className="flex justify-center py-16">
               <div className="w-8 h-8 border-2 border-stone-800 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : filteredClasses.length > 0 ? (
-            filteredClasses.map((classItem) => (
+            <>
+            <div className={!currentUser ? 'filter blur-sm select-none space-y-4' : 'space-y-4'}>
+            {filteredClasses.map((classItem) => (
               <div
                 key={classItem.id}
                 onClick={() => router.push(`/classes/${classItem.id}`)}
@@ -177,10 +180,11 @@ export default function ClassesPage() {
                 {/* Image */}
                 <div className="relative h-48 bg-stone-200">
                   {classItem.thumbnailUrl ? (
-                    <img
+                    <BlurredImage
                       src={classItem.thumbnailUrl}
                       alt={classItem.title}
                       className="w-full h-full object-cover"
+                      blurWhenLoggedOut={true}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -272,7 +276,21 @@ export default function ClassesPage() {
                   )}
                 </div>
               </div>
-            ))
+            ))}
+            </div>
+
+            {/* 비로그인 사용자 오버레이 - 전체 리스트에 하나만 */}
+            {!currentUser && (
+              <div
+                onClick={() => router.push('/login')}
+                className="absolute top-0 left-0 right-0 bottom-0 flex items-start justify-center pt-16 bg-white/30 cursor-pointer hover:bg-white/40 transition-colors z-10"
+              >
+                <div className="text-stone-800 text-sm font-bold bg-white px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                  로그인하고 전체 보기 →
+                </div>
+              </div>
+            )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Users className="w-12 h-12 text-stone-300 mb-4" />

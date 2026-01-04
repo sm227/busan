@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Search, Calendar, MapPin, Filter, ChevronDown, Phone, Building2 } from "lucide-react";
 import festivalsData from "@/data/festivals.json";
+import { useApp } from "@/contexts/AppContext";
 
 interface Festival {
   id: number;
@@ -27,6 +28,7 @@ interface Festival {
 
 export default function FestivalPage() {
   const router = useRouter();
+  const { currentUser } = useApp();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("전체");
   const [selectedMonth, setSelectedMonth] = useState("전체");
@@ -167,9 +169,11 @@ export default function FestivalPage() {
         </div>
 
         {/* 축제 목록 */}
-        <div className="px-6 py-4 pb-24 space-y-3">
+        <div className="px-6 py-4 pb-24 space-y-3 relative">
           {filteredFestivals.length > 0 ? (
-            filteredFestivals.map((festival) => {
+            <>
+            <div className={`space-y-3 ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
+            {filteredFestivals.map((festival) => {
               const isExpanded = expandedId === festival.id;
               const hasDetails = festival.venueName || festival.organization || festival.department || festival.contact;
 
@@ -183,30 +187,32 @@ export default function FestivalPage() {
                     onClick={() => hasDetails && setExpandedId(isExpanded ? null : festival.id)}
                     className={`p-4 ${hasDetails ? 'cursor-pointer hover:bg-stone-50' : ''} transition-colors`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-stone-800 text-base mb-2 leading-snug">
-                          {festival.name}
-                        </h3>
+                    <div>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-stone-800 text-base mb-2 leading-snug">
+                            {festival.name}
+                          </h3>
 
-                        <div className="space-y-1.5">
-                          <div className="flex items-center text-stone-500 text-sm">
-                            <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                            <span className="truncate">{festival.location}</span>
-                          </div>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center text-stone-500 text-sm">
+                              <MapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                              <span className="truncate">{festival.location}</span>
+                            </div>
 
-                          <div className="flex items-center text-stone-500 text-sm">
-                            <Calendar className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                            <span>{festival.period}</span>
+                            <div className="flex items-center text-stone-500 text-sm">
+                              <Calendar className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                              <span>{festival.period}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {hasDetails && (
-                        <ChevronDown
-                          className={`w-5 h-5 text-stone-400 flex-shrink-0 ml-2 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        />
-                      )}
+                        {hasDetails && (
+                          <ChevronDown
+                            className={`w-5 h-5 text-stone-400 flex-shrink-0 ml-2 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -254,7 +260,21 @@ export default function FestivalPage() {
                   )}
                 </div>
               );
-            })
+            })}
+            </div>
+
+            {/* 비로그인 사용자 오버레이 - 전체 리스트에 하나만 */}
+            {!currentUser && (
+              <div
+                onClick={() => router.push('/login')}
+                className="absolute top-0 left-0 right-0 bottom-0 flex items-start justify-center pt-16 bg-white/30 cursor-pointer hover:bg-white/40 transition-colors z-10"
+              >
+                <div className="text-stone-800 text-sm font-bold bg-white px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                  로그인하고 전체 보기 →
+                </div>
+              </div>
+            )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Filter className="w-12 h-12 text-stone-300 mb-4" />

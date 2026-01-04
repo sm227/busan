@@ -298,11 +298,21 @@ export default function ClassDetailPage() {
             {selectedTab === "overview" && (
               <>
                 {/* Description */}
-                <div>
+                <div className="relative">
                   <h3 className="font-bold text-lg mb-3">클래스 설명</h3>
-                  <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">
+                  <p className={`text-stone-600 leading-relaxed whitespace-pre-wrap ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
                     {classData.description}
                   </p>
+                  {!currentUser && (
+                    <div
+                      onClick={() => router.push('/login')}
+                      className="absolute inset-0 flex items-center justify-center bg-white/30 cursor-pointer hover:bg-white/40 transition-colors"
+                    >
+                      <div className="text-stone-800 text-sm font-bold bg-white/90 px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                        로그인하고 전체 보기 →
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Quick Info */}

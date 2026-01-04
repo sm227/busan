@@ -33,7 +33,10 @@ export default function ChatRoom({ room, currentUser, onBack }: ChatRoomProps) {
   const [sending, setSending] = useState(false);
   const [onlineCount, setOnlineCount] = useState(1); // 최소 1명 (나)
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isUserScrollingRef = useRef(false);
+  const lastMessageCountRef = useRef(0);
 
   useEffect(() => {
     loadMessages();
@@ -50,8 +53,31 @@ export default function ChatRoom({ room, currentUser, onBack }: ChatRoomProps) {
     };
   }, [room.id]);
 
+  // 스크롤 위치 감지
   useEffect(() => {
-    scrollToBottom();
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+      isUserScrollingRef.current = !isAtBottom;
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // 메시지 변경 시 조건부 스크롤
+  useEffect(() => {
+    // 메시지 개수가 변경된 경우에만 처리
+    if (messages.length !== lastMessageCountRef.current) {
+      // 사용자가 스크롤 중이 아닐 때만 자동 스크롤
+      if (!isUserScrollingRef.current) {
+        scrollToBottom();
+      }
+      lastMessageCountRef.current = messages.length;
+    }
   }, [messages]);
 
   const loadMessages = async (silent = false) => {
@@ -81,6 +107,9 @@ export default function ChatRoom({ room, currentUser, onBack }: ChatRoomProps) {
     const content = inputValue.trim();
     setInputValue('');
     setSending(true);
+
+    // 내가 메시지를 보낼 때는 강제로 하단으로 스크롤
+    isUserScrollingRef.current = false;
 
     try {
       const response = await fetch('/api/chat/messages', {
@@ -167,9 +196,9 @@ export default function ChatRoom({ room, currentUser, onBack }: ChatRoomProps) {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-stone-100 px-6 py-4">
+      <div className="flex-shrink-0 bg-white border-b border-stone-100 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
@@ -196,7 +225,7 @@ export default function ChatRoom({ room, currentUser, onBack }: ChatRoomProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 bg-[#FDFBF7]">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-6 py-4 bg-[#FDFBF7]">
         {Object.entries(groupedMessages).map(([date, msgs]) => (
           <div key={date}>
             {/* 날짜 구분선 */}
@@ -268,7 +297,7 @@ export default function ChatRoom({ room, currentUser, onBack }: ChatRoomProps) {
       </div>
 
       {/* Input */}
-      <div className="sticky bottom-0 bg-white border-t border-stone-100 px-6 py-4">
+      <div className="flex-shrink-0 bg-white border-t border-stone-100 px-6 py-4">
         <div className="flex items-center gap-2">
           <input
             type="text"

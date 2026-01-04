@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Plus, Calendar, Clock, Users, X } from "lucide-react";
+import { ArrowLeft, Plus, Calendar, Clock, Users, X, Edit, Trash2 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 
 export default function ManageSessionsPage() {
@@ -13,6 +13,8 @@ export default function ManageSessionsPage() {
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingSession, setEditingSession] = useState<any | null>(null);
 
   // 새 세션 정보
   const [sessionDate, setSessionDate] = useState("");
@@ -86,6 +88,83 @@ export default function ManageSessionsPage() {
     } catch (error) {
       console.error("세션 추가 실패:", error);
       alert("세션 추가 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleEditSession = (session: any) => {
+    setEditingSession(session);
+    setSessionDate(session.sessionDate.split('T')[0]);
+    setStartTime(session.startTime);
+    setEndTime(session.endTime);
+    setMaxCapacity(session.maxCapacity.toString());
+    setNotes(session.notes || '');
+    setShowEditModal(true);
+  };
+
+  const handleUpdateSession = async () => {
+    if (!currentUser || !editingSession) return;
+
+    if (!sessionDate || !startTime || !endTime || !maxCapacity) {
+      alert("모든 필수 정보를 입력해주세요.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/classes/sessions/${editingSession.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instructorId: currentUser.id,
+          sessionDate,
+          startTime,
+          endTime,
+          maxCapacity: parseInt(maxCapacity),
+          notes: notes.trim() || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("세션이 수정되었습니다!");
+        setShowEditModal(false);
+        setEditingSession(null);
+        setSessionDate("");
+        setStartTime("");
+        setEndTime("");
+        setMaxCapacity("");
+        setNotes("");
+        loadClassData();
+      } else {
+        alert(data.error || "세션 수정에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("세션 수정 실패:", error);
+      alert("세션 수정 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch(
+        `/api/classes/sessions/${sessionId}?instructorId=${currentUser.id}`,
+        { method: "DELETE" }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("세션이 삭제되었습니다.");
+        loadClassData();
+      } else {
+        alert(data.error || "세션 삭제에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error("세션 삭제 실패:", error);
+      alert("세션 삭제 중 오류가 발생했습니다.");
     }
   };
 
@@ -194,6 +273,26 @@ export default function ManageSessionsPage() {
                     {session.notes}
                   </p>
                 )}
+
+                {/* 수정/삭제 버튼 */}
+                {session.currentEnrolled === 0 && (
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-stone-100">
+                    <button
+                      onClick={() => handleEditSession(session)}
+                      className="flex-1 py-2 px-3 bg-stone-100 text-stone-700 rounded-xl text-sm font-bold hover:bg-stone-200 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Edit className="w-4 h-4" />
+                      수정
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSession(session.id)}
+                      className="flex-1 py-2 px-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      삭제
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           ) : (
@@ -296,6 +395,101 @@ export default function ManageSessionsPage() {
                   className="w-full py-3 bg-stone-800 text-white rounded-xl font-bold hover:bg-stone-700 transition-colors"
                 >
                   세션 추가하기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Session Modal */}
+        {showEditModal && editingSession && (
+          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+            <div className="bg-white rounded-t-3xl w-full max-w-md p-6 pb-8 max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-bold text-xl">세션 수정</h3>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingSession(null);
+                  }}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                >
+                  <X className="w-5 h-5 text-stone-500" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    날짜 *
+                  </label>
+                  <input
+                    type="date"
+                    value={sessionDate}
+                    onChange={(e) => setSessionDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone-300"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-2">
+                      시작 시간 *
+                    </label>
+                    <input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-2">
+                      종료 시간 *
+                    </label>
+                    <input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone-300"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    최대 인원 *
+                  </label>
+                  <input
+                    type="number"
+                    value={maxCapacity}
+                    onChange={(e) => setMaxCapacity(e.target.value)}
+                    placeholder="10"
+                    min="1"
+                    className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone-300"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    안내 사항
+                  </label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="수강생에게 전달할 안내 사항이 있다면 작성해주세요"
+                    rows={3}
+                    className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone-300 resize-none"
+                  />
+                </div>
+
+                <button
+                  onClick={handleUpdateSession}
+                  className="w-full py-3 bg-stone-800 text-white rounded-xl font-bold hover:bg-stone-700 transition-colors"
+                >
+                  세션 수정하기
                 </button>
               </div>
             </div>

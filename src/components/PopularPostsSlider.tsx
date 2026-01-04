@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Heart, MapPin, Clock, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { HOUSE_IMAGES } from '@/config/constants';
+import { useApp } from '@/contexts/AppContext';
+import { useRouter } from 'next/navigation';
 
 interface PopularPost {
   id: number;
@@ -24,10 +26,13 @@ interface PopularPostsSliderProps {
 }
 
 export default function PopularPostsSlider({ onPostClick }: PopularPostsSliderProps) {
+  const { currentUser } = useApp();
+  const router = useRouter();
   const [posts, setPosts] = useState<PopularPost[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const shouldBlur = !currentUser;
 
   // 인기 게시글 로드 (좋아요 많은 순)
   useEffect(() => {
@@ -138,11 +143,25 @@ export default function PopularPostsSlider({ onPostClick }: PopularPostsSliderPr
                 src={getImageForLocation(posts[currentIndex].location)}
                 alt={posts[currentIndex].title}
                 fill
-                className="object-cover opacity-90"
+                className={`object-cover opacity-90 ${shouldBlur ? "filter blur-md" : ""}`}
                 priority
               />
               {/* 그라데이션 오버레이 (텍스트 가독성용) */}
               <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/40 to-transparent" />
+              {/* 블러 오버레이 */}
+              {shouldBlur && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center bg-black/20 z-30"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push('/login');
+                  }}
+                >
+                  <div className="text-white text-sm font-bold bg-stone-800/80 px-4 py-2 rounded-full pointer-events-none">
+                    로그인하고 전체 보기 →
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 콘텐츠 */}

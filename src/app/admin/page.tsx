@@ -11,6 +11,7 @@ import { CommunityManagement } from '@/components/admin/CommunityManagement';
 import { CoinsManagement } from '@/components/admin/CoinsManagement';
 import { ChatManagement } from '@/components/admin/ChatManagement';
 import { BadgesManagement } from '@/components/admin/BadgesManagement';
+import { AnalyticsManagement } from '@/components/admin/AnalyticsManagement';
 
 export type AdminModule =
   | 'dashboard'
@@ -20,7 +21,8 @@ export type AdminModule =
   | 'community'
   | 'coins'
   | 'chat'
-  | 'badges';
+  | 'badges'
+  | 'analytics';
 
 export default function AdminPage() {
   const [userId, setUserId] = useState<number | null>(null);
@@ -123,6 +125,7 @@ export default function AdminPage() {
       {currentModule === 'coins' && <CoinsManagement userId={userId} />}
       {currentModule === 'chat' && <ChatManagement userId={userId} />}
       {currentModule === 'badges' && <BadgesManagement userId={userId} />}
+      {currentModule === 'analytics' && <AnalyticsManagement userId={userId} />}
     </AdminLayout>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { MessageCircle, Users, ChevronRight, Filter } from 'lucide-react';
 
@@ -25,6 +26,7 @@ interface ChatRoomListProps {
 }
 
 export default function ChatRoomList({ onSelectRoom, currentUser }: ChatRoomListProps) {
+  const router = useRouter();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -126,74 +128,88 @@ export default function ChatRoomList({ onSelectRoom, currentUser }: ChatRoomList
       </div>
 
       {/* 채팅방 목록 */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="flex-1 overflow-y-auto px-6 py-4 relative">
         {rooms.length === 0 ? (
           <div className="text-center py-20 text-stone-400 text-sm">
             채팅방이 없습니다.
           </div>
         ) : (
-          <div className="space-y-3">
-            {rooms.map((room, idx) => (
-              <motion.div
-                key={room.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                onClick={() => onSelectRoom(room)}
-                className="bg-white p-4 rounded-xl border border-stone-100 hover:border-stone-300 transition-all cursor-pointer active:scale-[0.98]"
-              >
-                <div className="flex items-start gap-3">
-                  {/* 아이콘 */}
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center text-2xl flex-shrink-0">
-                    {room.icon || '💬'}
-                  </div>
+          <>
+            <div className={`space-y-3 ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
+              {rooms.map((room, idx) => (
+                <motion.div
+                  key={room.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  onClick={() => onSelectRoom(room)}
+                  className="bg-white p-4 rounded-xl border border-stone-100 hover:border-stone-300 transition-all cursor-pointer active:scale-[0.98]"
+                >
+                  <div className="flex items-start gap-3">
+                    {/* 아이콘 */}
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-stone-100 to-stone-200 flex items-center justify-center text-2xl flex-shrink-0">
+                      {room.icon || '💬'}
+                    </div>
 
-                  {/* 정보 */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <h3 className="font-bold text-stone-800 text-sm truncate pr-2">
-                        {room.name}
-                      </h3>
-                      {room.lastMessage && (
-                        <span className="text-[10px] text-stone-400 whitespace-nowrap">
-                          {formatDate(room.lastMessage.createdAt)}
-                        </span>
+                    {/* 정보 */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-1">
+                        <h3 className="font-bold text-stone-800 text-sm truncate pr-2">
+                          {room.name}
+                        </h3>
+                        {room.lastMessage && (
+                          <span className="text-[10px] text-stone-400 whitespace-nowrap">
+                            {formatDate(room.lastMessage.createdAt)}
+                          </span>
+                        )}
+                      </div>
+
+                      {room.description && (
+                        <p className="text-xs text-stone-500 line-clamp-1 mb-2">
+                          {room.description}
+                        </p>
                       )}
+
+                      {/* 마지막 메시지 */}
+                      {room.lastMessage ? (
+                        <p className="text-xs text-stone-400 line-clamp-1">
+                          <span className="font-medium">{room.lastMessage.authorNickname}</span>: {room.lastMessage.content}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-stone-400 italic">아직 메시지가 없습니다</p>
+                      )}
+
+                      {/* 카테고리 & 메시지 수 */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${getCategoryColor(room.category)}`}>
+                          {getCategoryLabel(room.category)}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] text-stone-400">
+                          <MessageCircle className="w-3 h-3" />
+                          {room.messageCount}
+                        </span>
+                      </div>
                     </div>
 
-                    {room.description && (
-                      <p className="text-xs text-stone-500 line-clamp-1 mb-2">
-                        {room.description}
-                      </p>
-                    )}
-
-                    {/* 마지막 메시지 */}
-                    {room.lastMessage ? (
-                      <p className="text-xs text-stone-400 line-clamp-1">
-                        <span className="font-medium">{room.lastMessage.authorNickname}</span>: {room.lastMessage.content}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-stone-400 italic">아직 메시지가 없습니다</p>
-                    )}
-
-                    {/* 카테고리 & 메시지 수 */}
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${getCategoryColor(room.category)}`}>
-                        {getCategoryLabel(room.category)}
-                      </span>
-                      <span className="flex items-center gap-1 text-[10px] text-stone-400">
-                        <MessageCircle className="w-3 h-3" />
-                        {room.messageCount}
-                      </span>
-                    </div>
+                    {/* 화살표 */}
+                    <ChevronRight className="w-5 h-5 text-stone-300 flex-shrink-0 mt-2" />
                   </div>
+                </motion.div>
+              ))}
+            </div>
 
-                  {/* 화살표 */}
-                  <ChevronRight className="w-5 h-5 text-stone-300 flex-shrink-0 mt-2" />
+            {/* 비로그인 사용자 오버레이 */}
+            {!currentUser && (
+              <div
+                onClick={() => router.push('/login')}
+                className="absolute inset-0 flex items-start justify-center pt-16 bg-white/30 cursor-pointer hover:bg-white/40 transition-colors z-10"
+              >
+                <div className="text-stone-800 text-sm font-bold bg-white px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                  로그인하고 전체 보기 →
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

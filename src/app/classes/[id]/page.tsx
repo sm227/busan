@@ -13,6 +13,7 @@ import {
   Share,
   Check,
   User,
+  Settings,
 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 
@@ -27,11 +28,15 @@ export default function ClassDetailPage() {
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [userEnrollment, setUserEnrollment] = useState<any | null>(null);
 
   useEffect(() => {
     loadClassData();
     loadReviews();
-  }, [params.id]);
+    if (currentUser) {
+      loadUserEnrollment();
+    }
+  }, [params.id, currentUser]);
 
   const loadClassData = async () => {
     try {
@@ -83,6 +88,27 @@ export default function ClassDetailPage() {
       }
     } catch (error) {
       console.error("리뷰 로딩 실패:", error);
+    }
+  };
+
+  const loadUserEnrollment = async () => {
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch(
+        `/api/classes/enrollments?userId=${currentUser.id}&classId=${params.id}`
+      );
+      const data = await response.json();
+
+      if (data.success && data.data && data.data.length > 0) {
+        // 가장 최근의 완료된 수강 내역 찾기
+        const completedEnrollment = data.data.find(
+          (e: any) => e.status === "completed"
+        );
+        setUserEnrollment(completedEnrollment || null);
+      }
+    } catch (error) {
+      console.error("수강 내역 로딩 실패:", error);
     }
   };
 
@@ -168,9 +194,20 @@ export default function ClassDetailPage() {
             <span className="font-bold text-lg text-stone-800 truncate max-w-[200px]">
               {classData.title}
             </span>
-            <button className="p-2">
-              <Share className="w-5 h-5 text-stone-500" />
-            </button>
+            <div className="flex items-center gap-2">
+              {currentUser && classData.instructorId === currentUser.id && (
+                <button
+                  onClick={() => router.push(`/classes/${params.id}/students`)}
+                  className="p-2 hover:bg-stone-100 rounded-full"
+                  title="학생 관리"
+                >
+                  <Settings className="w-5 h-5 text-stone-500" />
+                </button>
+              )}
+              <button className="p-2 hover:bg-stone-100 rounded-full">
+                <Share className="w-5 h-5 text-stone-500" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -261,11 +298,21 @@ export default function ClassDetailPage() {
             {selectedTab === "overview" && (
               <>
                 {/* Description */}
-                <div>
+                <div className="relative">
                   <h3 className="font-bold text-lg mb-3">클래스 설명</h3>
-                  <p className="text-stone-600 leading-relaxed whitespace-pre-wrap">
+                  <p className={`text-stone-600 leading-relaxed whitespace-pre-wrap ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
                     {classData.description}
                   </p>
+                  {!currentUser && (
+                    <div
+                      onClick={() => router.push('/login')}
+                      className="absolute inset-0 flex items-center justify-center bg-white/30 cursor-pointer hover:bg-white/40 transition-colors"
+                    >
+                      <div className="text-stone-800 text-sm font-bold bg-white/90 px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                        로그인하고 전체 보기 →
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Quick Info */}
@@ -382,6 +429,28 @@ export default function ClassDetailPage() {
 
             {selectedTab === "reviews" && (
               <div className="space-y-4">
+                {/* 리뷰 작성 버튼 - 완료된 수강 내역이 있고 아직 리뷰를 작성하지 않은 경우 */}
+                {currentUser && userEnrollment && !userEnrollment.review && (
+                  <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="font-bold text-stone-800 mb-1">수강하신 클래스는 어떠셨나요?</h4>
+                        <p className="text-sm text-stone-600">클래스에 대한 솔직한 리뷰를 남겨주세요!</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => router.push(`/classes/${params.id}/review?enrollmentId=${userEnrollment.id}`)}
+                      className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl font-bold hover:from-orange-600 hover:to-amber-600 transition-all shadow-md"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <Star className="w-5 h-5" />
+                        <span>리뷰 작성하기</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
+                {/* 리뷰 목록 */}
                 {reviews.length > 0 ? (
                   reviews.map((review) => (
                     <div

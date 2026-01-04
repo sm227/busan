@@ -157,8 +157,20 @@ export default function CommunityDetailPage() {
             </div>
           )}
 
-          <div className="prose prose-sm max-w-none mb-6">
-            <p className="whitespace-pre-wrap">{entry.content}</p>
+          <div className="relative prose prose-sm max-w-none mb-6">
+            <p className={`whitespace-pre-wrap ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
+              {entry.content}
+            </p>
+            {!currentUser && (
+              <div
+                onClick={() => router.push('/login')}
+                className="absolute inset-0 flex items-center justify-center bg-white/30 cursor-pointer hover:bg-white/40 transition-colors"
+              >
+                <div className="text-stone-800 text-sm font-bold bg-white/90 px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                  로그인하고 전체 보기 →
+                </div>
+              </div>
+            )}
           </div>
 
           {entry.tags && (() => {

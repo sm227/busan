@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
 import { ArrowLeft, Plus, MapPin, Phone, Home as HomeIcon, Calendar, User } from "lucide-react";
+import { BlurredImage } from "@/components/BlurredImage";
 
 interface PropertyImage {
   id: string;
@@ -145,13 +146,15 @@ export default function TradePage() {
         )}
 
         {/* 매물 목록 */}
-        <div className="px-6 py-4 pb-24 space-y-4">
+        <div className="px-6 py-4 pb-24 space-y-4 relative">
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <div className="w-8 h-8 border-2 border-stone-800 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : properties.length > 0 ? (
-            properties.map((property) => (
+            <>
+            <div className={`space-y-4 ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
+            {properties.map((property) => (
               <div
                 key={property.id}
                 className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
@@ -236,7 +239,21 @@ export default function TradePage() {
                   </div>
                 </div>
               </div>
-            ))
+            ))}
+            </div>
+
+            {/* 비로그인 사용자 오버레이 - 전체 리스트에 하나만 */}
+            {!currentUser && (
+              <div
+                onClick={() => router.push('/login')}
+                className="absolute top-0 left-0 right-0 bottom-0 flex items-start justify-center pt-16 bg-white/30 cursor-pointer hover:bg-white/40 transition-colors z-10"
+              >
+                <div className="text-stone-800 text-sm font-bold bg-white px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                  로그인하고 전체 보기 →
+                </div>
+              </div>
+            )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <HomeIcon className="w-16 h-16 text-stone-300 mb-4" />

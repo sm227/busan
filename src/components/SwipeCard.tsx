@@ -5,6 +5,7 @@ import { useState, forwardRef, useImperativeHandle } from 'react'; // forwardRef
 import { Home, MapPin, Users, Sparkles, Quote, Lock, Coins, Heart } from 'lucide-react';
 import { RuralProperty, VillageStory } from '@/types';
 import { useRouter } from 'next/navigation';
+import { BlurredImage } from '@/components/BlurredImage';
 
 // 외부에서 호출할 수 있는 함수 타입 정의
 export interface SwipeCardRef {
@@ -186,11 +187,11 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({
           )}
         
         <div className="relative h-[35%] shrink-0 bg-stone-100">
-          <img 
-            src={property.images[0]} 
+          <BlurredImage
+            src={property.images[0]}
             alt={property.title}
             className="w-full h-full object-cover pointer-events-none"
-            style={{ display: 'block' }}
+            blurWhenLoggedOut={true}
           />
           <div className="absolute inset-0 -z-10 flex items-center justify-center bg-stone-100">
             <div className="text-center text-stone-400">

@@ -27,7 +27,7 @@ const SUGGESTED_QUESTIONS = [
 
 export default function AIConsultationPage() {
   const router = useRouter();
-  const { userPreferences } = useApp();
+  const { userPreferences, currentUser } = useApp();
   const { selectedModel } = useAIModel();
 
   // 1. 상태 관리
@@ -138,11 +138,11 @@ export default function AIConsultationPage() {
         </div>
 
         {/* 채팅 영역 (스크롤 가능) */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-hide bg-[#FDFBF7]">
-          
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-hide bg-[#FDFBF7] relative">
+
           {/* A. 초기 가이드 화면 (대화 시작 전까지만 표시) */}
           {!isChatStarted && (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className={`flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in slide-in-from-bottom-4 duration-700 ${!currentUser ? 'filter blur-sm select-none' : ''}`}>
               
               {/* 캐릭터 */}
               <div className="relative w-24 h-24 mb-6">
@@ -183,14 +183,15 @@ export default function AIConsultationPage() {
 
           {/* B. 실제 대화 내용 (대화 시작 후) */}
           {isChatStarted && (
-            <AnimatePresence initial={false}>
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex ${message.isUser ? 'justify-end' : 'justify-start items-end gap-2'}`}
-                >
+            <div className={!currentUser ? 'filter blur-sm select-none' : ''}>
+              <AnimatePresence initial={false}>
+                {messages.map((message) => (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`flex ${message.isUser ? 'justify-end' : 'justify-start items-end gap-2'}`}
+                  >
                   {/* AI 프로필 (왼쪽) */}
                   {!message.isUser && (
                     <div className="w-8 h-8 relative shrink-0 mb-4">
@@ -219,7 +220,8 @@ export default function AIConsultationPage() {
                   </div>
                 </motion.div>
               ))}
-            </AnimatePresence>
+              </AnimatePresence>
+            </div>
           )}
 
           {/* 로딩 중 표시 */}
@@ -239,8 +241,20 @@ export default function AIConsultationPage() {
               </div>
             </motion.div>
           )}
-          
+
           <div ref={messagesEndRef} />
+
+          {/* 비로그인 사용자 오버레이 */}
+          {!currentUser && (
+            <div
+              onClick={() => router.push('/login')}
+              className="absolute inset-0 flex items-center justify-center bg-white/30 cursor-pointer hover:bg-white/40 transition-colors z-20"
+            >
+              <div className="text-stone-800 text-sm font-bold bg-white/90 px-4 py-2 rounded-full shadow-lg pointer-events-none">
+                로그인하고 AI 상담 시작하기 →
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 입력 영역 (하단 고정) */}
@@ -256,15 +270,15 @@ export default function AIConsultationPage() {
                     handleSubmit(e);
                   }
                 }}
-                placeholder="메시지를 입력하세요..."
+                placeholder={!currentUser ? "로그인이 필요합니다" : "메시지를 입력하세요..."}
                 className="w-full bg-stone-50 border border-stone-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-stone-800 focus:border-transparent resize-none max-h-24 min-h-[48px]"
                 rows={1}
-                disabled={isLoading}
+                disabled={isLoading || !currentUser}
               />
             </div>
             <button
               type="submit"
-              disabled={!inputValue.trim() || isLoading}
+              disabled={!inputValue.trim() || isLoading || !currentUser}
               className="p-2 text-stone-800 hover:text-stone-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="w-6 h-6" />

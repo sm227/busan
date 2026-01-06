@@ -9,13 +9,15 @@ interface QuestionCardProps {
   onAnswer: (option: QuestionOption) => void;
   currentQuestion: number;
   totalQuestions: number;
+  onSkip?: () => void;
 }
 
 export default function QuestionCard({
   question,
   onAnswer,
   currentQuestion,
-  totalQuestions
+  totalQuestions,
+  onSkip
 }: QuestionCardProps) {
   const progress = ((currentQuestion + 1) / totalQuestions) * 100;
 
@@ -40,7 +42,7 @@ export default function QuestionCard({
 
   return (
     <div className="w-full max-w-md mx-auto px-6 py-8">
-      
+
       {/* 1. 진행률 표시 */}
       <div className="mb-10">
         <div className="flex justify-between items-end mb-3 px-1">

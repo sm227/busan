@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { badgesData } from '@/data/badgesData';
 import { sampleUsersData } from '@/data/sampleUsersData';
+import { uploadSurveyToS3 } from '@/lib/survey-s3-uploader';
 
 // 샘플 사용자 자동 생성 (앱 시작 시)
 let sampleUsersInitialized = false;
@@ -113,7 +114,8 @@ export async function saveSurveyResult(userId: number, preferences: {
   budget: string;
 }) {
   try {
-    await prisma.surveyResult.create({
+    // 1. PostgreSQL에 저장
+    const surveyResult = await prisma.surveyResult.create({
       data: {
         userId,
         occupation: preferences.occupation,
@@ -127,7 +129,26 @@ export async function saveSurveyResult(userId: number, preferences: {
       }
     });
 
-    return { success: true };
+    console.log(`✅ Survey saved to DB: ID ${surveyResult.id}`);
+
+    // 2. S3에 업로드 (비동기 - 실패해도 DB 저장은 성공으로 처리)
+    uploadSurveyToS3({
+      id: surveyResult.id,
+      userId: surveyResult.userId,
+      occupation: surveyResult.occupation,
+      livingStyle: surveyResult.livingStyle,
+      socialStyle: surveyResult.socialStyle,
+      workStyle: surveyResult.workStyle,
+      hobbyStyle: surveyResult.hobbyStyle,
+      pace: surveyResult.pace,
+      purchaseType: surveyResult.purchaseType,
+      budget: surveyResult.budget,
+      createdAt: surveyResult.createdAt,
+    }).catch((err) => {
+      console.error('⚠️ S3 upload failed (non-blocking):', err);
+    });
+
+    return { success: true, surveyId: surveyResult.id };
   } catch (error) {
     console.error('❌ Database error:', error);
     return { success: false, error: '설문 결과 저장에 실패했습니다.' };

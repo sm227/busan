@@ -61,6 +61,11 @@ export default function QuestionnairePage() {
     }, 0);
   };
 
+  const handleSkip = () => {
+    console.log('⏭️ 설문 건너뛰기');
+    router.push("/");
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 overflow-x-hidden">
       <div className="max-w-md mx-auto bg-white min-h-screen relative">
@@ -71,6 +76,16 @@ export default function QuestionnairePage() {
             currentQuestion={currentQuestionIndex}
             totalQuestions={filteredQuestions.length}
           />
+
+          {/* 건너뛰기 버튼 */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={handleSkip}
+              className="text-stone-400 text-sm hover:text-stone-500 transition-colors underline underline-offset-2"
+            >
+              건너뛰기
+            </button>
+          </div>
         </div>
       </div>
     </div>

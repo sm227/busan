@@ -278,12 +278,6 @@ export default function Home() {
                 <span className="text-sm font-bold">{coinBalance}</span>
               </button>
               <button
-                onClick={() => router.push("/korea-map")}
-                className="p-2 text-stone-600 hover:bg-stone-50 rounded-full transition-colors"
-              >
-                <Map className="w-5 h-5" />
-              </button>
-              <button
                 onClick={() => setIsMenuOpen(true)}
                 className="p-2 text-stone-600 hover:bg-stone-50 rounded-full transition-colors"
                 aria-label="메뉴 열기"

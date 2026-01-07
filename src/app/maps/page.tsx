@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RuralProperty } from '@/types';
 import { useApp } from '@/contexts/AppContext';
@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export default function MapsPage() {
+function MapsPageContent() {
   const searchParams = useSearchParams();
   const mapContainer = useRef<HTMLDivElement>(null);
   const [villages, setVillages] = useState<RuralProperty[]>([]);
@@ -64,7 +64,7 @@ export default function MapsPage() {
               regionParam,
               searchTerms,
               filteredCount: regionVillages.length,
-              sampleLocations: regionVillages.slice(0, 3).map(v => v.location.district)
+              sampleLocations: regionVillages.slice(0, 3).map((v: RuralProperty) => v.location.district)
             });
             setSelectedRegion(regionParam);
             setSelectedVillages(regionVillages);
@@ -672,5 +672,20 @@ export default function MapsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MapsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F0]">
+        <div className="text-center">
+          <Loader className="w-12 h-12 animate-spin text-stone-400 mx-auto mb-4" />
+          <p className="text-stone-600">지도를 불러오는 중...</p>
+        </div>
+      </div>
+    }>
+      <MapsPageContent />
+    </Suspense>
   );
 }

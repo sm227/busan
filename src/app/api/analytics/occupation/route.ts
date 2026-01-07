@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     const result = await getOccupationStats();
 
-    if (!result.success) {
+    if (!result.success || !result.data) {
       return NextResponse.json(
         { success: false, error: result.error || "Failed to fetch statistics" },
         { status: 500 }
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
     // 캐시에 저장
     await prisma.analyticsCache.upsert({
       where: { queryType: "occupation" },
-      update: { data: result.data },
-      create: { queryType: "occupation", data: result.data },
+      update: { data: result.data as any },
+      create: { queryType: "occupation", data: result.data as any },
     });
 
     console.log("💾 Cached occupation statistics");

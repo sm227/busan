@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         );
     }
 
-    if (!result.success) {
+    if (!result.success || !result.data) {
       return NextResponse.json(
         { success: false, error: result.error || "Failed to fetch statistics" },
         { status: 500 }
@@ -60,8 +60,8 @@ export async function GET(request: NextRequest) {
     // 캐시에 저장
     await prisma.analyticsCache.upsert({
       where: { queryType: type },
-      update: { data: result.data },
-      create: { queryType: type, data: result.data },
+      update: { data: result.data as any },
+      create: { queryType: type, data: result.data as any },
     });
 
     console.log(`💾 Cached ${type} statistics`);

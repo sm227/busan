@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RuralProperty } from '@/types';
 import { useApp } from '@/contexts/AppContext';
 import { ListFilter, X, Heart, MapPin, Home, Trees, Users, Loader, ArrowLeft, Search } from 'lucide-react';
@@ -12,7 +13,8 @@ declare global {
   }
 }
 
-export default function MapsPage() {
+function MapsPageContent() {
+  const searchParams = useSearchParams();
   const mapContainer = useRef<HTMLDivElement>(null);
   const [villages, setVillages] = useState<RuralProperty[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +38,39 @@ export default function MapsPage() {
 
         if (data.success && data.properties) {
           setVillages(data.properties);
+
+          // URL에서 지역 파라미터 확인
+          const regionParam = searchParams.get('region');
+          if (regionParam) {
+            // 지역 이름 매핑 (메인 페이지의 간단한 이름 → 실제 district 검색어)
+            const regionMapping: { [key: string]: string[] } = {
+              '강원도': ['강원'],
+              '제주도': ['제주'],
+              '전라도': ['전라', '전북', '광주'],
+              '경상도': ['경상', '부산', '대구', '울산'],
+              '충청도': ['충청', '대전', '세종'],
+            };
+
+            // 매핑된 검색어 또는 원본 사용
+            const searchTerms = regionMapping[regionParam] || [regionParam];
+
+            // 해당 지역의 마을들 필터링
+            const regionVillages = data.properties.filter((v: RuralProperty) => {
+              const locationStr = `${v.location.district} ${v.location.city} ${v.location.region}`.toLowerCase();
+              return searchTerms.some(term => locationStr.includes(term.toLowerCase()));
+            });
+
+            console.log('🔍 Region filter:', {
+              regionParam,
+              searchTerms,
+              filteredCount: regionVillages.length,
+              sampleLocations: regionVillages.slice(0, 3).map((v: RuralProperty) => v.location.district)
+            });
+            setSelectedRegion(regionParam);
+            setSelectedVillages(regionVillages);
+            setSearchQuery(''); // 검색어 초기화하여 패널 표시 보장
+            setSelectedVillage(null); // 선택된 마을 초기화
+          }
         }
       } catch (error) {
         console.error(error);
@@ -48,7 +83,7 @@ export default function MapsPage() {
     };
 
     fetchAllVillages();
-  }, []);
+  }, [searchParams]);
 
   // 2. 카카오맵 초기화
   useEffect(() => {
@@ -63,9 +98,32 @@ export default function MapsPage() {
       window.kakao.maps.load(() => {
         if (!mapContainer.current) return;
 
+        // 지역이 선택된 경우 해당 지역 중심으로, 아니면 기본 중심
+        let centerLat = 36.5;
+        let centerLng = 127.5;
+        let zoomLevel = 13;
+
+        // URL에서 지역 파라미터 확인하여 지도 중심 설정
+        const regionParam = searchParams.get('region');
+        if (regionParam && selectedVillages.length > 0) {
+          const regionCenters: { [key: string]: { lat: number; lng: number } } = {
+            '강원도': { lat: 37.8228, lng: 128.1555 },
+            '제주도': { lat: 33.4890, lng: 126.4983 },
+            '전라도': { lat: 35.2, lng: 127.0 },
+            '경상도': { lat: 36.0, lng: 128.5 },
+          };
+
+          const regionCenter = regionCenters[regionParam];
+          if (regionCenter) {
+            centerLat = regionCenter.lat;
+            centerLng = regionCenter.lng;
+            zoomLevel = 9; // 지역 선택 시 확대
+          }
+        }
+
         const options = {
-          center: new window.kakao.maps.LatLng(36.5, 127.5),
-          level: 13,
+          center: new window.kakao.maps.LatLng(centerLat, centerLng),
+          level: zoomLevel,
         };
 
         const map = new window.kakao.maps.Map(mapContainer.current, options);
@@ -79,7 +137,7 @@ export default function MapsPage() {
     return () => {
       script.remove();
     };
-  }, [villages, loading]);
+  }, [villages, loading, selectedVillages, searchParams]);
 
   // 3. 마커 표시
   const displayRegionalMarkers = (map: any) => {
@@ -547,7 +605,17 @@ export default function MapsPage() {
           )}
 
           {/* 3. 지역별 목록 패널 (기존 유지) */}
-          {selectedRegion && selectedVillages.length > 0 && !selectedVillage && !searchQuery && (
+          {(() => {
+            const shouldShow = selectedRegion && selectedVillages.length > 0 && !selectedVillage && !searchQuery;
+            console.log('📍 Panel condition check:', {
+              selectedRegion,
+              villagesCount: selectedVillages.length,
+              selectedVillage: selectedVillage ? 'exists' : 'null',
+              searchQuery,
+              shouldShow
+            });
+            return shouldShow;
+          })() && (
             <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] max-h-[60%] flex flex-col z-30 animate-in slide-in-from-bottom duration-300">
               <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center">
                 <div>
@@ -604,5 +672,20 @@ export default function MapsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MapsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F0]">
+        <div className="text-center">
+          <Loader className="w-12 h-12 animate-spin text-stone-400 mx-auto mb-4" />
+          <p className="text-stone-600">지도를 불러오는 중...</p>
+        </div>
+      </div>
+    }>
+      <MapsPageContent />
+    </Suspense>
   );
 }

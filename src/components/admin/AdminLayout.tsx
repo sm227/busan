@@ -36,6 +36,7 @@ export function AdminLayout({
     { id: 'coins', label: '코인 관리' },
     { id: 'chat', label: '채팅방 관리' },
     { id: 'badges', label: '뱃지 관리' },
+    { id: 'athena', label: '통계 분석' },
     { id: 'analytics', label: '설문 분석 (Glue)' },
   ];
 

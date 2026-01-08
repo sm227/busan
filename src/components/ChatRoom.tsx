@@ -310,7 +310,7 @@ export default function ChatRoom({ room, currentUser, onBack }: ChatRoomProps) {
               }
             }}
             placeholder="메시지를 입력하세요..."
-            className="flex-1 bg-stone-50 border border-stone-200 rounded-full px-4 py-3 text-sm focus:outline-none focus:border-stone-400 transition-colors"
+            className="flex-1 bg-stone-50 border border-stone-200 rounded-full px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 transition-colors"
             disabled={sending}
           />
           <button

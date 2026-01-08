@@ -11,6 +11,7 @@ import { CommunityManagement } from '@/components/admin/CommunityManagement';
 import { CoinsManagement } from '@/components/admin/CoinsManagement';
 import { ChatManagement } from '@/components/admin/ChatManagement';
 import { BadgesManagement } from '@/components/admin/BadgesManagement';
+import { AthenaManagement } from '@/components/admin/AthenaManagement';
 import { AnalyticsManagement } from '@/components/admin/AnalyticsManagement';
 
 export type AdminModule =
@@ -22,6 +23,7 @@ export type AdminModule =
   | 'coins'
   | 'chat'
   | 'badges'
+  | 'athena'
   | 'analytics';
 
 export default function AdminPage() {
@@ -125,6 +127,7 @@ export default function AdminPage() {
       {currentModule === 'coins' && <CoinsManagement userId={userId} />}
       {currentModule === 'chat' && <ChatManagement userId={userId} />}
       {currentModule === 'badges' && <BadgesManagement userId={userId} />}
+      {currentModule === 'athena' && <AthenaManagement userId={userId} />}
       {currentModule === 'analytics' && <AnalyticsManagement userId={userId} />}
     </AdminLayout>
   );

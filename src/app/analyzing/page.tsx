@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
 import { Home, Users, MapPin, CheckCircle2, Circle } from "lucide-react";
@@ -14,8 +14,13 @@ export default function AnalyzingPage() {
   const router = useRouter();
   const { currentUser, userPreferences, setRecommendations } = useApp();
   const [analysisStep, setAnalysisStep] = useState(0);
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
+    // 중복 실행 방지
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
     const analyze = async () => {
       setTimeout(() => setAnalysisStep(1), 500);
 

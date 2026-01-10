@@ -278,12 +278,6 @@ export default function Home() {
                 <span className="text-sm font-bold">{coinBalance}</span>
               </button>
               <button
-                onClick={() => router.push("/korea-map")}
-                className="p-2 text-stone-600 hover:bg-stone-50 rounded-full transition-colors"
-              >
-                <Map className="w-5 h-5" />
-              </button>
-              <button
                 onClick={() => setIsMenuOpen(true)}
                 className="p-2 text-stone-600 hover:bg-stone-50 rounded-full transition-colors"
                 aria-label="메뉴 열기"
@@ -575,7 +569,11 @@ export default function Home() {
                 { icon: "🌾", name: "전라도", desc: "슬로 라이프" },
                 { icon: "🏕️", name: "경상도", desc: "전통 체험" },
               ].map((region) => (
-                <div key={region.name} className="flex-shrink-0 w-28 p-4 bg-white rounded-2xl border border-stone-100 text-center cursor-pointer hover:border-stone-300 transition-colors">
+                <div
+                  key={region.name}
+                  onClick={() => router.push(`/maps?region=${encodeURIComponent(region.name)}`)}
+                  className="flex-shrink-0 w-28 p-4 bg-white rounded-2xl border border-stone-100 text-center cursor-pointer hover:border-stone-300 transition-colors"
+                >
                   <div className="text-2xl mb-2">{region.icon}</div>
                   <h4 className="font-bold text-stone-800 text-sm">{region.name}</h4>
                   <p className="text-stone-400 text-[10px] mt-1">{region.desc}</p>

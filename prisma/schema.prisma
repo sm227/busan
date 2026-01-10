@@ -577,3 +577,18 @@ model ChatMessage {
   @@index([createdAt])
   @@map("chat_messages")
 }
+
+// ==================== Athena 쿼리 캐시 ====================
+
+model AnalyticsCache {
+  id        String   @id @default(cuid())
+  queryType String   @map("query_type") // occupation, living_style, budget, trend
+  data      Json     // Athena 쿼리 결과
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([queryType])
+  @@index([queryType])
+  @@index([updatedAt])
+  @@map("analytics_cache")
+}

@@ -222,3 +222,8 @@ html, body {
 .animate-bounce-slow {
   animation: bounceSlow 2.5s ease-in-out infinite;
 }
+
+/* 모바일 자동 확대 방지 */
+input, textarea, select {
+  font-size: 16px !important;
+}
